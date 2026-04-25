@@ -12,6 +12,7 @@ next-env.d.ts
 out/
 dist/
 build/
+worker/dist/
 *.tsbuildinfo
 
 # Environment
