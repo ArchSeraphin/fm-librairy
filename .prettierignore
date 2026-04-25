@@ -1,0 +1,27 @@
+# Lockfiles
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+node_modules/
+
+# Generated
+prisma/generated/
+src/generated/
+.turbo/
+.vercel/
+
+# Coverage
+coverage/
+
+# Minified
+*.min.js
+*.min.css
+
+# Misc
+*.tsbuildinfo
