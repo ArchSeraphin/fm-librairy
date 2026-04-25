@@ -1,0 +1,13 @@
+{
+  "Home": {
+    "title": "BiblioShare",
+    "subtitle": "Plateforme privée de gestion de bibliothèques numériques et physiques",
+    "comingSoon": "Bientôt disponible",
+    "phase": "Phase 0 — Fondations"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue.",
+    "retry": "Réessayer"
+  }
+}
