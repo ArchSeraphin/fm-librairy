@@ -1,3 +1,14 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "plugins": ["local"],
+  "rules": {
+    "local/no-unscoped-prisma": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+        "message": "dangerouslySetInnerHTML interdit (risque XSS)."
+      }
+    ]
+  }
 }
