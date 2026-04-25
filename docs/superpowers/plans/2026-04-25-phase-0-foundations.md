@@ -18,60 +18,60 @@
 
 ### Fichiers à créer
 
-| Fichier | Responsabilité |
-|---|---|
-| `package.json` | Métadonnées projet, scripts npm, dépendances |
-| `pnpm-lock.yaml` | Lockfile pnpm (généré) |
-| `tsconfig.json` | Config TS strict |
-| `next.config.ts` | Config Next.js (security headers, i18n, output standalone) |
-| `tailwind.config.ts` | Config Tailwind avec design tokens |
-| `postcss.config.mjs` | PostCSS pour Tailwind |
-| `.eslintrc.cjs` (ou `eslint.config.mjs`) | Config ESLint + règle custom no-unscoped-prisma |
-| `.prettierrc` | Config Prettier |
-| `.editorconfig` | Cohérence éditeurs |
-| `.env.example` | Variables d'environnement documentées |
-| `.dockerignore` | Exclusions build Docker |
-| `Dockerfile` | Image app (multi-stage) |
-| `Dockerfile.worker` | Image worker (multi-stage) |
-| `docker-compose.yml` | Orchestration 8 services |
-| `prisma/schema.prisma` | Schéma DB complet |
-| `prisma/seed.ts` | Seed dev minimal |
-| `src/app/layout.tsx` | Layout racine |
-| `src/app/page.tsx` | Page d'accueil minimale |
-| `src/app/globals.css` | CSS global, tokens, base Tailwind |
-| `src/app/api/health/route.ts` | Endpoint healthcheck |
-| `src/lib/env.ts` | Validation des variables d'env (zod) |
-| `src/lib/logger.ts` | Logger pino configuré |
-| `src/lib/db.ts` | Client Prisma singleton |
-| `src/lib/redis.ts` | Client Redis singleton |
-| `src/lib/meili.ts` | Client Meilisearch singleton |
-| `src/lib/private-scope.ts` | Type Brand `PrivateScope` |
-| `src/lib/security-headers.ts` | Helper headers de sécurité |
-| `src/components/ui/button.tsx` | Primitive Button |
-| `src/components/ui/input.tsx` | Primitive Input |
-| `src/components/ui/card.tsx` | Primitive Card |
-| `src/components/ui/toast.tsx` | Primitive Toast |
-| `src/i18n/messages/fr.json` | Traductions FR |
-| `src/i18n/config.ts` | Config next-intl |
-| `worker/index.ts` | Worker minimal (boot, connect Redis, idle) |
-| `worker/tsconfig.json` | Config TS worker |
-| `eslint-rules/no-unscoped-prisma.js` | Règle ESLint custom |
-| `tests/unit/example.test.ts` | Test unit exemple |
-| `tests/e2e/health.spec.ts` | Test E2E exemple |
-| `vitest.config.ts` | Config Vitest |
-| `playwright.config.ts` | Config Playwright |
-| `.github/workflows/ci.yml` | Pipeline CI |
-| `.github/dependabot.yml` | Config Dependabot |
-| `.github/workflows/codeql.yml` | Scan sécurité GitHub natif (optionnel) |
-| `README.md` | Doc projet, démarrage rapide |
-| `docs/deployment.md` | Guide Coolify pas-à-pas |
-| `docs/security/owasp-mapping.md` | Couverture OWASP Top 10 (squelette) |
-| `docs/security/credential-rotation.md` | Calendrier rotation credentials |
+| Fichier                                  | Responsabilité                                             |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| `package.json`                           | Métadonnées projet, scripts npm, dépendances               |
+| `pnpm-lock.yaml`                         | Lockfile pnpm (généré)                                     |
+| `tsconfig.json`                          | Config TS strict                                           |
+| `next.config.ts`                         | Config Next.js (security headers, i18n, output standalone) |
+| `tailwind.config.ts`                     | Config Tailwind avec design tokens                         |
+| `postcss.config.mjs`                     | PostCSS pour Tailwind                                      |
+| `.eslintrc.cjs` (ou `eslint.config.mjs`) | Config ESLint + règle custom no-unscoped-prisma            |
+| `.prettierrc`                            | Config Prettier                                            |
+| `.editorconfig`                          | Cohérence éditeurs                                         |
+| `.env.example`                           | Variables d'environnement documentées                      |
+| `.dockerignore`                          | Exclusions build Docker                                    |
+| `Dockerfile`                             | Image app (multi-stage)                                    |
+| `Dockerfile.worker`                      | Image worker (multi-stage)                                 |
+| `docker-compose.yml`                     | Orchestration 8 services                                   |
+| `prisma/schema.prisma`                   | Schéma DB complet                                          |
+| `prisma/seed.ts`                         | Seed dev minimal                                           |
+| `src/app/layout.tsx`                     | Layout racine                                              |
+| `src/app/page.tsx`                       | Page d'accueil minimale                                    |
+| `src/app/globals.css`                    | CSS global, tokens, base Tailwind                          |
+| `src/app/api/health/route.ts`            | Endpoint healthcheck                                       |
+| `src/lib/env.ts`                         | Validation des variables d'env (zod)                       |
+| `src/lib/logger.ts`                      | Logger pino configuré                                      |
+| `src/lib/db.ts`                          | Client Prisma singleton                                    |
+| `src/lib/redis.ts`                       | Client Redis singleton                                     |
+| `src/lib/meili.ts`                       | Client Meilisearch singleton                               |
+| `src/lib/private-scope.ts`               | Type Brand `PrivateScope`                                  |
+| `src/lib/security-headers.ts`            | Helper headers de sécurité                                 |
+| `src/components/ui/button.tsx`           | Primitive Button                                           |
+| `src/components/ui/input.tsx`            | Primitive Input                                            |
+| `src/components/ui/card.tsx`             | Primitive Card                                             |
+| `src/components/ui/toast.tsx`            | Primitive Toast                                            |
+| `src/i18n/messages/fr.json`              | Traductions FR                                             |
+| `src/i18n/config.ts`                     | Config next-intl                                           |
+| `worker/index.ts`                        | Worker minimal (boot, connect Redis, idle)                 |
+| `worker/tsconfig.json`                   | Config TS worker                                           |
+| `eslint-rules/no-unscoped-prisma.js`     | Règle ESLint custom                                        |
+| `tests/unit/example.test.ts`             | Test unit exemple                                          |
+| `tests/e2e/health.spec.ts`               | Test E2E exemple                                           |
+| `vitest.config.ts`                       | Config Vitest                                              |
+| `playwright.config.ts`                   | Config Playwright                                          |
+| `.github/workflows/ci.yml`               | Pipeline CI                                                |
+| `.github/dependabot.yml`                 | Config Dependabot                                          |
+| `.github/workflows/codeql.yml`           | Scan sécurité GitHub natif (optionnel)                     |
+| `README.md`                              | Doc projet, démarrage rapide                               |
+| `docs/deployment.md`                     | Guide Coolify pas-à-pas                                    |
+| `docs/security/owasp-mapping.md`         | Couverture OWASP Top 10 (squelette)                        |
+| `docs/security/credential-rotation.md`   | Calendrier rotation credentials                            |
 
 ### Fichiers à modifier
 
-| Fichier | Modification |
-|---|---|
+| Fichier      | Modification                                                                 |
+| ------------ | ---------------------------------------------------------------------------- |
 | `.gitignore` | Ajouter exclusions Next.js (`.next/`, `next-env.d.ts`) si pas déjà couvertes |
 
 ---
@@ -91,6 +91,7 @@
 ### Task 1 : Initialiser Next.js 15 + TypeScript strict + pnpm
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.json`, `next.config.ts`, `next-env.d.ts`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/globals.css`, `postcss.config.mjs`, `tailwind.config.ts`
 - Create: `.gitignore` mis à jour
 
@@ -178,6 +179,7 @@ git commit -m "chore: bootstrap Next.js 15 + TypeScript strict via create-next-a
 ### Task 2 : Configurer Prettier + EditorConfig + .gitignore complet
 
 **Files:**
+
 - Create: `.prettierrc`, `.editorconfig`
 - Modify: `package.json` (scripts format), `.gitignore`
 
@@ -264,6 +266,7 @@ git commit -m "chore: add Prettier + EditorConfig"
 **Note** : Next.js 15 + `create-next-app --tailwind` installe déjà Tailwind. On y ajoute shadcn/ui et Lucide.
 
 **Files:**
+
 - Modify: `package.json`, `tailwind.config.ts`, `src/app/globals.css`
 - Create: `components.json` (shadcn config), `src/lib/utils.ts`
 
@@ -340,6 +343,7 @@ git commit -m "feat: add shadcn/ui + Lucide icons"
 **Goal** : palette neutre + un accent unique (sobre, professionnel), typographie système avec police lisible, tokens d'espacement et rayons cohérents. Mode sombre soigné.
 
 **Files:**
+
 - Modify: `src/app/globals.css`, `tailwind.config.ts`
 
 - [ ] **Step 1 : Définir les tokens CSS dans `src/app/globals.css`**
@@ -402,9 +406,17 @@ Remplacer le contenu par :
     --ring: 217 91% 60%;
   }
 
-  * { @apply border-border; }
-  html { font-feature-settings: 'rlig' 1, 'calt' 1; }
-  body { @apply bg-background text-foreground antialiased; }
+  * {
+    @apply border-border;
+  }
+  html {
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
 }
 ```
 
@@ -468,7 +480,15 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Inter', 'sans-serif'],
+        sans: [
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Inter',
+          'sans-serif',
+        ],
         serif: ['ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
       },
@@ -509,6 +529,7 @@ git commit -m "feat: define design tokens (palette, typography, radii, animation
 ### Task 5 : Ajouter primitives UI (Button, Input, Card, Toast)
 
 **Files:**
+
 - Create via shadcn CLI : `src/components/ui/button.tsx`, `src/components/ui/input.tsx`, `src/components/ui/card.tsx`, `src/components/ui/toast.tsx`, `src/components/ui/toaster.tsx`, `src/hooks/use-toast.ts`
 - Create: `tests/unit/button.test.tsx`
 
@@ -532,13 +553,13 @@ import { BookOpen } from 'lucide-react';
 export default function Home() {
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-8">
-      <Card className="w-full max-w-md animate-slide-up">
+      <Card className="animate-slide-up w-full max-w-md">
         <CardHeader className="flex flex-row items-center gap-3">
-          <BookOpen className="h-6 w-6 text-accent" aria-hidden />
+          <BookOpen className="text-accent h-6 w-6" aria-hidden />
           <CardTitle>BiblioShare</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Plateforme privée de gestion de bibliothèques.
           </p>
           <Button className="w-full">Bientôt disponible</Button>
@@ -571,6 +592,7 @@ git commit -m "feat: add base UI primitives (Button, Input, Card, Toast)"
 ### Task 6 : Initialiser Prisma + écrire le schéma complet
 
 **Files:**
+
 - Create: `prisma/schema.prisma`, `src/lib/db.ts`
 - Modify: `package.json` (scripts prisma)
 
@@ -1120,6 +1142,7 @@ git commit -m "feat: add Prisma schema (full data model) + DB singleton"
 **Goal** : type qui rend impossible de fetcher des annotations/bookmarks/progression sans avoir d'abord prouvé qu'on est dans un scope utilisateur explicite. Empêche les fuites cross-users par construction.
 
 **Files:**
+
 - Create: `src/lib/private-scope.ts`, `tests/unit/private-scope.test.ts`
 
 - [ ] **Step 1 : Écrire le test d'abord**
@@ -1203,6 +1226,7 @@ git commit -m "feat: add PrivateScope brand type for user-scoped queries"
 ### Task 8 : Validation des variables d'environnement (zod)
 
 **Files:**
+
 - Create: `src/lib/env.ts`, `.env.example`
 - Modify: `package.json` (script `env:check`)
 
@@ -1261,7 +1285,10 @@ export function getEnv(): Env {
   if (cached) return cached;
   const parsed = EnvSchema.safeParse(process.env);
   if (!parsed.success) {
-    console.error('[env] Variables d\'environnement invalides :', parsed.error.flatten().fieldErrors);
+    console.error(
+      "[env] Variables d'environnement invalides :",
+      parsed.error.flatten().fieldErrors,
+    );
     throw new Error('Invalid environment variables');
   }
   cached = parsed.data;
@@ -1342,6 +1369,7 @@ git commit -m "feat: add zod-validated env schema + .env.example"
 ### Task 9 : Logger Pino structuré avec redact
 
 **Files:**
+
 - Create: `src/lib/logger.ts`, `tests/unit/logger.test.ts`
 
 - [ ] **Step 1 : Installer Pino**
@@ -1390,7 +1418,11 @@ export const logger = pino({
     ? {
         transport: {
           target: 'pino-pretty',
-          options: { colorize: true, translateTime: 'SYS:HH:MM:ss', ignore: 'pid,hostname,service,env' },
+          options: {
+            colorize: true,
+            translateTime: 'SYS:HH:MM:ss',
+            ignore: 'pid,hostname,service,env',
+          },
         },
       }
     : {}),
@@ -1418,7 +1450,7 @@ describe('logger redaction', () => {
     process.env.CRYPTO_MASTER_KEY = '1'.repeat(32);
   });
 
-  it("redacte les champs sensibles dans les logs", async () => {
+  it('redacte les champs sensibles dans les logs', async () => {
     const { logger } = await import('@/lib/logger');
     const captured: string[] = [];
     const stream = { write: (s: string) => captured.push(s) };
@@ -1448,6 +1480,7 @@ git commit -m "feat: add pino logger with secret redaction"
 ### Task 10 : Clients Redis et Meilisearch (singletons)
 
 **Files:**
+
 - Create: `src/lib/redis.ts`, `src/lib/meili.ts`
 
 - [ ] **Step 1 : Installer ioredis et meilisearch**
@@ -1513,6 +1546,7 @@ git commit -m "feat: add Redis and Meilisearch singletons"
 ### Task 11 : Endpoint /health avec checks DB, Redis, Meili, ClamAV
 
 **Files:**
+
 - Create: `src/app/api/health/route.ts`, `tests/unit/health.test.ts`
 
 - [ ] **Step 1 : Installer le client ClamAV**
@@ -1648,6 +1682,7 @@ git commit -m "feat: add /api/health endpoint with subsystem checks"
 ### Task 12 : Page d'accueil minimale + i18n FR
 
 **Files:**
+
 - Create: `src/i18n/messages/fr.json`, `src/i18n/config.ts`, `next.config.ts` (si modif), `src/app/layout.tsx`, `src/app/page.tsx`
 - Modify: `src/app/layout.tsx`, `src/app/page.tsx`
 
@@ -1747,10 +1782,10 @@ export default function HomePage() {
   const t = useTranslations('Home');
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-md animate-slide-up shadow-sm">
+      <Card className="animate-slide-up w-full max-w-md shadow-sm">
         <CardHeader className="space-y-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-accent/10">
-            <Library className="h-5 w-5 text-accent" aria-hidden="true" />
+          <div className="bg-accent/10 flex h-10 w-10 items-center justify-center rounded-md">
+            <Library className="text-accent h-5 w-5" aria-hidden="true" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-xl">{t('title')}</CardTitle>
@@ -1758,7 +1793,7 @@ export default function HomePage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t('phase')}</p>
+          <p className="text-muted-foreground text-xs uppercase tracking-wide">{t('phase')}</p>
           <p className="text-sm text-foreground">{t('comingSoon')}</p>
         </CardContent>
       </Card>
@@ -1789,6 +1824,7 @@ git commit -m "feat: add i18n FR + minimal landing page with Lucide icon"
 ### Task 13 : Headers de sécurité (CSP, HSTS, etc.)
 
 **Files:**
+
 - Create: `src/lib/security-headers.ts`
 - Modify: `next.config.ts`
 
@@ -1901,6 +1937,7 @@ git commit -m "feat: add static security headers (HSTS, X-Frame-Options, etc.)"
 **Goal** : éviter qu'une query Prisma sans scope ne fuite des données cross-bibliothèque.
 
 **Files:**
+
 - Create: `eslint-rules/no-unscoped-prisma.js`, `eslint-rules/index.js`
 - Modify: `eslint.config.mjs` (ou `.eslintrc.cjs`)
 
@@ -1926,7 +1963,8 @@ module.exports = {
     },
     schema: [],
     messages: {
-      missingWhere: 'Prisma `{{method}}` sans `where` interdit (risque de fuite cross-scope). Ajoutez `where` ou désactivez localement avec un commentaire justifié.',
+      missingWhere:
+        'Prisma `{{method}}` sans `where` interdit (risque de fuite cross-scope). Ajoutez `where` ou désactivez localement avec un commentaire justifié.',
     },
   },
   create(context) {
@@ -1940,7 +1978,11 @@ module.exports = {
         const arg = node.arguments[0];
         // Pas d'argument du tout
         if (!arg) {
-          context.report({ node, messageId: 'missingWhere', data: { method: callee.property.name } });
+          context.report({
+            node,
+            messageId: 'missingWhere',
+            data: { method: callee.property.name },
+          });
           return;
         }
         // Argument est un objet littéral : vérifier qu'il a une clé `where`
@@ -1949,7 +1991,11 @@ module.exports = {
             (p) => p.type === 'Property' && p.key.type === 'Identifier' && p.key.name === 'where',
           );
           if (!hasWhere) {
-            context.report({ node, messageId: 'missingWhere', data: { method: callee.property.name } });
+            context.report({
+              node,
+              messageId: 'missingWhere',
+              data: { method: callee.property.name },
+            });
           }
         }
         // Argument est dynamique (Identifier, etc.) : on accepte (ne peut pas vérifier statiquement)
@@ -2066,6 +2112,7 @@ git commit -m "feat: add custom ESLint rule no-unscoped-prisma + interdire dange
 ### Task 15 : Configurer Vitest
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Modify: `package.json` (scripts test)
 
@@ -2145,6 +2192,7 @@ git commit -m "test: configure Vitest + run baseline unit tests"
 ### Task 16 : Configurer Playwright + smoke test E2E
 
 **Files:**
+
 - Create: `playwright.config.ts`, `tests/e2e/health.spec.ts`, `tests/e2e/landing.spec.ts`
 - Modify: `package.json`
 
@@ -2256,6 +2304,7 @@ git commit -m "test: configure Playwright + landing & health E2E tests"
 **Goal** : container worker qui boot, valide l'env, se connecte à Redis et reste en vie. Pas de jobs en Phase 0.
 
 **Files:**
+
 - Create: `worker/package.json`, `worker/tsconfig.json`, `worker/index.ts`
 
 - [ ] **Step 1 : Créer la structure worker**
@@ -2371,6 +2420,7 @@ git commit -m "feat: add minimal worker (boots, connects Redis, idle heartbeat)"
 ### Task 18 : Dockerfile pour l'app (multi-stage)
 
 **Files:**
+
 - Create: `Dockerfile`, `.dockerignore`
 
 - [ ] **Step 1 : Créer `.dockerignore`**
@@ -2464,6 +2514,7 @@ git commit -m "build: add Dockerfile (multi-stage, non-root, healthcheck)"
 ### Task 19 : Dockerfile pour le worker
 
 **Files:**
+
 - Create: `Dockerfile.worker`
 
 - [ ] **Step 1 : Créer `Dockerfile.worker`**
@@ -2520,6 +2571,7 @@ git commit -m "build: add worker Dockerfile (multi-stage, non-root)"
 ### Task 20 : docker-compose.yml — 8 services
 
 **Files:**
+
 - Create: `docker-compose.yml`
 
 - [ ] **Step 1 : Créer `docker-compose.yml`**
@@ -2535,13 +2587,13 @@ services:
       POSTGRES_DB: biblioshare
       POSTGRES_USER: biblioshare
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C.UTF-8"
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --locale=C.UTF-8'
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U biblioshare -d biblioshare"]
+      test: ['CMD-SHELL', 'pg_isready -U biblioshare -d biblioshare']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -2554,13 +2606,13 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    command: ['redis-server', '--appendonly', 'yes', '--save', '60', '1000']
     volumes:
       - redis_data:/data
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -2574,13 +2626,13 @@ services:
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?required}
       MEILI_ENV: ${MEILI_ENV:-production}
-      MEILI_NO_ANALYTICS: "true"
+      MEILI_NO_ANALYTICS: 'true'
     volumes:
       - meili_data:/meili_data
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:7700/health']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -2592,13 +2644,13 @@ services:
     image: clamav/clamav:1.4
     restart: unless-stopped
     environment:
-      CLAMAV_NO_FRESHCLAMD: "false"
+      CLAMAV_NO_FRESHCLAMD: 'false'
     volumes:
       - clamav_db:/var/lib/clamav
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "echo PING | nc -w 2 localhost 3310 | grep -q PONG"]
+      test: ['CMD-SHELL', 'echo PING | nc -w 2 localhost 3310 | grep -q PONG']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -2613,8 +2665,8 @@ services:
     restart: unless-stopped
     profiles: [conversion]
     environment:
-      PUID: "1001"
-      PGID: "1001"
+      PUID: '1001'
+      PGID: '1001'
       TZ: Europe/Paris
     volumes:
       - calibre_config:/config
@@ -2638,7 +2690,7 @@ services:
       MEILI_HOST: http://meili:7700
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
       CLAMAV_HOST: clamav
-      CLAMAV_PORT: "3310"
+      CLAMAV_PORT: '3310'
       LOG_LEVEL: ${LOG_LEVEL:-info}
       SESSION_SECRET: ${SESSION_SECRET:?required}
       CRYPTO_MASTER_KEY: ${CRYPTO_MASTER_KEY:?required}
@@ -2650,17 +2702,17 @@ services:
       - uploads:/app/uploads
       - covers:/app/covers
     depends_on:
-      pg:        { condition: service_healthy }
-      redis:     { condition: service_healthy }
-      meili:     { condition: service_healthy }
-      clamav:    { condition: service_started }  # clamav peut prendre >2 min à initialiser ; pas de blocage
+      pg: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      meili: { condition: service_healthy }
+      clamav: { condition: service_started } # clamav peut prendre >2 min à initialiser ; pas de blocage
     networks:
       - internal
       - public
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - '${APP_PORT:-3000}:3000'
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/health"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -2692,9 +2744,9 @@ services:
 
   backup:
     image: alpine:3.20
-    restart: "no"
+    restart: 'no'
     profiles: [backup]
-    command: ["sh", "-c", "echo 'backup placeholder — configuré en Phase 8'"]
+    command: ['sh', '-c', "echo 'backup placeholder — configuré en Phase 8'"]
     networks:
       - internal
 
@@ -2716,6 +2768,7 @@ volumes:
 ```
 
 **Notes** :
+
 - `calibre` et `backup` sont sous `profiles` pour ne pas démarrer par défaut. On les active avec `--profile conversion` ou `--profile backup`. Phase 5 les utilisera réellement.
 - Seul `app` est exposé sur le port host (3000). Tous les autres services sont sur le réseau `internal` uniquement.
 - `app` est `read_only: true` avec `tmpfs` pour `/tmp` et le cache Next.
@@ -2821,6 +2874,7 @@ git commit -m "build: add docker-compose with 8 services + healthchecks + isolat
 ### Task 21 : Pipeline GitHub Actions CI
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1 : Créer `.github/workflows/ci.yml`**
@@ -2835,8 +2889,8 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: "22"
-  PNPM_VERSION: "9"
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
 
 jobs:
   lint-typecheck-unit:
@@ -2852,7 +2906,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
 
@@ -2873,7 +2927,7 @@ jobs:
           POSTGRES_DB: biblioshare
           POSTGRES_USER: biblioshare
           POSTGRES_PASSWORD: testpassword
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U biblioshare"
           --health-interval 10s
@@ -2882,7 +2936,7 @@ jobs:
 
       redis:
         image: redis:7-alpine
-        ports: ["6379:6379"]
+        ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -2893,8 +2947,8 @@ jobs:
         image: getmeili/meilisearch:v1.10
         env:
           MEILI_MASTER_KEY: testkeytestkeytestkeytestkey1234
-          MEILI_NO_ANALYTICS: "true"
-        ports: ["7700:7700"]
+          MEILI_NO_ANALYTICS: 'true'
+        ports: ['7700:7700']
         options: >-
           --health-cmd "curl -f http://localhost:7700/health"
           --health-interval 10s
@@ -2907,10 +2961,10 @@ jobs:
       MEILI_HOST: http://localhost:7700
       MEILI_MASTER_KEY: testkeytestkeytestkeytestkey1234
       CLAMAV_HOST: localhost
-      CLAMAV_PORT: "3310"
+      CLAMAV_PORT: '3310'
       APP_URL: http://localhost:3000
-      SESSION_SECRET: "0000000000000000000000000000000000000000000000000000000000000000"
-      CRYPTO_MASTER_KEY: "1111111111111111111111111111111111111111111111111111111111111111"
+      SESSION_SECRET: '0000000000000000000000000000000000000000000000000000000000000000'
+      CRYPTO_MASTER_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
       EMAIL_FROM: noreply@biblioshare.local
       LOG_LEVEL: warn
 
@@ -2924,7 +2978,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma generate
@@ -2936,7 +2990,7 @@ jobs:
 
       - name: Run E2E
         env:
-          PORT: "3000"
+          PORT: '3000'
         run: |
           pnpm exec next start &
           npx wait-on http://localhost:3000
@@ -2989,7 +3043,7 @@ jobs:
           image-ref: biblioshare-app:scan
           format: table
           severity: CRITICAL,HIGH
-          exit-code: "1"
+          exit-code: '1'
           ignore-unfixed: true
 
   gitleaks:
@@ -3022,6 +3076,7 @@ git commit -m "ci: add GitHub Actions pipeline (lint, test, E2E, docker, Trivy, 
 ### Task 22 : Dependabot
 
 **Files:**
+
 - Create: `.github/dependabot.yml`
 
 - [ ] **Step 1 : Créer `.github/dependabot.yml`**
@@ -3030,45 +3085,45 @@ git commit -m "ci: add GitHub Actions pipeline (lint, test, E2E, docker, Trivy, 
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
     groups:
       patches-and-minor:
-        update-types: ["patch", "minor"]
+        update-types: ['patch', 'minor']
     ignore:
-      - dependency-name: "next"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@prisma/client"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "prisma"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@prisma/client'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'prisma'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: npm
-    directory: "/worker"
+    directory: '/worker'
     schedule:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
     groups:
       patches-and-minor:
-        update-types: ["patch", "minor"]
+        update-types: ['patch', 'minor']
 
   - package-ecosystem: docker
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
 
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: '/'
     schedule:
       interval: monthly
 ```
@@ -3087,6 +3142,7 @@ git commit -m "ci: add Dependabot config (npm, docker, github-actions)"
 ### Task 23 : README.md complet
 
 **Files:**
+
 - Create: `README.md`
 
 - [ ] **Step 1 : Créer `README.md`**
@@ -3123,18 +3179,23 @@ git clone <repo-url> biblioshare
 cd biblioshare
 
 # Variables d'environnement
+
 cp .env.example .env.local
+
 # Générer les secrets pour le dev
+
 sed -i.bak "s/please-generate-with-openssl-rand-hex-32/$(openssl rand -hex 32)/g" .env.local
 rm -f .env.local.bak
 
 # Pour docker-compose
+
 cp .env.example .env
 echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" >> .env
 echo "MEILI_MASTER_KEY=$(openssl rand -hex 16)" >> .env
 echo "APP_PORT=3000" >> .env
 
 # Dépendances
+
 pnpm install
 pnpm prisma generate
 \`\`\`
@@ -3145,6 +3206,7 @@ pnpm prisma generate
 docker compose up -d --build
 
 # Première fois : appliquer la migration Prisma
+
 docker compose exec app pnpm prisma migrate deploy
 \`\`\`
 
@@ -3153,14 +3215,18 @@ L'app est disponible sur http://localhost:3000. Healthcheck : http://localhost:3
 ### Mode dev (Next.js local + services Docker)
 
 \`\`\`bash
+
 # Démarrer uniquement les dépendances
+
 docker compose up -d pg redis meili clamav
 
 # Migrer la DB
+
 DATABASE_URL=postgresql://biblioshare:$(grep POSTGRES_PASSWORD .env | cut -d= -f2)@localhost:5432/biblioshare \\
-  pnpm prisma migrate dev
+pnpm prisma migrate dev
 
 # Lancer Next.js en local (hot reload)
+
 pnpm dev
 \`\`\`
 
@@ -3168,43 +3234,43 @@ pnpm dev
 
 ## Scripts pnpm
 
-| Script | Description |
-|---|---|
-| \`pnpm dev\` | Next.js dev server avec hot reload |
-| \`pnpm build\` | Build production |
-| \`pnpm start\` | Lancer le build production |
-| \`pnpm lint\` | ESLint |
-| \`pnpm typecheck\` | Vérification TypeScript |
-| \`pnpm format\` | Prettier write |
-| \`pnpm format:check\` | Prettier check |
-| \`pnpm test\` | Tests unitaires Vitest |
-| \`pnpm test:watch\` | Vitest watch mode |
-| \`pnpm e2e\` | Tests Playwright |
-| \`pnpm prisma:generate\` | Régénérer le client Prisma |
+| Script                      | Description                          |
+| --------------------------- | ------------------------------------ |
+| \`pnpm dev\`                | Next.js dev server avec hot reload   |
+| \`pnpm build\`              | Build production                     |
+| \`pnpm start\`              | Lancer le build production           |
+| \`pnpm lint\`               | ESLint                               |
+| \`pnpm typecheck\`          | Vérification TypeScript              |
+| \`pnpm format\`             | Prettier write                       |
+| \`pnpm format:check\`       | Prettier check                       |
+| \`pnpm test\`               | Tests unitaires Vitest               |
+| \`pnpm test:watch\`         | Vitest watch mode                    |
+| \`pnpm e2e\`                | Tests Playwright                     |
+| \`pnpm prisma:generate\`    | Régénérer le client Prisma           |
 | \`pnpm prisma:migrate:dev\` | Créer/appliquer une migration en dev |
-| \`pnpm prisma:studio\` | UI graphique Prisma |
+| \`pnpm prisma:studio\`      | UI graphique Prisma                  |
 
 ## Structure du projet
 
 \`\`\`
 src/
-  app/                  Pages et API routes (Next.js App Router)
-  components/ui/        Primitives UI (shadcn/ui adapté)
-  i18n/                 Traductions et config next-intl
-  lib/                  Helpers (db, redis, meili, env, logger, private-scope)
-  types/                Déclarations TS auxiliaires
-worker/                 Service de jobs asynchrones (BullMQ)
-prisma/                 Schéma + migrations
+app/ Pages et API routes (Next.js App Router)
+components/ui/ Primitives UI (shadcn/ui adapté)
+i18n/ Traductions et config next-intl
+lib/ Helpers (db, redis, meili, env, logger, private-scope)
+types/ Déclarations TS auxiliaires
+worker/ Service de jobs asynchrones (BullMQ)
+prisma/ Schéma + migrations
 tests/
-  unit/                 Tests Vitest
-  e2e/                  Tests Playwright
+unit/ Tests Vitest
+e2e/ Tests Playwright
 docs/
-  adr/                  Architecture Decision Records
-  superpowers/specs/    Spécifications de design
-  superpowers/plans/    Plans d'implémentation par phase
-  security/             Documentation sécurité (OWASP, threat model)
-  deployment.md         Guide Coolify
-eslint-rules/           Règles ESLint custom
+adr/ Architecture Decision Records
+superpowers/specs/ Spécifications de design
+superpowers/plans/ Plans d'implémentation par phase
+security/ Documentation sécurité (OWASP, threat model)
+deployment.md Guide Coolify
+eslint-rules/ Règles ESLint custom
 \`\`\`
 
 ## Sécurité
@@ -3224,18 +3290,18 @@ Voir [\`docs/deployment.md\`](docs/deployment.md) pour le guide Coolify pas-à-p
 
 ## Roadmap
 
-| Phase | Titre | Statut |
-|---|---|---|
-| 0 | Fondations | en cours / fait |
-| 1 | Auth, 2FA, invitations, rôles | à venir |
-| 2 | Catalogue, upload, ClamAV, métadonnées | à venir |
-| 3 | Liseuse, annotations, sync | à venir |
-| 4 | Recherche, tags, collections | à venir |
-| 5 | Conversion, téléchargements | à venir |
-| 6 | Livres physiques | à venir |
-| 7 | Social, stats | à venir |
-| 7.5 | Recette utilisateur en local | à venir |
-| 8 | Backups NAS, monitoring, hardening final | à venir |
+| Phase | Titre                                    | Statut          |
+| ----- | ---------------------------------------- | --------------- |
+| 0     | Fondations                               | en cours / fait |
+| 1     | Auth, 2FA, invitations, rôles            | à venir         |
+| 2     | Catalogue, upload, ClamAV, métadonnées   | à venir         |
+| 3     | Liseuse, annotations, sync               | à venir         |
+| 4     | Recherche, tags, collections             | à venir         |
+| 5     | Conversion, téléchargements              | à venir         |
+| 6     | Livres physiques                         | à venir         |
+| 7     | Social, stats                            | à venir         |
+| 7.5   | Recette utilisateur en local             | à venir         |
+| 8     | Backups NAS, monitoring, hardening final | à venir         |
 
 ## Licence
 
@@ -3254,6 +3320,7 @@ git commit -m "docs: add comprehensive README"
 ### Task 24 : Guide de déploiement Coolify
 
 **Files:**
+
 - Create: `docs/deployment.md`
 
 - [ ] **Step 1 : Créer `docs/deployment.md`**
@@ -3269,17 +3336,20 @@ Cible : VPS OVH Debian 13 (8 Go RAM, 4 vCPU, 80 Go), domaine personnel, HTTPS Le
 ssh root@<vps-ip>
 
 # Mise à jour système
+
 apt update && apt upgrade -y
 apt install -y curl wget htop ufw fail2ban
 
 # Pare-feu (autoriser uniquement SSH + HTTP/HTTPS)
+
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
 # Désactiver le login SSH par mot de passe (si pas déjà fait)
-sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+sed -i 's/^#_PasswordAuthentication._/PasswordAuthentication no/' /etc/ssh/sshd_config
 systemctl restart ssh
 \`\`\`
 
@@ -3299,10 +3369,10 @@ Coolify écoute par défaut sur \`http://<vps-ip>:8000\` — créer un domaine \
 
 Sur votre registrar :
 
-| Sous-domaine | Type | Cible |
-|---|---|---|
-| \`@\` ou \`biblioshare\` | A | IP du VPS |
-| \`coolify\` | A | IP du VPS |
+| Sous-domaine             | Type | Cible     |
+| ------------------------ | ---- | --------- |
+| \`@\` ou \`biblioshare\` | A    | IP du VPS |
+| \`coolify\`              | A    | IP du VPS |
 
 ## 4. Connecter le repo GitHub
 
@@ -3319,24 +3389,25 @@ Sur votre registrar :
 
 Dans **Configuration → Environment Variables** de la ressource, ajouter :
 
-| Clé | Valeur |
-|---|---|
-| \`APP_URL\` | https://biblioshare.<votre-domaine> |
+| Clé                   | Valeur                               |
+| --------------------- | ------------------------------------ |
+| \`APP_URL\`           | https://biblioshare.<votre-domaine>  |
 | \`POSTGRES_PASSWORD\` | (générer : \`openssl rand -hex 24\`) |
-| \`MEILI_MASTER_KEY\` | (générer : \`openssl rand -hex 24\`) |
-| \`SESSION_SECRET\` | (générer : \`openssl rand -hex 32\`) |
+| \`MEILI_MASTER_KEY\`  | (générer : \`openssl rand -hex 24\`) |
+| \`SESSION_SECRET\`    | (générer : \`openssl rand -hex 32\`) |
 | \`CRYPTO_MASTER_KEY\` | (générer : \`openssl rand -hex 32\`) |
-| \`EMAIL_FROM\` | noreply@<votre-domaine> |
-| \`RESEND_API_KEY\` | (Phase 1+, depuis dashboard Resend) |
-| \`LOG_LEVEL\` | info |
-| \`MEILI_ENV\` | production |
-| \`APP_PORT\` | 3000 |
+| \`EMAIL_FROM\`        | noreply@<votre-domaine>              |
+| \`RESEND_API_KEY\`    | (Phase 1+, depuis dashboard Resend)  |
+| \`LOG_LEVEL\`         | info                                 |
+| \`MEILI_ENV\`         | production                           |
+| \`APP_PORT\`          | 3000                                 |
 
 **IMPORTANT** : marquer toutes ces variables comme **secret** dans Coolify (icône cadenas). Ne jamais les committer.
 
 ## 7. Configurer le domaine et HTTPS
 
 Dans **Configuration → Domains** :
+
 - Service : \`app\`
 - Port : 3000
 - Domain : \`biblioshare.<votre-domaine>\`
@@ -3400,6 +3471,7 @@ git commit -m "docs: add Coolify deployment step-by-step guide"
 ### Task 25 : Documents sécurité de base
 
 **Files:**
+
 - Create: `docs/security/owasp-mapping.md`, `docs/security/credential-rotation.md`
 
 - [ ] **Step 1 : Créer `docs/security/owasp-mapping.md`**
@@ -3409,18 +3481,18 @@ git commit -m "docs: add Coolify deployment step-by-step guide"
 
 Statut : squelette Phase 0. Sera enrichi à mesure que les phases avancent.
 
-| OWASP | Risque | Mitigation BiblioShare | Phase |
-|---|---|---|---|
-| A01:2021 | Broken Access Control | Modèle 3 rôles + defense in depth (tRPC middleware / service / DB), lint rule `no-unscoped-prisma`, type Brand `PrivateScope`, tests E2E par paire de users | 1, 2, 3 |
-| A02:2021 | Cryptographic Failures | argon2id (passwords), AES-256-GCM (TOTP secrets), HTTPS forcé (HSTS), TLS 1.3 via Coolify | 0, 1 |
-| A03:2021 | Injection | Prisma ORM (pas de SQL brut), DOMPurify (XSS riche), escape React natif (XSS), lint interdit `dangerouslySetInnerHTML` | 0, 2 |
-| A04:2021 | Insecure Design | Threat model documenté (`docs/security/threat-model.md` Phase 8), revue par phase, ADR | 0, 8 |
-| A05:2021 | Security Misconfiguration | Headers de sécurité (HSTS, X-Frame, CSP, etc.), containers `read_only` + `cap_drop ALL`, services non exposés | 0 |
-| A06:2021 | Vulnerable and Outdated Components | Dependabot, `npm audit` en CI, Trivy sur images Docker, CodeQL | 0, 8 |
-| A07:2021 | Identification and Authentication Failures | argon2id, 2FA TOTP obligatoire admin, magic links hashés, rate limit, lockout | 1 |
-| A08:2021 | Software and Data Integrity Failures | Lockfile pnpm committé, image Docker signée (Phase 8), backups borg avec vérification d'intégrité | 0, 8 |
-| A09:2021 | Security Logging and Monitoring Failures | Pino structuré, AuditLog des actions admin, DownloadLog des téléchargements, monitoring UptimeKuma | 0, 1, 5, 8 |
-| A10:2021 | Server-Side Request Forgery | Validation URL fetch couvertures (refus IPs privées RFC 1918), timeouts | 2 |
+| OWASP    | Risque                                     | Mitigation BiblioShare                                                                                                                                      | Phase      |
+| -------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| A01:2021 | Broken Access Control                      | Modèle 3 rôles + defense in depth (tRPC middleware / service / DB), lint rule `no-unscoped-prisma`, type Brand `PrivateScope`, tests E2E par paire de users | 1, 2, 3    |
+| A02:2021 | Cryptographic Failures                     | argon2id (passwords), AES-256-GCM (TOTP secrets), HTTPS forcé (HSTS), TLS 1.3 via Coolify                                                                   | 0, 1       |
+| A03:2021 | Injection                                  | Prisma ORM (pas de SQL brut), DOMPurify (XSS riche), escape React natif (XSS), lint interdit `dangerouslySetInnerHTML`                                      | 0, 2       |
+| A04:2021 | Insecure Design                            | Threat model documenté (`docs/security/threat-model.md` Phase 8), revue par phase, ADR                                                                      | 0, 8       |
+| A05:2021 | Security Misconfiguration                  | Headers de sécurité (HSTS, X-Frame, CSP, etc.), containers `read_only` + `cap_drop ALL`, services non exposés                                               | 0          |
+| A06:2021 | Vulnerable and Outdated Components         | Dependabot, `npm audit` en CI, Trivy sur images Docker, CodeQL                                                                                              | 0, 8       |
+| A07:2021 | Identification and Authentication Failures | argon2id, 2FA TOTP obligatoire admin, magic links hashés, rate limit, lockout                                                                               | 1          |
+| A08:2021 | Software and Data Integrity Failures       | Lockfile pnpm committé, image Docker signée (Phase 8), backups borg avec vérification d'intégrité                                                           | 0, 8       |
+| A09:2021 | Security Logging and Monitoring Failures   | Pino structuré, AuditLog des actions admin, DownloadLog des téléchargements, monitoring UptimeKuma                                                          | 0, 1, 5, 8 |
+| A10:2021 | Server-Side Request Forgery                | Validation URL fetch couvertures (refus IPs privées RFC 1918), timeouts                                                                                     | 2          |
 ```
 
 - [ ] **Step 2 : Créer `docs/security/credential-rotation.md`**
@@ -3430,18 +3502,18 @@ Statut : squelette Phase 0. Sera enrichi à mesure que les phases avancent.
 
 Tous les secrets sont en variables d'environnement, jamais en code, jamais loggués (redact pino).
 
-| Credential | Localisation | Rotation | Procédure |
-|---|---|---|---|
-| `POSTGRES_PASSWORD` | Coolify env | 12 mois | Générer nouveau, modifier env, redémarrer `pg` + `app`. |
-| `MEILI_MASTER_KEY` | Coolify env | 6 mois | Générer nouveau, modifier env, redémarrer `meili` + `app`. Réindexation possible si Meili la requiert. |
-| `SESSION_SECRET` | Coolify env | 6 mois | Générer nouveau (`openssl rand -hex 32`), modifier env, redémarrer `app`. **Effet : invalide toutes les sessions** (les users devront se reconnecter). |
-| `CRYPTO_MASTER_KEY` | Coolify env | 12 mois | **ATTENTION** : rotation complexe, déchiffre/rechiffre tous les `TwoFactorSecret.secretCipher`. Procédure dédiée à écrire (Phase 8). |
-| `RESEND_API_KEY` | Coolify env | 6 mois | Régénérer dans dashboard Resend, modifier env, redémarrer `app`. |
-| `GOOGLE_BOOKS_API_KEY` | Coolify env | 12 mois | Régénérer dans Google Cloud Console. |
-| `ISBNDB_API_KEY` | Coolify env | 12 mois | Régénérer dans dashboard ISBNdb. |
-| Borg passphrase | Gestionnaire MdP + papier | jamais (sans procédure dédiée) | Si nécessaire : créer un nouveau dépôt borg avec nouvelle passphrase, migrer les sauvegardes. |
-| Clés SSH VPS ↔ NAS | `~/.ssh/` sur VPS | 12 mois | Générer nouvelle paire, ajouter authorized_keys NAS, retirer ancienne. |
-| Mot de passe admin Coolify | gestionnaire MdP | 6 mois | UI Coolify. |
+| Credential                 | Localisation              | Rotation                       | Procédure                                                                                                                                              |
+| -------------------------- | ------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POSTGRES_PASSWORD`        | Coolify env               | 12 mois                        | Générer nouveau, modifier env, redémarrer `pg` + `app`.                                                                                                |
+| `MEILI_MASTER_KEY`         | Coolify env               | 6 mois                         | Générer nouveau, modifier env, redémarrer `meili` + `app`. Réindexation possible si Meili la requiert.                                                 |
+| `SESSION_SECRET`           | Coolify env               | 6 mois                         | Générer nouveau (`openssl rand -hex 32`), modifier env, redémarrer `app`. **Effet : invalide toutes les sessions** (les users devront se reconnecter). |
+| `CRYPTO_MASTER_KEY`        | Coolify env               | 12 mois                        | **ATTENTION** : rotation complexe, déchiffre/rechiffre tous les `TwoFactorSecret.secretCipher`. Procédure dédiée à écrire (Phase 8).                   |
+| `RESEND_API_KEY`           | Coolify env               | 6 mois                         | Régénérer dans dashboard Resend, modifier env, redémarrer `app`.                                                                                       |
+| `GOOGLE_BOOKS_API_KEY`     | Coolify env               | 12 mois                        | Régénérer dans Google Cloud Console.                                                                                                                   |
+| `ISBNDB_API_KEY`           | Coolify env               | 12 mois                        | Régénérer dans dashboard ISBNdb.                                                                                                                       |
+| Borg passphrase            | Gestionnaire MdP + papier | jamais (sans procédure dédiée) | Si nécessaire : créer un nouveau dépôt borg avec nouvelle passphrase, migrer les sauvegardes.                                                          |
+| Clés SSH VPS ↔ NAS         | `~/.ssh/` sur VPS         | 12 mois                        | Générer nouvelle paire, ajouter authorized_keys NAS, retirer ancienne.                                                                                 |
+| Mot de passe admin Coolify | gestionnaire MdP          | 6 mois                         | UI Coolify.                                                                                                                                            |
 
 **Calendrier suivi** : un événement récurrent dans le calendrier personnel rappelle chaque rotation. Toutes les rotations sont consignées dans `AuditLog` (rotation manuelle) ou commit Git (rotation env vars).
 
@@ -3614,33 +3686,33 @@ Demander à l'utilisateur la validation explicite pour passer à la Phase 1.
 
 Vérification que chaque livrable de la Phase 0 du design doc est couvert par une tâche :
 
-| Livrable design doc Phase 0 | Couvert par Task |
-|---|---|
-| Monorepo Next.js 15 + TS strict + ESLint + Prettier | 1, 2 |
-| Schéma Prisma complet | 6 |
-| Migration `001_init.sql` | 26 (step 4) |
-| Docker Compose avec 8 services | 20 |
-| Volumes nommés, healthchecks, réseau interne isolé | 20 |
-| `.env.example` documenté | 8 |
-| CI GitHub Actions (lint, typecheck, unit, build Docker, smoke test) | 21 |
-| ADR initiaux (0001-0004) | déjà fait en phase Design |
-| Page d'accueil minimale | 12 |
-| `/health` | 11 |
-| Logs structurés (pino) | 9 |
-| Guide déploiement Coolify | 24 |
-| Système de design (tokens, palette, typo, primitives) | 4, 5 |
-| Type Brand `PrivateScope` (mentionné transversalement) | 7 |
-| Lint rule no-unscoped-prisma | 14 |
-| Headers sécurité | 13 |
-| i18n next-intl | 12 |
-| Worker minimal | 17 |
-| Tests Vitest + Playwright | 15, 16 |
-| README | 23 |
-| Dependabot | 22 |
-| Trivy + gitleaks | 21 (intégré CI) |
-| OWASP mapping squelette | 25 |
-| Credential rotation doc | 25 |
-| Tag git phase-0-complete | 26 |
-| Récap + memory update | 27 |
+| Livrable design doc Phase 0                                         | Couvert par Task          |
+| ------------------------------------------------------------------- | ------------------------- |
+| Monorepo Next.js 15 + TS strict + ESLint + Prettier                 | 1, 2                      |
+| Schéma Prisma complet                                               | 6                         |
+| Migration `001_init.sql`                                            | 26 (step 4)               |
+| Docker Compose avec 8 services                                      | 20                        |
+| Volumes nommés, healthchecks, réseau interne isolé                  | 20                        |
+| `.env.example` documenté                                            | 8                         |
+| CI GitHub Actions (lint, typecheck, unit, build Docker, smoke test) | 21                        |
+| ADR initiaux (0001-0004)                                            | déjà fait en phase Design |
+| Page d'accueil minimale                                             | 12                        |
+| `/health`                                                           | 11                        |
+| Logs structurés (pino)                                              | 9                         |
+| Guide déploiement Coolify                                           | 24                        |
+| Système de design (tokens, palette, typo, primitives)               | 4, 5                      |
+| Type Brand `PrivateScope` (mentionné transversalement)              | 7                         |
+| Lint rule no-unscoped-prisma                                        | 14                        |
+| Headers sécurité                                                    | 13                        |
+| i18n next-intl                                                      | 12                        |
+| Worker minimal                                                      | 17                        |
+| Tests Vitest + Playwright                                           | 15, 16                    |
+| README                                                              | 23                        |
+| Dependabot                                                          | 22                        |
+| Trivy + gitleaks                                                    | 21 (intégré CI)           |
+| OWASP mapping squelette                                             | 25                        |
+| Credential rotation doc                                             | 25                        |
+| Tag git phase-0-complete                                            | 26                        |
+| Récap + memory update                                               | 27                        |
 
 **Aucun livrable manquant.** Le critère de validation final est testé en Task 26.

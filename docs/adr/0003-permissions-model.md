@@ -16,11 +16,13 @@ BiblioShare gère plusieurs bibliothèques avec des accès différenciés. Le br
 3. **Membre** (sur `LibraryMember`) : permissions par bibliothèque modulées par flags `canRead`, `canUpload`, `canDownload`.
 
 **Invariants forts** :
+
 - Les annotations privées (`Annotation`, `Bookmark`, `ReadingProgress`, `ReadingSession`) sont strictement privées. Aucun rôle, y compris Admin global, ne peut les lire.
 - Tout refus de permission = HTTP 403 + entrée `AuditLog`.
 - Tout download est loggué dans `DownloadLog` **avant** le début du stream (transactionnel).
 
 **Implémentation defense in depth, 3 couches** :
+
 1. Couche tRPC procedure : middleware `requirePermission(perm)` charge `LibraryMember` et vérifie.
 2. Couche service : helper `assertCan*(user, resource)`, indépendant de tRPC.
 3. Couche DB : queries Prisma avec scope toujours présent. Lint rule custom interdit `findMany`/`findFirst` sans `where`.
@@ -35,12 +37,14 @@ BiblioShare gère plusieurs bibliothèques avec des accès différenciés. Le br
 ## Conséquences
 
 **Positives** :
+
 - Modèle clair, 3 rôles nommés.
 - Délégation possible (Admin biblio) sans donner les clefs du royaume.
 - Defense in depth → un oubli à une couche n'expose pas les données.
 - Tests systématiques par cellule de la matrice.
 
 **Négatives** :
+
 - Légère friction : Admin biblio doit demander à Admin global pour promouvoir un autre admin (acceptable).
 - Coût initial de mise en place du type `PrivateScope` et de la lint rule (compense largement le risque évité).
 

@@ -86,31 +86,31 @@ Internet ──HTTPS─│  Traefik (Coolify) + Let's Encrypt     │
 
 ### 2.2 Stack par couche
 
-| Couche | Choix | Justification |
-|---|---|---|
-| Framework fullstack | Next.js 15 (App Router) | Corpus IA massif, types end-to-end, écosystème epub.js/pdf.js natif |
-| Langage | TypeScript strict | Types partagés back/front, limite hallucinations IA |
-| API interne | tRPC + Server Actions | Pas de schéma OpenAPI à maintenir, types end-to-end |
-| ORM | Prisma 6 | Migrations claires, types auto, corpus IA |
-| Base de données | PostgreSQL 16 + extensions `pgcrypto`, `citext`, `pg_trgm` | Robuste, FTS dispo si besoin secondaire |
-| Auth | Auth.js v5 + module 2FA TOTP custom (`otplib`) | Magic links, sessions sécurisées |
-| Hash mots de passe | argon2id via `@node-rs/argon2` | Standard moderne, conformité brief |
-| Recherche full-text | Meilisearch 1.x | RAM ~300 Mo, simple, performant à notre échelle |
-| Cache + queues | Redis 7 (instance unique mutualisée) | BullMQ + cache TanStack |
-| Jobs async | BullMQ | Mature, retry policies, dashboard intégré |
-| Antivirus | ClamAV daemon (`clamd`) via socket Unix | Standard, scan stream, freshclam quotidien |
-| Conversion ebook | Calibre `ebook-convert` (CLI) en container dédié | Standard de facto |
-| Liseuse epub | epub.js via wrapper React (`react-reader` adapté) | Référence de l'écosystème |
-| Liseuse pdf | pdf.js via `react-pdf` | Référence de l'écosystème |
-| UI kit | Tailwind 4 + shadcn/ui (Radix primitives) + Lucide icons | Code copié dans le repo, accessibilité par défaut |
-| Stockage fichiers | Filesystem local hors webroot, accès via endpoints authentifiés signés | Pas de S3 nécessaire, abstraction `FileStorage` pour migration future |
-| Email | Resend (provider) avec fallback SMTP générique via env | Deliverability, simplicité |
-| i18n | `next-intl` | FR par défaut, prêt pour ajout de langues |
-| Backup | borgbackup push SSH vers NAS, append-only | Déduplication + chiffrement + intégrité |
-| Tests | Vitest (unit) + Playwright (E2E) | Standards de l'écosystème |
-| CI | GitHub Actions | Lint, types, tests, build Docker, scan Trivy |
-| Logs | pino (JSON structuré) avec redact des secrets | Compatible agrégateurs futurs |
-| Monitoring | UptimeKuma (optionnel) + healthchecks Docker | Pragma solo dev |
+| Couche              | Choix                                                                  | Justification                                                         |
+| ------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Framework fullstack | Next.js 15 (App Router)                                                | Corpus IA massif, types end-to-end, écosystème epub.js/pdf.js natif   |
+| Langage             | TypeScript strict                                                      | Types partagés back/front, limite hallucinations IA                   |
+| API interne         | tRPC + Server Actions                                                  | Pas de schéma OpenAPI à maintenir, types end-to-end                   |
+| ORM                 | Prisma 6                                                               | Migrations claires, types auto, corpus IA                             |
+| Base de données     | PostgreSQL 16 + extensions `pgcrypto`, `citext`, `pg_trgm`             | Robuste, FTS dispo si besoin secondaire                               |
+| Auth                | Auth.js v5 + module 2FA TOTP custom (`otplib`)                         | Magic links, sessions sécurisées                                      |
+| Hash mots de passe  | argon2id via `@node-rs/argon2`                                         | Standard moderne, conformité brief                                    |
+| Recherche full-text | Meilisearch 1.x                                                        | RAM ~300 Mo, simple, performant à notre échelle                       |
+| Cache + queues      | Redis 7 (instance unique mutualisée)                                   | BullMQ + cache TanStack                                               |
+| Jobs async          | BullMQ                                                                 | Mature, retry policies, dashboard intégré                             |
+| Antivirus           | ClamAV daemon (`clamd`) via socket Unix                                | Standard, scan stream, freshclam quotidien                            |
+| Conversion ebook    | Calibre `ebook-convert` (CLI) en container dédié                       | Standard de facto                                                     |
+| Liseuse epub        | epub.js via wrapper React (`react-reader` adapté)                      | Référence de l'écosystème                                             |
+| Liseuse pdf         | pdf.js via `react-pdf`                                                 | Référence de l'écosystème                                             |
+| UI kit              | Tailwind 4 + shadcn/ui (Radix primitives) + Lucide icons               | Code copié dans le repo, accessibilité par défaut                     |
+| Stockage fichiers   | Filesystem local hors webroot, accès via endpoints authentifiés signés | Pas de S3 nécessaire, abstraction `FileStorage` pour migration future |
+| Email               | Resend (provider) avec fallback SMTP générique via env                 | Deliverability, simplicité                                            |
+| i18n                | `next-intl`                                                            | FR par défaut, prêt pour ajout de langues                             |
+| Backup              | borgbackup push SSH vers NAS, append-only                              | Déduplication + chiffrement + intégrité                               |
+| Tests               | Vitest (unit) + Playwright (E2E)                                       | Standards de l'écosystème                                             |
+| CI                  | GitHub Actions                                                         | Lint, types, tests, build Docker, scan Trivy                          |
+| Logs                | pino (JSON structuré) avec redact des secrets                          | Compatible agrégateurs futurs                                         |
+| Monitoring          | UptimeKuma (optionnel) + healthchecks Docker                           | Pragma solo dev                                                       |
 
 ### 2.3 Décisions d'architecture notables
 
@@ -385,12 +385,12 @@ Notification
 
 ### 4.1 Niveaux d'autorité
 
-| Niveau | Source | Portée |
-|---|---|---|
-| Visiteur | Aucune session | Aucune (sauf landing) |
-| Membre | `LibraryMember` row | Une bibliothèque, modulé par `canRead/canUpload/canDownload` |
-| Admin de bibliothèque | `LibraryMember.role = LIBRARY_ADMIN` | Une bibliothèque (gestion membres + catalogue) |
-| Admin global | `User.role = GLOBAL_ADMIN` | Tout. Bypass automatique. Toujours loggué. 2FA obligatoire. |
+| Niveau                | Source                               | Portée                                                       |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Visiteur              | Aucune session                       | Aucune (sauf landing)                                        |
+| Membre                | `LibraryMember` row                  | Une bibliothèque, modulé par `canRead/canUpload/canDownload` |
+| Admin de bibliothèque | `LibraryMember.role = LIBRARY_ADMIN` | Une bibliothèque (gestion membres + catalogue)               |
+| Admin global          | `User.role = GLOBAL_ADMIN`           | Tout. Bypass automatique. Toujours loggué. 2FA obligatoire.  |
 
 ### 4.2 Matrice complète
 
@@ -406,107 +406,107 @@ Notification
 
 #### Comptes & invitations
 
-| Action | Visiteur | Membre | Admin Biblio | Admin Global |
-|---|---|---|---|---|
-| Login / logout | O | O | O | O |
-| Reset MdP par email | O | O | O | O |
-| Activer/désactiver son 2FA | — | O | O | OBLIGATOIRE |
-| Modifier son profil | — | O | O | O |
-| Créer compte (par invitation) | (O via lien) | — | — | — |
-| Inviter un user dans une biblio | — | — | O (sa biblio) LOG | O LOG |
-| Créer un compte système | — | — | — | O LOG |
-| Suspendre / réactiver un user | — | — | — | O LOG |
-| Supprimer un user | — | (O soi-même) | — | O LOG |
-| Modifier rôle système d'un user | — | — | — | O LOG |
-| Voir liste de tous les users | — | — | — | O |
+| Action                          | Visiteur     | Membre       | Admin Biblio      | Admin Global |
+| ------------------------------- | ------------ | ------------ | ----------------- | ------------ |
+| Login / logout                  | O            | O            | O                 | O            |
+| Reset MdP par email             | O            | O            | O                 | O            |
+| Activer/désactiver son 2FA      | —            | O            | O                 | OBLIGATOIRE  |
+| Modifier son profil             | —            | O            | O                 | O            |
+| Créer compte (par invitation)   | (O via lien) | —            | —                 | —            |
+| Inviter un user dans une biblio | —            | —            | O (sa biblio) LOG | O LOG        |
+| Créer un compte système         | —            | —            | —                 | O LOG        |
+| Suspendre / réactiver un user   | —            | —            | —                 | O LOG        |
+| Supprimer un user               | —            | (O soi-même) | —                 | O LOG        |
+| Modifier rôle système d'un user | —            | —            | —                 | O LOG        |
+| Voir liste de tous les users    | —            | —            | —                 | O            |
 
 #### Bibliothèques
 
-| Action | Visiteur | Membre | Admin Biblio | Admin Global |
-|---|---|---|---|---|
-| Créer une bibliothèque | — | — | — | O LOG |
-| Renommer / décrire une biblio | — | — | O (sa biblio) LOG | O LOG |
-| Supprimer une biblio | — | — | — | O LOG |
-| Lister mes bibliothèques | — | O | O | O (toutes) |
-| Voir les membres d'une biblio | — | O (sa biblio) | O (sa biblio) | O |
+| Action                        | Visiteur | Membre        | Admin Biblio      | Admin Global |
+| ----------------------------- | -------- | ------------- | ----------------- | ------------ |
+| Créer une bibliothèque        | —        | —             | —                 | O LOG        |
+| Renommer / décrire une biblio | —        | —             | O (sa biblio) LOG | O LOG        |
+| Supprimer une biblio          | —        | —             | —                 | O LOG        |
+| Lister mes bibliothèques      | —        | O             | O                 | O (toutes)   |
+| Voir les membres d'une biblio | —        | O (sa biblio) | O (sa biblio)     | O            |
 
 #### Membres d'une bibliothèque
 
-| Action | Membre | Admin Biblio (sa biblio) | Admin Global |
-|---|---|---|---|
-| Ajouter un membre existant | — | O LOG | O LOG |
-| Retirer un membre | (soi-même) | O (sauf autre admin biblio) LOG | O LOG |
-| Promouvoir Membre → Admin Biblio | — | — | O LOG |
-| Rétrograder Admin Biblio → Membre | — | — | O LOG |
-| Modifier `canUpload` / `canDownload` d'un membre | — | O LOG | O LOG |
+| Action                                           | Membre     | Admin Biblio (sa biblio)        | Admin Global |
+| ------------------------------------------------ | ---------- | ------------------------------- | ------------ |
+| Ajouter un membre existant                       | —          | O LOG                           | O LOG        |
+| Retirer un membre                                | (soi-même) | O (sauf autre admin biblio) LOG | O LOG        |
+| Promouvoir Membre → Admin Biblio                 | —          | —                               | O LOG        |
+| Rétrograder Admin Biblio → Membre                | —          | —                               | O LOG        |
+| Modifier `canUpload` / `canDownload` d'un membre | —          | O LOG                           | O LOG        |
 
 #### Livres (catalogue)
 
-| Action | Membre `canRead` | Membre `canUpload` | Admin Biblio | Admin Global |
-|---|---|---|---|---|
-| Voir le catalogue de la biblio | O | O | O | O |
-| Voir détails d'un livre | O | O | O | O |
-| Uploader un livre | — | O | O | O |
-| Éditer les métadonnées | — | (O si uploader) | O | O |
-| Supprimer un livre | — | (O si uploader, dans 24h) | O LOG | O LOG |
-| Déplacer un livre vers autre biblio | — | — | (O si admin des deux) LOG | O LOG |
-| Lancer une re-scan ClamAV | — | — | O | O |
-| Re-récupérer métadonnées via API | — | — | O | O |
+| Action                              | Membre `canRead` | Membre `canUpload`        | Admin Biblio              | Admin Global |
+| ----------------------------------- | ---------------- | ------------------------- | ------------------------- | ------------ |
+| Voir le catalogue de la biblio      | O                | O                         | O                         | O            |
+| Voir détails d'un livre             | O                | O                         | O                         | O            |
+| Uploader un livre                   | —                | O                         | O                         | O            |
+| Éditer les métadonnées              | —                | (O si uploader)           | O                         | O            |
+| Supprimer un livre                  | —                | (O si uploader, dans 24h) | O LOG                     | O LOG        |
+| Déplacer un livre vers autre biblio | —                | —                         | (O si admin des deux) LOG | O LOG        |
+| Lancer une re-scan ClamAV           | —                | —                         | O                         | O            |
+| Re-récupérer métadonnées via API    | —                | —                         | O                         | O            |
 
 #### Lecture & téléchargement
 
-| Action | Membre `canRead` | Membre `canDownload` | Admin Biblio | Admin Global |
-|---|---|---|---|---|
-| Lire dans la liseuse en ligne | O | O | O | O |
-| Télécharger format original | — | O LOG | O LOG | O LOG |
-| Demander conversion + télécharger | — | O LOG | O LOG | O LOG |
-| Voir logs téléchargement (sa biblio) | — | — | O | O |
+| Action                               | Membre `canRead` | Membre `canDownload` | Admin Biblio | Admin Global |
+| ------------------------------------ | ---------------- | -------------------- | ------------ | ------------ |
+| Lire dans la liseuse en ligne        | O                | O                    | O            | O            |
+| Télécharger format original          | —                | O LOG                | O LOG        | O LOG        |
+| Demander conversion + télécharger    | —                | O LOG                | O LOG        | O LOG        |
+| Voir logs téléchargement (sa biblio) | —                | —                    | O            | O            |
 
 #### Annotations, marque-pages, progression, collections
 
-| Action | Membre | Admin Biblio | Admin Global |
-|---|---|---|---|
-| CRUD ses propres annotations | O | O | O |
-| Lire annotations d'autrui | — | — | — *(jamais)* |
-| Idem marque-pages, progression, collections | O (siennes) | O (siennes) | O (siennes) |
+| Action                                      | Membre      | Admin Biblio | Admin Global |
+| ------------------------------------------- | ----------- | ------------ | ------------ |
+| CRUD ses propres annotations                | O           | O            | O            |
+| Lire annotations d'autrui                   | —           | —            | — _(jamais)_ |
+| Idem marque-pages, progression, collections | O (siennes) | O (siennes)  | O (siennes)  |
 
 #### Livres physiques
 
-| Action | Membre | Propriétaire | Détenteur actuel | Admin Biblio | Admin Global |
-|---|---|---|---|---|---|
-| Voir le statut | O | O | O | O | O |
-| Demander à emprunter | O | O | O | O | O |
-| Accepter / refuser une demande | — | O | (O notifié) | — | — |
-| Mettre à jour le détenteur | — | O | O | O | O |
-| Marquer comme rendu | — | O | O | O | O |
+| Action                         | Membre | Propriétaire | Détenteur actuel | Admin Biblio | Admin Global |
+| ------------------------------ | ------ | ------------ | ---------------- | ------------ | ------------ |
+| Voir le statut                 | O      | O            | O                | O            | O            |
+| Demander à emprunter           | O      | O            | O                | O            | O            |
+| Accepter / refuser une demande | —      | O            | (O notifié)      | —            | —            |
+| Mettre à jour le détenteur     | —      | O            | O                | O            | O            |
+| Marquer comme rendu            | —      | O            | O                | O            | O            |
 
 #### Social (notes, avis)
 
-| Action | Membre | Admin Biblio | Admin Global |
-|---|---|---|---|
-| Noter un livre (1-5) | O | O | O |
-| Modifier sa note | O | O | O |
-| Écrire un avis | O | O | O |
-| Modifier / supprimer son avis | O | O | O |
-| Masquer un avis (modération) | — | O (sa biblio) LOG | O LOG |
-| Voir notes/avis | O | O | O |
+| Action                        | Membre | Admin Biblio      | Admin Global |
+| ----------------------------- | ------ | ----------------- | ------------ |
+| Noter un livre (1-5)          | O      | O                 | O            |
+| Modifier sa note              | O      | O                 | O            |
+| Écrire un avis                | O      | O                 | O            |
+| Modifier / supprimer son avis | O      | O                 | O            |
+| Masquer un avis (modération)  | —      | O (sa biblio) LOG | O LOG        |
+| Voir notes/avis               | O      | O                 | O            |
 
 #### Tags & collections
 
-| Action | Membre | Admin Biblio | Admin Global |
-|---|---|---|---|
-| Créer un tag | — | O | O |
-| Appliquer un tag à un livre | (O si `canUpload`) | O | O |
-| Renommer / supprimer un tag | — | O LOG | O LOG |
-| CRUD ses collections personnelles | O | O | O |
+| Action                            | Membre             | Admin Biblio | Admin Global |
+| --------------------------------- | ------------------ | ------------ | ------------ |
+| Créer un tag                      | —                  | O            | O            |
+| Appliquer un tag à un livre       | (O si `canUpload`) | O            | O            |
+| Renommer / supprimer un tag       | —                  | O LOG        | O LOG        |
+| CRUD ses collections personnelles | O                  | O            | O            |
 
 #### Audit & logs
 
-| Action | Membre | Admin Biblio | Admin Global |
-|---|---|---|---|
-| Voir l'audit log global | — | — | O |
-| Voir téléchargements de SA biblio | — | O | O |
-| Voir SES propres téléchargements | O | O | O |
+| Action                            | Membre | Admin Biblio | Admin Global |
+| --------------------------------- | ------ | ------------ | ------------ |
+| Voir l'audit log global           | —      | —            | O            |
+| Voir téléchargements de SA biblio | —      | O            | O            |
+| Voir SES propres téléchargements  | O      | O            | O            |
 
 ### 4.3 Implémentation du contrôle (defense in depth, 3 couches)
 
@@ -530,22 +530,23 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 
 ### 5.2 Vue d'ensemble
 
-| Phase | Titre | Complexité | Dépendances |
-|---|---|---|---|
-| 0 | Fondations | M | — |
-| 1 | Auth, 2FA, invitations, rôles | L | 0 |
-| 2 | Catalogue, upload, ClamAV, métadonnées | L | 1 |
-| 3 | Liseuse, annotations, sync | XL | 2 |
-| 4 | Recherche, tags, collections | M | 2 (3 utile) |
-| 5 | Conversion, téléchargements | M | 2 |
-| 6 | Livres physiques | S | 2 |
-| 7 | Social, stats | S | 2 (3 pour stats) |
-| 7.5 | **Recette utilisateur en local** | S | 7 |
-| 8 | Backups NAS, monitoring, hardening final | M | toutes |
+| Phase | Titre                                    | Complexité | Dépendances      |
+| ----- | ---------------------------------------- | ---------- | ---------------- |
+| 0     | Fondations                               | M          | —                |
+| 1     | Auth, 2FA, invitations, rôles            | L          | 0                |
+| 2     | Catalogue, upload, ClamAV, métadonnées   | L          | 1                |
+| 3     | Liseuse, annotations, sync               | XL         | 2                |
+| 4     | Recherche, tags, collections             | M          | 2 (3 utile)      |
+| 5     | Conversion, téléchargements              | M          | 2                |
+| 6     | Livres physiques                         | S          | 2                |
+| 7     | Social, stats                            | S          | 2 (3 pour stats) |
+| 7.5   | **Recette utilisateur en local**         | S          | 7                |
+| 8     | Backups NAS, monitoring, hardening final | M          | toutes           |
 
 ### 5.3 Détail des phases
 
 **Phase 0 — Fondations**
+
 - Repo Next.js 15 + TS strict + ESLint + Prettier.
 - Schéma Prisma complet + migration `001_init`.
 - docker-compose : `app`, `worker`, `pg`, `redis`, `meili`, `clamav`, `calibre`, `backup`. Healthchecks, volumes nommés, réseau isolé.
@@ -558,6 +559,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : clone repo + suivi README → environnement local fonctionnel en < 15 min. Déploiement Coolify validé en HTTPS sur le VPS.
 
 **Phase 1 — Auth, 2FA, invitations, rôles**
+
 - Auth.js v5, magic links invitation (token hashé, 72h), reset password (1h).
 - 2FA TOTP : enrolment QR, vérif login, 8 codes secours hashés.
 - 2FA forcé Admin global après 7j.
@@ -569,6 +571,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : flux invitation → création → 2FA → login fonctionnel ; toutes tentatives non autorisées renvoient 403 + AuditLog.
 
 **Phase 2 — Catalogue, upload, ClamAV, métadonnées**
+
 - CRUD bibliothèques + gestion membres.
 - Upload : MIME réel (libmagic), 100 Mo max, écriture staging, scan ClamAV bloquant, dédup SHA-256.
 - Chaîne fallback métadonnées : Google Books → Open Library → ISBNdb (optionnel).
@@ -579,6 +582,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : upload 20 livres réels, métadonnées auto, catalogue navigable, infecté bloqué et tracé.
 
 **Phase 3 — Liseuse, annotations, sync**
+
 - Endpoint `/library/:slug/book/:id/read` authentifié, range requests pdf.
 - Wrapper React epub.js + react-pdf, interface annotation unifiée.
 - Personnalisation : police, taille, espacement, marges, mode sombre.
@@ -592,6 +596,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Risque** : epubs malformés (epub.js bugs) → epubcheck en background non bloquant + warning UI.
 
 **Phase 4 — Recherche, tags, collections**
+
 - Worker `extract-text` post-scan : epub (JSZip), pdf (pdf-parse), docx (mammoth), txt direct.
 - Index Meilisearch par bibliothèque.
 - API recherche : q, filtres, pagination, highlights.
@@ -601,6 +606,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : recherche par phrase exacte < 200 ms sur 1000 livres, filtres combinables.
 
 **Phase 5 — Conversion, téléchargements**
+
 - Worker `convert-file` : ebook-convert, queue dédiée, timeout 5 min, max 1 conversion concurrente.
 - Cache : conversion stockée comme `BookFile` non-original.
 - Endpoint `/download` : auth, log avant stream, URLs signées 5 min.
@@ -608,12 +614,14 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : epub original instantané, conversion epub→pdf < 60s pour 300p, second download du pdf instantané (cache).
 
 **Phase 6 — Livres physiques**
+
 - Marquer livre physique, désigner propriétaire et détenteur courant.
 - Workflow demande : demande → notif détenteur → accept/refuse → update détenteur.
 - Notifications in-app + email optionnel.
 - **Critère** : demande, acceptation, transfert tracé.
 
 **Phase 7 — Social, stats**
+
 - Note 1-5 par livre, par user, modifiable.
 - Avis publics par livre, modération Admin biblio.
 - Dashboard utilisateur : lus / en cours / temps total / top auteurs / historique.
@@ -621,6 +629,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : un user voit ses stats 30j, modération avis fonctionnelle.
 
 **Phase 7.5 — Recette utilisateur en local**
+
 - Stack complète déployée localement (poste dev ou LAN), seedée : 50-100 livres, 5-10 users couvrant tous rôles.
 - Scénarios documentés : invitation→2FA→première lecture, upload→metadata→annotations, recherche→collection→download converti, demande physique, modération.
 - 2-3 testeurs externes, tranches d'âge variées.
@@ -629,6 +638,7 @@ Pour chaque ligne de la matrice : un test « happy path » et un test « unautho
 - **Critère** : un testeur novice accomplit les 5 parcours principaux sans aide, sans bug bloquant. Liste de friction triée pour Phase 8.
 
 **Phase 8 — Backups NAS, monitoring, hardening final**
+
 - Service `backup` : borgbackup + cron, push SSH NAS, repo chiffré, rétention 7d/4w/12m.
 - Couvre dump PG, volume uploads, volume covers, snapshot Meili, config (hors secrets).
 - Test restauration documenté et joué.
@@ -648,18 +658,18 @@ Synthèse — détail complet par catégorie en Annexe A (à intégrer dans `doc
 
 ### 6.1 Risques critiques (11 identifiés)
 
-| # | Catégorie | Risque | Phase mitigation |
-|---|---|---|---|
-| A1 | Auth | Bruteforce login / 2FA | 1 |
-| A4 | Auth | Réutilisation magic link / reset token | 1 |
-| B1 | Permissions | IDOR cross-bibliothèque | 1+2 |
-| B2 | Permissions | Lecture annotations d'autrui | 3 |
-| C1 | Upload | Path traversal | 2 |
-| C2 | Upload | MIME spoofing | 2 |
-| C3 | Upload | Malware uploadé | 2 |
-| D1 | Liseuse | XSS via JS embarqué dans epub | 3 |
-| D2 | Liseuse | Leak fichier original via URL prédictible | 3, 5 |
-| G1 | Backup | Ransomware chiffre aussi backups | 8 |
+| #   | Catégorie   | Risque                                    | Phase mitigation |
+| --- | ----------- | ----------------------------------------- | ---------------- |
+| A1  | Auth        | Bruteforce login / 2FA                    | 1                |
+| A4  | Auth        | Réutilisation magic link / reset token    | 1                |
+| B1  | Permissions | IDOR cross-bibliothèque                   | 1+2              |
+| B2  | Permissions | Lecture annotations d'autrui              | 3                |
+| C1  | Upload      | Path traversal                            | 2                |
+| C2  | Upload      | MIME spoofing                             | 2                |
+| C3  | Upload      | Malware uploadé                           | 2                |
+| D1  | Liseuse     | XSS via JS embarqué dans epub             | 3                |
+| D2  | Liseuse     | Leak fichier original via URL prédictible | 3, 5             |
+| G1  | Backup      | Ransomware chiffre aussi backups          | 8                |
 
 ### 6.2 Catégories couvertes
 
@@ -692,31 +702,31 @@ H. Privacy / RGPD (5 risques)
 
 ### 7.1 Résolues
 
-| Décision | Choix | Date |
-|---|---|---|
-| Stack backend/frontend | Next.js 15 App Router fullstack TypeScript | 2026-04-25 |
-| ORM | Prisma 6 | 2026-04-25 |
-| DB | PostgreSQL 16 | 2026-04-25 |
-| Search | Meilisearch | 2026-04-25 |
-| Cache + jobs | Redis + BullMQ | 2026-04-25 |
-| Antivirus | ClamAV daemon | 2026-04-25 |
-| Conversion | Calibre `ebook-convert` | 2026-04-25 |
-| Email | Resend (fallback SMTP) | 2026-04-25 |
-| Backup | borgbackup append-only vers NAS | 2026-04-25 |
-| Stockage | Filesystem local hors webroot | 2026-04-25 |
-| Modèle de rôles | 3 rôles (Global Admin / Library Admin / Member) | 2026-04-25 |
-| Multi-tenancy | Single-tenant (un seul groupe par instance) | 2026-04-25 |
-| Recette | Phase 7.5 dédiée avant hardening final | 2026-04-25 |
+| Décision               | Choix                                           | Date       |
+| ---------------------- | ----------------------------------------------- | ---------- |
+| Stack backend/frontend | Next.js 15 App Router fullstack TypeScript      | 2026-04-25 |
+| ORM                    | Prisma 6                                        | 2026-04-25 |
+| DB                     | PostgreSQL 16                                   | 2026-04-25 |
+| Search                 | Meilisearch                                     | 2026-04-25 |
+| Cache + jobs           | Redis + BullMQ                                  | 2026-04-25 |
+| Antivirus              | ClamAV daemon                                   | 2026-04-25 |
+| Conversion             | Calibre `ebook-convert`                         | 2026-04-25 |
+| Email                  | Resend (fallback SMTP)                          | 2026-04-25 |
+| Backup                 | borgbackup append-only vers NAS                 | 2026-04-25 |
+| Stockage               | Filesystem local hors webroot                   | 2026-04-25 |
+| Modèle de rôles        | 3 rôles (Global Admin / Library Admin / Member) | 2026-04-25 |
+| Multi-tenancy          | Single-tenant (un seul groupe par instance)     | 2026-04-25 |
+| Recette                | Phase 7.5 dédiée avant hardening final          | 2026-04-25 |
 
 ### 7.2 Ouvertes (à trancher avant ou pendant la phase concernée)
 
-| Question | Phase | Note |
-|---|---|---|
-| Compte ISBNdb (clé API payante) ? | 2 | Si non, fallback sur Google Books + Open Library suffit |
-| Hébergement Resend ou auto-hébergé Postal ? | 1 | Recommandation Resend (3000 mails / mois gratuits) |
-| Nom de domaine final | 0 | À fournir avant déploiement Coolify staging |
-| NAS : modèle / chemin SSH / clé dédiée | 8 | À fournir avant Phase 8 |
-| Couleurs / logo / identité visuelle | 0 | Si pas de brand, je propose une charte sobre (tokens neutres, accent unique) |
+| Question                                    | Phase | Note                                                                         |
+| ------------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| Compte ISBNdb (clé API payante) ?           | 2     | Si non, fallback sur Google Books + Open Library suffit                      |
+| Hébergement Resend ou auto-hébergé Postal ? | 1     | Recommandation Resend (3000 mails / mois gratuits)                           |
+| Nom de domaine final                        | 0     | À fournir avant déploiement Coolify staging                                  |
+| NAS : modèle / chemin SSH / clé dédiée      | 8     | À fournir avant Phase 8                                                      |
+| Couleurs / logo / identité visuelle         | 0     | Si pas de brand, je propose une charte sobre (tokens neutres, accent unique) |
 
 ---
 
@@ -726,84 +736,84 @@ Légende : **[CRITIQUE]** = revue dédiée requise avant merge des phases concer
 
 ### A. Authentification & sessions
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| A1 | **[CRITIQUE]** Bruteforce login / 2FA | Argon2id (params 19 Mo / 2 itérations / 1 thread minimum), rate limit IP+email sliding window (5 tentatives / 15 min), backoff exponentiel, lockout temporaire à 20 échecs | 1 |
-| A2 | Énumération d'emails | Réponses HTTP et timings uniformes, message générique « si l'email existe… », delay artificiel constant | 1 |
-| A3 | Vol de session (cookie hijack) | `httpOnly`, `Secure`, `SameSite=Lax`, rotation login/privilege change, expiration absolue 30j / inactive 7j, fingerprint UA | 1 |
-| A4 | **[CRITIQUE]** Réutilisation magic link / reset token | Token 32 octets, **stocké hashé** en DB, single-use (`consumedAt`), expirations courtes (72h invitation, 1h reset) | 1 |
-| A5 | Contournement 2FA (downgrade) | 2FA vérifié avant session privilégiée, désactivation impose re-auth + MdP, codes secours hashés argon2 | 1 |
-| A6 | Vol secret TOTP en DB | `secretCipher` chiffré AES-256-GCM, clé maîtresse en env, nonce unique par enregistrement | 1 |
-| A7 | Session fixation | Régénération ID session à chaque login (Auth.js, vérif explicite) | 1 |
-| A8 | CSRF | Tokens CSRF Server Actions natifs, `SameSite=Lax`, double-submit pour endpoints sensibles | 1 |
+| #   | Risque                                                | Mitigation                                                                                                                                                                 | Phase |
+| --- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| A1  | **[CRITIQUE]** Bruteforce login / 2FA                 | Argon2id (params 19 Mo / 2 itérations / 1 thread minimum), rate limit IP+email sliding window (5 tentatives / 15 min), backoff exponentiel, lockout temporaire à 20 échecs | 1     |
+| A2  | Énumération d'emails                                  | Réponses HTTP et timings uniformes, message générique « si l'email existe… », delay artificiel constant                                                                    | 1     |
+| A3  | Vol de session (cookie hijack)                        | `httpOnly`, `Secure`, `SameSite=Lax`, rotation login/privilege change, expiration absolue 30j / inactive 7j, fingerprint UA                                                | 1     |
+| A4  | **[CRITIQUE]** Réutilisation magic link / reset token | Token 32 octets, **stocké hashé** en DB, single-use (`consumedAt`), expirations courtes (72h invitation, 1h reset)                                                         | 1     |
+| A5  | Contournement 2FA (downgrade)                         | 2FA vérifié avant session privilégiée, désactivation impose re-auth + MdP, codes secours hashés argon2                                                                     | 1     |
+| A6  | Vol secret TOTP en DB                                 | `secretCipher` chiffré AES-256-GCM, clé maîtresse en env, nonce unique par enregistrement                                                                                  | 1     |
+| A7  | Session fixation                                      | Régénération ID session à chaque login (Auth.js, vérif explicite)                                                                                                          | 1     |
+| A8  | CSRF                                                  | Tokens CSRF Server Actions natifs, `SameSite=Lax`, double-submit pour endpoints sensibles                                                                                  | 1     |
 
 ### B. Permissions & isolation
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| B1 | **[CRITIQUE]** Accès cross-bibliothèque (IDOR) | Toute query Prisma scope explicite `library.members.some({ userId })`, lint rule interdit `findMany`/`findFirst` sans `where`, tests E2E par paire users biblios différentes | 1+2 |
-| B2 | **[CRITIQUE]** Lecture annotations d'autrui | Type Brand TS `PrivateScope` non-construisible hors `withCurrentUserScope(userId)`, compile error si oubli, test E2E dédié | 3 |
-| B3 | Escalade via Admin Biblio | Admin biblio ne peut pas modifier rôle système ni promouvoir d'autres admins de sa biblio, vérif explicite + AuditLog | 1 |
-| B4 | Fuite via cache HTTP partagé | `Cache-Control: private, no-store` sur endpoints user-scoped, pas de `user_id` en query string | 3 |
-| B5 | Fuite via messages d'erreur | Erreurs uniformes prod (401/403/404 sans détail), stack traces serveur uniquement | toutes |
+| #   | Risque                                         | Mitigation                                                                                                                                                                   | Phase  |
+| --- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| B1  | **[CRITIQUE]** Accès cross-bibliothèque (IDOR) | Toute query Prisma scope explicite `library.members.some({ userId })`, lint rule interdit `findMany`/`findFirst` sans `where`, tests E2E par paire users biblios différentes | 1+2    |
+| B2  | **[CRITIQUE]** Lecture annotations d'autrui    | Type Brand TS `PrivateScope` non-construisible hors `withCurrentUserScope(userId)`, compile error si oubli, test E2E dédié                                                   | 3      |
+| B3  | Escalade via Admin Biblio                      | Admin biblio ne peut pas modifier rôle système ni promouvoir d'autres admins de sa biblio, vérif explicite + AuditLog                                                        | 1      |
+| B4  | Fuite via cache HTTP partagé                   | `Cache-Control: private, no-store` sur endpoints user-scoped, pas de `user_id` en query string                                                                               | 3      |
+| B5  | Fuite via messages d'erreur                    | Erreurs uniformes prod (401/403/404 sans détail), stack traces serveur uniquement                                                                                            | toutes |
 
 ### C. Upload & traitement de fichiers
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| C1 | **[CRITIQUE]** Path traversal | Nom client ignoré, path `/uploads/{libId}/{bookId}/{format}-{sha[:8]}.{ext}` côté serveur, vérif `path.resolve` reste dans base path | 2 |
-| C2 | **[CRITIQUE]** MIME spoofing | Vérif type réel via libmagic (`file-type`) sur premiers octets, rejet si mismatch | 2 |
-| C3 | **[CRITIQUE]** Malware uploadé | ClamAV daemon obligatoire pré-publication, fichier en quarantaine `/uploads-staging/` tant que pas `CLEAN`, freshclam quotidien | 2 |
-| C4 | Zip bomb / fichier trop gros / pdf hostile | Limite hard 100 Mo à 3 niveaux (Traefik, middleware Next, DB), epub avec ratio max 10x, pdf-parse en sandbox process avec timeout 30s + cap RAM | 2, 4 |
-| C5 | XXE / DoS sur parsing XML epub | Parser XML avec entités externes désactivées, limites profondeur DOM | 2, 4 |
-| C6 | Injection via métadonnées | Sanitization à l'entrée (DOMPurify côté serveur), escape strict, lint rule interdit `dangerouslySetInnerHTML` | 2 |
-| C7 | DoS flood d'uploads | Rate limit upload 10/h/user, BullMQ rate limiter par queue | 2 |
+| #   | Risque                                     | Mitigation                                                                                                                                      | Phase |
+| --- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| C1  | **[CRITIQUE]** Path traversal              | Nom client ignoré, path `/uploads/{libId}/{bookId}/{format}-{sha[:8]}.{ext}` côté serveur, vérif `path.resolve` reste dans base path            | 2     |
+| C2  | **[CRITIQUE]** MIME spoofing               | Vérif type réel via libmagic (`file-type`) sur premiers octets, rejet si mismatch                                                               | 2     |
+| C3  | **[CRITIQUE]** Malware uploadé             | ClamAV daemon obligatoire pré-publication, fichier en quarantaine `/uploads-staging/` tant que pas `CLEAN`, freshclam quotidien                 | 2     |
+| C4  | Zip bomb / fichier trop gros / pdf hostile | Limite hard 100 Mo à 3 niveaux (Traefik, middleware Next, DB), epub avec ratio max 10x, pdf-parse en sandbox process avec timeout 30s + cap RAM | 2, 4  |
+| C5  | XXE / DoS sur parsing XML epub             | Parser XML avec entités externes désactivées, limites profondeur DOM                                                                            | 2, 4  |
+| C6  | Injection via métadonnées                  | Sanitization à l'entrée (DOMPurify côté serveur), escape strict, lint rule interdit `dangerouslySetInnerHTML`                                   | 2     |
+| C7  | DoS flood d'uploads                        | Rate limit upload 10/h/user, BullMQ rate limiter par queue                                                                                      | 2     |
 
 ### D. Liseuse & contenu servi
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| D1 | **[CRITIQUE]** XSS via JS embarqué dans epub | epub.js dans iframe `sandbox="allow-same-origin"` UNIQUEMENT (pas `allow-scripts`), CSP stricte iframe, tests epub piégé | 3 |
-| D2 | **[CRITIQUE]** Leak fichier original via URL prédictible | URLs signées HMAC + expiration 5 min, liées à session, jamais d'accès direct filesystem via path | 3, 5 |
-| D3 | Téléchargement non tracé | `DownloadLog` écrit avant début stream (transactionnel), refus si écriture log échoue | 5 |
-| D4 | Cross-origin embed (clickjacking) | `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` (sauf liseuse self) | 0+3 |
+| #   | Risque                                                   | Mitigation                                                                                                               | Phase |
+| --- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----- |
+| D1  | **[CRITIQUE]** XSS via JS embarqué dans epub             | epub.js dans iframe `sandbox="allow-same-origin"` UNIQUEMENT (pas `allow-scripts`), CSP stricte iframe, tests epub piégé | 3     |
+| D2  | **[CRITIQUE]** Leak fichier original via URL prédictible | URLs signées HMAC + expiration 5 min, liées à session, jamais d'accès direct filesystem via path                         | 3, 5  |
+| D3  | Téléchargement non tracé                                 | `DownloadLog` écrit avant début stream (transactionnel), refus si écriture log échoue                                    | 5     |
+| D4  | Cross-origin embed (clickjacking)                        | `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` (sauf liseuse self)                                                | 0+3   |
 
 ### E. APIs externes & secrets
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| E1 | SSRF via fetch couvertures | Validation URL (refus IPs privées RFC 1918, loopback, link-local) après résolution DNS, timeout 10s | 2 |
-| E2 | Fuite clé API | Toutes en env, jamais en code/log, `.env.example` documente, scan gitleaks en CI, rotation 6 mois documentée | 0 |
-| E3 | DoS budget API externe | Cache métadonnées en DB, pas de re-fetch sauf demande Admin | 2 |
+| #   | Risque                     | Mitigation                                                                                                   | Phase |
+| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------ | ----- |
+| E1  | SSRF via fetch couvertures | Validation URL (refus IPs privées RFC 1918, loopback, link-local) après résolution DNS, timeout 10s          | 2     |
+| E2  | Fuite clé API              | Toutes en env, jamais en code/log, `.env.example` documente, scan gitleaks en CI, rotation 6 mois documentée | 0     |
+| E3  | DoS budget API externe     | Cache métadonnées en DB, pas de re-fetch sauf demande Admin                                                  | 2     |
 
 ### F. Infrastructure & déploiement
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| F1 | Headers sécurité oubliés | Helmet-like middleware, CSP stricte avec nonce SSR, HSTS preload, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy minimal, test CI | 0 |
-| F2 | Secrets dans logs | pino `redact` sur clés sensibles, pas de stack traces côté client en prod | 0 |
-| F3 | DB password faible / réseau Docker exposé | Postgres/Redis/Meili sur réseau Docker interne uniquement, jamais bindés sur host, mots de passe 32+ chars random différents par env | 0 |
-| F4 | Container avec privilèges excessifs | `read_only: true` où possible, `cap_drop: [ALL]`, user non-root, pas de `--privileged`, ClamAV isolé sans accès filesystem app | 0+8 |
-| F5 | Mise à jour dépendances oubliée | Dependabot, `npm audit` en CI échec si HIGH/CRITICAL, revue mensuelle planifiée | 0+8 |
-| F6 | Image Docker contient des CVE | Base `node:22-alpine`, build multi-stage, Trivy en CI échec si CRITICAL, refresh trimestriel | 0 |
+| #   | Risque                                    | Mitigation                                                                                                                                                      | Phase |
+| --- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| F1  | Headers sécurité oubliés                  | Helmet-like middleware, CSP stricte avec nonce SSR, HSTS preload, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy minimal, test CI | 0     |
+| F2  | Secrets dans logs                         | pino `redact` sur clés sensibles, pas de stack traces côté client en prod                                                                                       | 0     |
+| F3  | DB password faible / réseau Docker exposé | Postgres/Redis/Meili sur réseau Docker interne uniquement, jamais bindés sur host, mots de passe 32+ chars random différents par env                            | 0     |
+| F4  | Container avec privilèges excessifs       | `read_only: true` où possible, `cap_drop: [ALL]`, user non-root, pas de `--privileged`, ClamAV isolé sans accès filesystem app                                  | 0+8   |
+| F5  | Mise à jour dépendances oubliée           | Dependabot, `npm audit` en CI échec si HIGH/CRITICAL, revue mensuelle planifiée                                                                                 | 0+8   |
+| F6  | Image Docker contient des CVE             | Base `node:22-alpine`, build multi-stage, Trivy en CI échec si CRITICAL, refresh trimestriel                                                                    | 0     |
 
 ### G. Backups & reprise
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| G1 | **[CRITIQUE]** Ransomware chiffre aussi backups | Push append-only vers NAS (`command="borg serve --append-only"`), VPS ne peut pas supprimer/écraser | 8 |
-| G2 | Repo borg compromis (clé volée) | Repo chiffré, passphrase indépendante de la clé SSH, double stockage (gestionnaire + papier) | 8 |
-| G3 | Backups jamais testés | Test restauration automatisé mensuel, échec → email Admin global | 8 |
-| G4 | Rétention insuffisante | 7 quotidiens / 4 hebdo / 12 mensuels | 8 |
+| #   | Risque                                          | Mitigation                                                                                          | Phase |
+| --- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----- |
+| G1  | **[CRITIQUE]** Ransomware chiffre aussi backups | Push append-only vers NAS (`command="borg serve --append-only"`), VPS ne peut pas supprimer/écraser | 8     |
+| G2  | Repo borg compromis (clé volée)                 | Repo chiffré, passphrase indépendante de la clé SSH, double stockage (gestionnaire + papier)        | 8     |
+| G3  | Backups jamais testés                           | Test restauration automatisé mensuel, échec → email Admin global                                    | 8     |
+| G4  | Rétention insuffisante                          | 7 quotidiens / 4 hebdo / 12 mensuels                                                                | 8     |
 
 ### H. Privacy / RGPD
 
-| # | Risque | Mitigation | Phase |
-|---|---|---|---|
-| H1 | Surveillance des lectures | `ReadingProgress`/`ReadingSession` strictement privés (cf. B2). Stats biblio Admin **anonymisées** | 3, 7 |
-| H2 | IPs en clair = données personnelles | Hash + sel rotatif 30j sur `DownloadLog` et `AuditLog` | 0+5 |
-| H3 | Droit à l'effacement | Endpoint suppression user avec cascade (annotations, bookmarks, progress, sessions, ratings, reviews), `AuditLog` conservé (durée légale) | 1+8 |
-| H4 | Droit à la portabilité | Endpoint export ZIP (annotations, bookmarks, collections, avis, historique en JSON) | 7 |
-| H5 | Cookies de tracking | **Aucun**. Pas d'analytics, pas de pixel. Bandeau cookies non nécessaire | 0 |
+| #   | Risque                              | Mitigation                                                                                                                                | Phase |
+| --- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| H1  | Surveillance des lectures           | `ReadingProgress`/`ReadingSession` strictement privés (cf. B2). Stats biblio Admin **anonymisées**                                        | 3, 7  |
+| H2  | IPs en clair = données personnelles | Hash + sel rotatif 30j sur `DownloadLog` et `AuditLog`                                                                                    | 0+5   |
+| H3  | Droit à l'effacement                | Endpoint suppression user avec cascade (annotations, bookmarks, progress, sessions, ratings, reviews), `AuditLog` conservé (durée légale) | 1+8   |
+| H4  | Droit à la portabilité              | Endpoint export ZIP (annotations, bookmarks, collections, avis, historique en JSON)                                                       | 7     |
+| H5  | Cookies de tracking                 | **Aucun**. Pas d'analytics, pas de pixel. Bandeau cookies non nécessaire                                                                  | 0     |
 
 Cette annexe sera reprise et étoffée dans `docs/security/threat-model.md` (modèle STRIDE formalisé) lors de la Phase 8.

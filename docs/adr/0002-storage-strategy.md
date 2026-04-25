@@ -12,6 +12,7 @@ BiblioShare doit stocker des fichiers livres (epub, pdf, txt, docx jusqu'à 100 
 **Stockage filesystem local sur le VPS, hors du webroot, accès uniquement via endpoints authentifiés du backend.**
 
 Structure :
+
 - `/uploads/{libraryId}/{bookId}/{format}-{sha256[:8]}.{ext}` — fichiers livres (originaux + conversions).
 - `/uploads-staging/` — quarantaine pré-scan ClamAV.
 - `/covers/` — cache local des couvertures.
@@ -28,16 +29,19 @@ Une **abstraction `FileStorage`** est introduite dès la Phase 0 (interface avec
 ## Conséquences
 
 **Positives** :
+
 - Simplicité opérationnelle maximale.
 - Pas de coût récurrent.
 - Backups directs via volume monté (borgbackup couvre filesystem).
 - Performance : accès local, pas de latence réseau.
 
 **Négatives** :
+
 - Couplé à une seule machine (pas de scale horizontal natif). Acceptable à l'échelle cible.
 - Doit gérer manuellement les permissions filesystem dans le container.
 
 **Sécurité** :
+
 - Volume monté hors du webroot → impossible d'y accéder via URL directe.
 - Endpoints `/download` et `/cover` font le check d'auth + permissions avant de stream le fichier.
 - URLs signées (HMAC + expiration 5 min) pour le download effectif.

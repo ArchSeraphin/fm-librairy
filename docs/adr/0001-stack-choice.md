@@ -26,12 +26,14 @@ Stack fullstack en un seul langage (TypeScript) end-to-end, types partagés via 
 ## Conséquences
 
 **Positives** :
+
 - Un seul langage end-to-end → moins de context switching pour l'IA, types catch les erreurs avant commit.
 - Écosystème epub.js/pdf.js natif.
 - shadcn/ui = composants accessibles WCAG copiés dans le repo, modifiables.
 - Corpus IA massif → propositions IA cohérentes.
 
 **Négatives / risques** :
+
 - Next.js bouge vite (App Router, Server Components évoluent). Mitigation : pin de version, évitement features expérimentales, politique de mise à jour annuelle documentée.
 - App Router plus complexe que Pages Router (Server vs Client Components). Mitigation : conventions strictes documentées dans `CLAUDE.md` projet.
 

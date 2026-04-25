@@ -7,6 +7,8 @@ node_modules/
 
 # Build outputs
 .next/
+next-env.d.ts
+.vercel
 out/
 dist/
 build/
@@ -41,6 +43,7 @@ test-results/
 
 # Prisma
 prisma/migrations/dev/
+prisma/generated/
 
 # Uploads (dev)
 uploads/

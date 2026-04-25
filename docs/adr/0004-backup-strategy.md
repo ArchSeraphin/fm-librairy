@@ -33,12 +33,14 @@ BiblioShare est self-hosted. Perte de données = perte définitive (pas de provi
 ## Conséquences
 
 **Positives** :
+
 - Déduplication efficace → 7+4+12 backups = très peu d'espace réel sur le NAS.
 - Chiffrement bout-en-bout → si le NAS est compromis, données illisibles.
 - Mode append-only → protection contre ransomware sur le VPS.
 - Test de restauration automatisé → garantit que les backups sont effectivement utilisables.
 
 **Négatives** :
+
 - Si la passphrase est perdue, les backups sont irrécupérables. Mitigation : double stockage (gestionnaire + papier).
 - Si la clé SSH du VPS est compromise, l'attaquant peut **lire** les anciens backups (déchiffrables uniquement avec la passphrase, qui n'est pas sur le VPS) et **ajouter** des fichiers, mais **ne peut pas effacer**.
 
