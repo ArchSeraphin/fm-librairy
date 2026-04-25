@@ -1,0 +1,51 @@
+# Claude Code local state
+.claude/settings.local.json
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Prisma
+prisma/migrations/dev/
+
+# Uploads (dev)
+uploads/
+uploads-staging/
+covers/
+
+# Backups
+*.borg
+*.dump
