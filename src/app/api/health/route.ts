@@ -63,17 +63,24 @@ async function checkClamav(): Promise<CheckResult> {
   });
 }
 
+function publicCheck(c: CheckResult, isProd: boolean): CheckResult {
+  if (c.ok || !isProd) return c;
+  return { ...c, error: 'check_failed' };
+}
+
 export async function GET() {
+  const isProd = getEnv().NODE_ENV === 'production';
   const checks = await Promise.all([checkDb(), checkRedis(), checkMeili(), checkClamav()]);
   const allOk = checks.every((c) => c.ok);
   const status = allOk ? 200 : 503;
   if (!allOk) {
     logger.warn({ checks }, 'health degraded');
   }
+  const publicChecks = checks.map((c) => publicCheck(c, isProd));
   return NextResponse.json(
     {
       status: allOk ? 'ok' : 'degraded',
-      checks,
+      checks: publicChecks,
       uptimeSec: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
     },
