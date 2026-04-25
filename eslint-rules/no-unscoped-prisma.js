@@ -3,7 +3,7 @@
  * sans clause `where`. Évite les fuites de données cross-scope.
  *
  * Faux positifs acceptables : on peut désactiver localement avec
- * // eslint-disable-next-line no-unscoped-prisma -- raison: ...
+ * // eslint-disable-next-line local/no-unscoped-prisma -- raison: ...
  */
 'use strict';
 
@@ -52,7 +52,9 @@ module.exports = {
             });
           }
         }
-        // Argument est dynamique (Identifier, etc.) : on accepte (ne peut pas vérifier statiquement)
+        // Autres formes (Identifier, ConditionalExpression, ...) : acceptées faute de vérification statique fiable.
+        // Note : un ObjectExpression contenant uniquement des SpreadElement (ex. `findMany({ ...opts })`) reste flagged
+        // — c'est volontaire pour anti-IDOR. Désactiver localement avec un commentaire justifié si nécessaire.
       },
     };
   },

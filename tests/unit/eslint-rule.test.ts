@@ -3,7 +3,7 @@ import { RuleTester } from 'eslint';
 import rule from '../../eslint-rules/no-unscoped-prisma.js';
 
 const tester = new RuleTester({
-  languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
+  parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
 });
 
 describe('no-unscoped-prisma', () => {
