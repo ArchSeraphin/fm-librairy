@@ -553,13 +553,13 @@ import { BookOpen } from 'lucide-react';
 export default function Home() {
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-8">
-      <Card className="animate-slide-up w-full max-w-md">
+      <Card className="w-full max-w-md animate-slide-up">
         <CardHeader className="flex flex-row items-center gap-3">
-          <BookOpen className="text-accent h-6 w-6" aria-hidden />
+          <BookOpen className="h-6 w-6 text-accent" aria-hidden />
           <CardTitle>BiblioShare</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Plateforme privée de gestion de bibliothèques.
           </p>
           <Button className="w-full">Bientôt disponible</Button>
@@ -1782,10 +1782,10 @@ export default function HomePage() {
   const t = useTranslations('Home');
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-6">
-      <Card className="animate-slide-up w-full max-w-md shadow-sm">
+      <Card className="w-full max-w-md animate-slide-up shadow-sm">
         <CardHeader className="space-y-3">
-          <div className="bg-accent/10 flex h-10 w-10 items-center justify-center rounded-md">
-            <Library className="text-accent h-5 w-5" aria-hidden="true" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-accent/10">
+            <Library className="h-5 w-5 text-accent" aria-hidden="true" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-xl">{t('title')}</CardTitle>
@@ -1793,7 +1793,7 @@ export default function HomePage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-muted-foreground text-xs uppercase tracking-wide">{t('phase')}</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t('phase')}</p>
           <p className="text-sm text-foreground">{t('comingSoon')}</p>
         </CardContent>
       </Card>
