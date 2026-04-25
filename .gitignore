@@ -53,3 +53,5 @@ covers/
 # Backups
 *.borg
 *.dump
+
+/src/generated/prisma
