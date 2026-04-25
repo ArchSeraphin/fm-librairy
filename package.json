@@ -13,7 +13,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "env:check": "node -e \"import('./src/lib/env.ts').then(m => m.getEnv()).then(() => console.log('env OK')).catch(e => { console.error(e); process.exit(1); })\""
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -26,7 +27,8 @@
     "prisma": "^6.19.3",
     "react": "19.0.0-rc-65a56d0e-20241020",
     "react-dom": "19.0.0-rc-65a56d0e-20241020",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",
