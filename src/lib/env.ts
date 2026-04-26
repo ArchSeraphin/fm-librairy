@@ -27,6 +27,11 @@ const EnvSchema = z.object({
   SESSION_SECRET: z.string().min(32),
   CRYPTO_MASTER_KEY: z.string().min(32),
 
+  // Sels rotatifs pour hash IP/UA (mitigation H2 RGPD). Statiques en Phase 1A,
+  // rotation = Phase 8.
+  IP_HASH_SALT: z.string().min(16),
+  UA_HASH_SALT: z.string().min(16),
+
   // Email (Phase 1+)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().email().default('noreply@biblioshare.local'),
