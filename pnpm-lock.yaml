@@ -94,8 +94,8 @@ importers:
         specifier: ^8
         version: 8.57.1
       eslint-config-next:
-        specifier: 15.0.0
-        version: 15.0.0(eslint@8.57.1)(typescript@5.9.3)
+        specifier: 15.5.15
+        version: 15.5.15(eslint@8.57.1)(typescript@5.9.3)
       eslint-plugin-local:
         specifier: link:eslint-rules
         version: link:eslint-rules
@@ -472,8 +472,8 @@ packages:
   '@next/env@15.5.15':
     resolution: {integrity: sha512-vcmyu5/MyFzN7CdqRHO3uHO44p/QPCZkuTUXroeUmhNP8bL5PHFEhik22JUazt+CDDoD6EpBYRCaS2pISL+/hg==}
 
-  '@next/eslint-plugin-next@15.0.0':
-    resolution: {integrity: sha512-UG/Gnsq6Sc4wRhO9qk+vc/2v4OfRXH7GEH6/TGlNF5eU/vI9PIO7q+kgd65X2DxJ+qIpHWpzWwlPLmqMi1FE9A==}
+  '@next/eslint-plugin-next@15.5.15':
+    resolution: {integrity: sha512-ExQoBfyKMjAUQ2nuF39ryQsG26H374ZfH13dlOZqf6TaE9ycRbIm+qUbUFCliU4BtQhiqtS7cnGA1yWfPMQ+jA==}
 
   '@next/swc-darwin-arm64@15.5.15':
     resolution: {integrity: sha512-6PvFO2Tzt10GFK2Ro9tAVEtacMqRmTarYMFKAnV2vYMdwWc73xzmDQyAV7SwEdMhzmiRoo7+m88DuiXlJlGeaw==}
@@ -1728,8 +1728,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-next@15.0.0:
-    resolution: {integrity: sha512-HFeTwCR2lFEUWmdB00WZrzaak2CvMvxici38gQknA6Bu2HPizSE4PNFGaFzr5GupjBt+SBJ/E0GIP57ZptOD3g==}
+  eslint-config-next@15.5.15:
+    resolution: {integrity: sha512-mI5KIONOIosjF3jK2z9a8fY2LePNeW5C4lRJ+XZoJHAKkwx2MQjMPQ2/kL7tsMRPcQPZc/UBtCfqxElluL1CBg==}
     peerDependencies:
       eslint: ^7.23.0 || ^8.0.0 || ^9.0.0
       typescript: '>=3.3.1'
@@ -2715,6 +2715,10 @@ packages:
     resolution: {integrity: sha512-pMMHxBOZKFU6HgAZ4eyGnwXF/EvPGGqUr0MnZ5+99485wwW41kW91A4LOGxSHhgugZmSChL5AlElNdwlNgcnLQ==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postcss@8.5.12:
+    resolution: {integrity: sha512-W62t/Se6rA0Az3DfCL0AqJwXuKwBeYg6nOaIgzP+xZ7N5BFCI7DYi1qs6ygUYT6rvfi6t9k65UMLJC+PHZpDAA==}
+    engines: {node: ^10 || ^12 || >=14}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -3674,7 +3678,7 @@ snapshots:
 
   '@next/env@15.5.15': {}
 
-  '@next/eslint-plugin-next@15.0.0':
+  '@next/eslint-plugin-next@15.5.15':
     dependencies:
       fast-glob: 3.3.1
 
@@ -4864,9 +4868,9 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-next@15.0.0(eslint@8.57.1)(typescript@5.9.3):
+  eslint-config-next@15.5.15(eslint@8.57.1)(typescript@5.9.3):
     dependencies:
-      '@next/eslint-plugin-next': 15.0.0
+      '@next/eslint-plugin-next': 15.5.15
       '@rushstack/eslint-patch': 1.16.1
       '@typescript-eslint/eslint-plugin': 8.59.0(@typescript-eslint/parser@8.59.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
       '@typescript-eslint/parser': 8.59.0(eslint@8.57.1)(typescript@5.9.3)
@@ -5948,6 +5952,12 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  postcss@8.5.12:
+    dependencies:
+      nanoid: 3.3.11
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
+
   prelude-ls@1.2.1: {}
 
   prettier-plugin-tailwindcss@0.7.3(prettier@3.8.3):
@@ -6541,7 +6551,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.10
+      postcss: 8.5.12
       rolldown: 1.0.0-rc.17
       tinyglobby: 0.2.16
     optionalDependencies:
