@@ -1,33 +1,20 @@
-import { afterAll, beforeAll } from 'vitest';
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { RedisContainer, StartedRedisContainer } from '@testcontainers/redis';
-import { execSync } from 'node:child_process';
-import { teardownTestPrisma } from './prisma';
+/**
+ * Vitest setupFiles — runs in each worker process (fork) after env vars are
+ * already present thanks to global-setup.ts.
+ *
+ * Responsibilities:
+ * - Re-initialise the Prisma singleton after the env is confirmed ready.
+ * - Disconnect the test Prisma client after all tests in the file finish.
+ */
+import { afterAll } from 'vitest';
+import { teardownTestPrisma, resetTestPrisma } from './prisma';
 
-let pg: StartedPostgreSqlContainer;
-let redis: StartedRedisContainer;
-
-beforeAll(async () => {
-  pg = await new PostgreSqlContainer('postgres:16-alpine').start();
-  redis = await new RedisContainer('redis:7-alpine').start();
-
-  process.env.DATABASE_URL = pg.getConnectionUri();
-  process.env.REDIS_URL = `redis://${redis.getHost()}:${redis.getMappedPort(6379)}`;
-  process.env.SESSION_SECRET = 'test-session-secret-32-chars-min!';
-  process.env.CRYPTO_MASTER_KEY = 'test-crypto-master-key-32-chars-min!';
-  process.env.APP_URL = 'http://localhost:3000';
-  process.env.MEILI_HOST = 'http://localhost:7700';
-  process.env.MEILI_MASTER_KEY = 'test-meili-master-key-16chars';
-  (process.env as Record<string, string>)['NODE_ENV'] = 'test';
-
-  execSync('pnpm prisma migrate deploy', {
-    env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL },
-    stdio: 'inherit',
-  });
-});
+// Env vars (DATABASE_URL etc.) are inherited from the main process via globalSetup.
+// Re-create the Prisma singleton now so the query-engine binary is spawned with
+// the correct connection string (it was first created at module-import time, before
+// env vars were available in older setups — resetTestPrisma() ensures it's fresh).
+resetTestPrisma();
 
 afterAll(async () => {
   await teardownTestPrisma();
-  await pg?.stop();
-  await redis?.stop();
 });
