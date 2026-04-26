@@ -1169,7 +1169,7 @@ import { getRedis } from './redis';
 const memInsurance = (points: number, duration: number) =>
   new RateLimiterMemory({ points, duration });
 
-const baseOpts = () => ({ storeClient: getRedis(), useRedisPackage: true });
+const baseOpts = () => ({ storeClient: getRedis() });
 
 export const loginLimiter = new RateLimiterRedis({
   ...baseOpts(),
