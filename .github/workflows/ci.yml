@@ -1,0 +1,176 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9'
+
+jobs:
+  lint-typecheck-unit:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm prisma generate
+
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: biblioshare
+          POSTGRES_USER: biblioshare
+          POSTGRES_PASSWORD: testpassword
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U biblioshare"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      meili:
+        image: getmeili/meilisearch:v1.10
+        env:
+          MEILI_MASTER_KEY: testkeytestkeytestkeytestkey1234
+          MEILI_NO_ANALYTICS: 'true'
+        ports: ['7700:7700']
+        options: >-
+          --health-cmd "curl -f http://localhost:7700/health"
+          --health-interval 10s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://biblioshare:testpassword@localhost:5432/biblioshare
+      REDIS_URL: redis://localhost:6379
+      MEILI_HOST: http://localhost:7700
+      MEILI_MASTER_KEY: testkeytestkeytestkeytestkey1234
+      CLAMAV_HOST: localhost
+      CLAMAV_PORT: '3310'
+      APP_URL: http://localhost:3000
+      SESSION_SECRET: '0000000000000000000000000000000000000000000000000000000000000000'
+      CRYPTO_MASTER_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
+      EMAIL_FROM: noreply@biblioshare.local
+      LOG_LEVEL: warn
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm prisma migrate deploy
+
+      - run: pnpm dlx playwright install --with-deps chromium
+
+      - run: pnpm build
+
+      - name: Run E2E
+        env:
+          PORT: '3000'
+        run: |
+          pnpm exec next start &
+          npx wait-on http://localhost:3000
+          pnpm e2e tests/e2e/landing.spec.ts
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build app image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: biblioshare-app:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.worker
+          push: false
+          tags: biblioshare-worker:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  trivy-scan:
+    name: Trivy image scan
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker build -t biblioshare-app:scan .
+      - uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: biblioshare-app:scan
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
