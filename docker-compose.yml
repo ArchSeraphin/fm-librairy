@@ -38,6 +38,9 @@ services:
       timeout: 3s
       retries: 5
     cap_drop: [ALL]
+    # redis:7-alpine entrypoint exécute `gosu redis` pour passer de root à l'user redis ;
+    # SETUID/SETGID requis. CHOWN/DAC_OVERRIDE pour le chown -R initial de /data.
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
     security_opt:
       - no-new-privileges:true
 
