@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1.6
+
+FROM node:22-alpine AS deps
+WORKDIR /worker
+# lockfile copied for --frozen-lockfile reproducibility (deviation from plan)
+COPY worker/package.json worker/pnpm-lock.yaml ./
+RUN corepack enable && corepack prepare pnpm@9 --activate \
+ && pnpm install --frozen-lockfile
+
+FROM node:22-alpine AS builder
+WORKDIR /worker
+COPY --from=deps /worker/node_modules ./node_modules
+COPY worker/ .
+RUN corepack enable && corepack prepare pnpm@9 --activate \
+ && pnpm build
+
+FROM node:22-alpine AS runner
+WORKDIR /worker
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 worker
+
+COPY --from=builder --chown=worker:nodejs /worker/dist ./dist
+COPY --from=builder --chown=worker:nodejs /worker/node_modules ./node_modules
+COPY --from=builder --chown=worker:nodejs /worker/package.json ./
+
+USER worker
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD pgrep -f "node dist/index.js" >/dev/null || exit 1
+
+CMD ["node", "dist/index.js"]
