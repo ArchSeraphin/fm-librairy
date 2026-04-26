@@ -20,6 +20,17 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'prisma'
         update-types: ['version-update:semver-major']
+      # Aligné avec node:22-alpine (Dockerfile + binaryTargets Prisma).
+      # Bumper conjointement quand on migrera la base image runtime.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # Tailwind v4 = breaking config + utilities. Migration planifiée Phase 1+.
+      - dependency-name: 'tailwindcss'
+        update-types: ['version-update:semver-major']
+      # ESLint v9 casse le shim eslint-plugin-local (cf. dette #13).
+      # À coordonner avec la migration flat config en Phase 1.
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: npm
     directory: '/worker'
@@ -30,6 +41,13 @@ updates:
     groups:
       patches-and-minor:
         update-types: ['patch', 'minor']
+    ignore:
+      # Aligné avec node:22-alpine (Dockerfile.worker).
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # TS v6 à coordonner avec un bump root (Phase 1+).
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: docker
     directory: '/'
@@ -37,6 +55,11 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
+    ignore:
+      # Pinnée node 22 (Dockerfile + binaryTargets Prisma + worker).
+      # Bump majeur = changement coordonné multi-fichier.
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: '/'
