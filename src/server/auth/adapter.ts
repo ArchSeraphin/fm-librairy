@@ -5,6 +5,8 @@ const SESSION_TTL_MS = 30 * 24 * 3600 * 1000; // 30j absolu
 const INACTIVITY_TTL_MS = 7 * 24 * 3600 * 1000; // 7j inactif
 const TOUCH_DEBOUNCE_MS = 60 * 1000; // 1 min
 
+// Process-local debounce. Single-instance deploy (one VPS) — if we ever scale
+// horizontally, move this to Redis or accept "best-effort debounce".
 const lastTouchByToken = new Map<string, number>();
 
 export function generateSessionToken(): string {
@@ -46,6 +48,7 @@ export function createSessionAdapter(prisma: PrismaClient) {
       const isInactive = now - s.lastActivityAt.getTime() > INACTIVITY_TTL_MS;
       if (isExpired || isInactive) {
         await prisma.session.delete({ where: { id: s.id } }).catch(() => undefined);
+        lastTouchByToken.delete(sessionToken);
         return null;
       }
       const lastTouch = lastTouchByToken.get(sessionToken) ?? 0;
