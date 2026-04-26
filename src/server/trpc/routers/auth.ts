@@ -10,9 +10,17 @@ import {
 import { encryptSecret, decryptSecret } from '@/lib/crypto';
 import { recordAudit } from '@/lib/audit-log';
 import { twoFactorLimiter } from '@/lib/rate-limit';
+import { getRedis } from '@/lib/redis';
 import { createSessionAdapter } from '@/server/auth/adapter';
 
 const codeInput = z.object({ code: z.string().min(6).max(20) });
+
+// RFC 6238 §5.2 : reject TOTP code replay within the validity window
+// (period 30s + epochTolerance 30s = 90s effective). Atomic SET NX EX.
+async function claimTotpCode(userId: string, code: string): Promise<boolean> {
+  const set = await getRedis().set(`2fa-replay:${userId}:${code}`, '1', 'EX', 90, 'NX');
+  return set === 'OK';
+}
 
 export const authRouter = t.router({
   enroll2FA: authedProcedure.mutation(async ({ ctx }) => {
@@ -69,6 +77,14 @@ export const authRouter = t.router({
         });
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
+      if (!(await claimTotpCode(ctx.user.id, input.code))) {
+        await recordAudit({
+          action: 'auth.2fa.failure',
+          actor: { id: ctx.user.id },
+          metadata: { method: 'totp', reason: 'replay' },
+        });
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
       const adapter = createSessionAdapter(db);
       const fresh = await adapter.upgradePendingSession({
         oldSessionId: ctx.session.id,
@@ -99,10 +115,21 @@ export const authRouter = t.router({
         });
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
-      await db.twoFactorSecret.update({
-        where: { userId: ctx.user.id },
+      // Optimistic concurrency : commit only if the codes array hasn't changed
+      // since we read it. Otherwise a concurrent request consumed the same
+      // code and we must reject this one to prevent double-spend.
+      const updated = await db.twoFactorSecret.updateMany({
+        where: { userId: ctx.user.id, backupCodes: { equals: sec.backupCodes } },
         data: { backupCodes: result.remainingHashes },
       });
+      if (updated.count === 0) {
+        await recordAudit({
+          action: 'auth.2fa.failure',
+          actor: { id: ctx.user.id },
+          metadata: { method: 'backup_code', reason: 'race' },
+        });
+        throw new TRPCError({ code: 'CONFLICT' });
+      }
       const adapter = createSessionAdapter(db);
       const fresh = await adapter.upgradePendingSession({
         oldSessionId: ctx.session.id,
