@@ -75,7 +75,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s
+      start_period: 120s # DL initial de la base virale freshclam au premier boot
     cap_drop: [ALL]
     cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
     security_opt:
@@ -98,12 +98,13 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # seul service exposé sur le host (port APP_PORT) ; rejoint internal + public
   app:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    init: true
+    init: true # PID 1 reaping (dette #35)
     environment:
       NODE_ENV: production
       APP_URL: ${APP_URL:?required}
@@ -176,7 +177,7 @@ services:
 networks:
   internal:
     driver: bridge
-    internal: false
+    internal: false # bridge non-isolé pour autoriser freshclam ; durcir en Phase 1 (dette #46)
   public:
     driver: bridge
 
