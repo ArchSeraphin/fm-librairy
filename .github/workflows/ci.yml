@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+# Token surface minimal au niveau workflow ; les jobs qui ont besoin
+# de plus (gitleaks comment PR) overrident en local.
+permissions:
+  contents: read
+
+# Annule un run précédent du même ref si un nouveau push arrive (économie minutes CI).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '22'
   PNPM_VERSION: '9'
@@ -14,6 +24,7 @@ jobs:
   lint-typecheck-unit:
     name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -35,9 +46,11 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
 
+  # ClamAV volontairement absent du services: aucun spec E2E ne touche /api/health.
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:16-alpine
@@ -124,6 +137,7 @@ jobs:
   docker-build:
     name: Build Docker images
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -152,11 +166,12 @@ jobs:
     name: Trivy image scan
     needs: docker-build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - run: docker build -t biblioshare-app:scan .
-      - uses: aquasecurity/trivy-action@0.24.0
+      - uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: biblioshare-app:scan
           format: table
@@ -167,6 +182,11 @@ jobs:
   gitleaks:
     name: Gitleaks secret scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Override workflow-level permissions : v2 poste un commentaire sur la PR.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
