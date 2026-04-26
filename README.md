@@ -84,24 +84,24 @@ pnpm dev
 
 ## Scripts pnpm
 
-| Script                       | Description                          |
-| ---------------------------- | ------------------------------------ |
-| `pnpm dev`                   | Next.js dev server avec hot reload   |
-| `pnpm build`                 | Build production                     |
-| `pnpm start`                 | Lancer le build production           |
-| `pnpm lint`                  | ESLint                               |
-| `pnpm typecheck`             | Vérification TypeScript              |
-| `pnpm format`                | Prettier write                       |
-| `pnpm format:check`          | Prettier check                       |
-| `pnpm test`                  | Tests unitaires Vitest               |
-| `pnpm test:watch`            | Vitest watch mode                    |
-| `pnpm test:coverage`         | Tests Vitest avec couverture         |
-| `pnpm e2e`                   | Tests Playwright                     |
-| `pnpm e2e:ui`                | Playwright en mode UI                |
-| `pnpm prisma:generate`       | Régénérer le client Prisma           |
-| `pnpm prisma:migrate:dev`    | Créer/appliquer une migration en dev |
-| `pnpm prisma:migrate:deploy` | Appliquer les migrations en prod     |
-| `pnpm prisma:studio`         | UI graphique Prisma                  |
+| Script                       | Description                           |
+| ---------------------------- | ------------------------------------- |
+| `pnpm dev`                   | Next.js dev server avec hot reload    |
+| `pnpm build`                 | Build production                      |
+| `pnpm start`                 | Lancer le build production            |
+| `pnpm lint`                  | ESLint                                |
+| `pnpm typecheck`             | Vérification TypeScript               |
+| `pnpm format`                | Prettier write                        |
+| `pnpm format:check`          | Prettier check                        |
+| `pnpm test`                  | Tests unitaires Vitest                |
+| `pnpm test:watch`            | Vitest watch mode                     |
+| `pnpm test:coverage`         | Tests Vitest avec couverture          |
+| `pnpm e2e`                   | Tests Playwright                      |
+| `pnpm e2e:ui`                | Playwright en mode UI                 |
+| `pnpm prisma:generate`       | Régénérer le client Prisma            |
+| `pnpm prisma:migrate:dev`    | Créer/appliquer une migration en dev  |
+| `pnpm prisma:migrate:deploy` | Appliquer les migrations en prod      |
+| `pnpm prisma:studio`         | UI graphique Prisma                   |
 | `pnpm env:check`             | Valider les variables d'environnement |
 
 ## Structure du projet
@@ -144,18 +144,18 @@ Voir [`docs/deployment.md`](docs/deployment.md) pour le guide Coolify pas-à-pas
 
 ## Roadmap
 
-| Phase | Titre                                    | Statut          |
-| ----- | ---------------------------------------- | --------------- |
-| 0     | Fondations                               | en cours        |
-| 1     | Auth, 2FA, invitations, rôles            | à venir         |
-| 2     | Catalogue, upload, ClamAV, métadonnées   | à venir         |
-| 3     | Liseuse, annotations, sync               | à venir         |
-| 4     | Recherche, tags, collections             | à venir         |
-| 5     | Conversion, téléchargements              | à venir         |
-| 6     | Livres physiques                         | à venir         |
-| 7     | Social, stats                            | à venir         |
-| 7.5   | Recette utilisateur en local             | à venir         |
-| 8     | Backups NAS, monitoring, hardening final | à venir         |
+| Phase | Titre                                    | Statut   |
+| ----- | ---------------------------------------- | -------- |
+| 0     | Fondations                               | en cours |
+| 1     | Auth, 2FA, invitations, rôles            | à venir  |
+| 2     | Catalogue, upload, ClamAV, métadonnées   | à venir  |
+| 3     | Liseuse, annotations, sync               | à venir  |
+| 4     | Recherche, tags, collections             | à venir  |
+| 5     | Conversion, téléchargements              | à venir  |
+| 6     | Livres physiques                         | à venir  |
+| 7     | Social, stats                            | à venir  |
+| 7.5   | Recette utilisateur en local             | à venir  |
+| 8     | Backups NAS, monitoring, hardening final | à venir  |
 
 ## Licence
 

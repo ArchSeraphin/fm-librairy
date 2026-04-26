@@ -38,10 +38,10 @@ Coolify écoute par défaut sur `http://<vps-ip>:8000` — créer un domaine `co
 
 Sur votre registrar :
 
-| Sous-domaine             | Type | Cible     |
-| ------------------------ | ---- | --------- |
-| `@` ou `biblioshare`     | A    | IP du VPS |
-| `coolify`                | A    | IP du VPS |
+| Sous-domaine         | Type | Cible     |
+| -------------------- | ---- | --------- |
+| `@` ou `biblioshare` | A    | IP du VPS |
+| `coolify`            | A    | IP du VPS |
 
 ## 4. Connecter le repo GitHub
 
@@ -58,18 +58,18 @@ Sur votre registrar :
 
 Dans **Configuration → Environment Variables** de la ressource, ajouter :
 
-| Clé                 | Valeur                               |
-| ------------------- | ------------------------------------ |
-| `APP_URL`           | https://biblioshare.<votre-domaine>  |
-| `POSTGRES_PASSWORD` | (générer : `openssl rand -hex 24`)   |
-| `MEILI_MASTER_KEY`  | (générer : `openssl rand -hex 24`)   |
-| `SESSION_SECRET`    | (générer : `openssl rand -hex 32`)   |
-| `CRYPTO_MASTER_KEY` | (générer : `openssl rand -hex 32`)   |
-| `EMAIL_FROM`        | noreply@<votre-domaine>              |
-| `RESEND_API_KEY`    | (Phase 1+, depuis dashboard Resend)  |
-| `LOG_LEVEL`         | info                                 |
-| `MEILI_ENV`         | production                           |
-| `APP_PORT`          | 3000                                 |
+| Clé                 | Valeur                              |
+| ------------------- | ----------------------------------- |
+| `APP_URL`           | https://biblioshare.<votre-domaine> |
+| `POSTGRES_PASSWORD` | (générer : `openssl rand -hex 24`)  |
+| `MEILI_MASTER_KEY`  | (générer : `openssl rand -hex 24`)  |
+| `SESSION_SECRET`    | (générer : `openssl rand -hex 32`)  |
+| `CRYPTO_MASTER_KEY` | (générer : `openssl rand -hex 32`)  |
+| `EMAIL_FROM`        | noreply@<votre-domaine>             |
+| `RESEND_API_KEY`    | (Phase 1+, depuis dashboard Resend) |
+| `LOG_LEVEL`         | info                                |
+| `MEILI_ENV`         | production                          |
+| `APP_PORT`          | 3000                                |
 
 > **Contraintes runtime** : `SESSION_SECRET` et `CRYPTO_MASTER_KEY` exigent min 32 chars, `MEILI_MASTER_KEY` min 16 chars (validés par `src/lib/env.ts`). `openssl rand -hex N` produit `2*N` chars hex, donc `-hex 32` = 64 chars conformes.
 
