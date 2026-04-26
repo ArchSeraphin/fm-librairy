@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import net from 'node:net';
 import { db } from '@/lib/db';
-import { redis } from '@/lib/redis';
-import { meili } from '@/lib/meili';
-import { logger } from '@/lib/logger';
+import { getRedis } from '@/lib/redis';
+import { getMeili } from '@/lib/meili';
+import { getLogger } from '@/lib/logger';
 import { getEnv } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,7 @@ async function checkDb(): Promise<CheckResult> {
 async function checkRedis(): Promise<CheckResult> {
   const start = Date.now();
   try {
-    const pong = await redis.ping();
+    const pong = await getRedis().ping();
     return { name: 'redis', ok: pong === 'PONG', latencyMs: Date.now() - start };
   } catch (err) {
     return { name: 'redis', ok: false, error: (err as Error).message };
@@ -34,7 +34,7 @@ async function checkRedis(): Promise<CheckResult> {
 async function checkMeili(): Promise<CheckResult> {
   const start = Date.now();
   try {
-    const h = await meili.health();
+    const h = await getMeili().health();
     return { name: 'meilisearch', ok: h.status === 'available', latencyMs: Date.now() - start };
   } catch (err) {
     return { name: 'meilisearch', ok: false, error: (err as Error).message };
@@ -74,7 +74,7 @@ export async function GET() {
   const allOk = checks.every((c) => c.ok);
   const status = allOk ? 200 : 503;
   if (!allOk) {
-    logger.warn({ checks }, 'health degraded');
+    getLogger().warn({ checks }, 'health degraded');
   }
   const publicChecks = checks.map((c) => publicCheck(c, isProd));
   return NextResponse.json(
