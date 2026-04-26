@@ -35,8 +35,10 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      if (token.uid) (session as { userId?: string }).userId = token.uid as string;
-      (session as { pending2fa?: boolean }).pending2fa = !!token.pending2fa;
+      if (token.uid) {
+        (session as { userId?: string }).userId = token.uid as string;
+        (session as { pending2fa?: boolean }).pending2fa = !!token.pending2fa;
+      }
       return session;
     },
   },
