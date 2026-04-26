@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test('landing page se charge avec le titre BiblioShare', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('BiblioShare')).toBeVisible();
-  await expect(page.getByText('Phase 0 — Fondations')).toBeVisible();
+  // Scope à <main> pour éviter le strict-mode violation contre <title>BiblioShare</title>
+  // exposé par Next 15.5+ (cf. dette #20).
+  const main = page.getByRole('main');
+  await expect(main.getByText('BiblioShare')).toBeVisible();
+  await expect(main.getByText('Phase 0 — Fondations')).toBeVisible();
 });
 
 test('headers de sécurité présents', async ({ request }) => {
