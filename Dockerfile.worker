@@ -1,20 +1,20 @@
 # syntax=docker/dockerfile:1.6
 
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /worker
 # lockfile copied for --frozen-lockfile reproducibility (deviation from plan)
 COPY worker/package.json worker/pnpm-lock.yaml ./
 RUN corepack enable && corepack prepare pnpm@9 --activate \
  && pnpm install --frozen-lockfile
 
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /worker
 COPY --from=deps /worker/node_modules ./node_modules
 COPY worker/ .
 RUN corepack enable && corepack prepare pnpm@9 --activate \
  && pnpm build
 
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /worker
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
