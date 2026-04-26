@@ -37,11 +37,14 @@ model User {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   lastLoginAt      DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
 
   twoFactorSecret    TwoFactorSecret?
   invitationsCreated Invitation[]      @relation("InvitedBy")
-  invitationConsumed Invitation?       @relation("ConsumedBy")
+  invitationConsumed Invitation[]      @relation("ConsumedBy")
   passwordResets     PasswordResetToken[]
+  sessions           Session[]
   libraryMembers     LibraryMember[]
   uploadedBooks      Book[]            @relation("UploadedBy")
   ownedCopies        PhysicalCopy[]    @relation("Owner")
@@ -60,6 +63,31 @@ model User {
 
   @@index([role])
   @@index([status])
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  sessionToken   String   @unique
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt      DateTime
+  lastActivityAt DateTime @default(now())
+  ipHash         String
+  userAgentHash  String
+  pending2fa     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model VerificationToken {
+  identifier String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+
+  @@id([identifier, tokenHash])
+  @@index([expiresAt])
 }
 
 model TwoFactorSecret {
@@ -87,11 +115,13 @@ model Invitation {
   tokenHash     String       @unique
   expiresAt     DateTime
   consumedAt    DateTime?
-  consumedById  String?      @unique
+  consumedById  String?
   consumedBy    User?        @relation("ConsumedBy", fields: [consumedById], references: [id])
   createdAt     DateTime     @default(now())
 
   @@index([email])
+  @@index([consumedById])
+  @@index([expiresAt])
 }
 
 model PasswordResetToken {
@@ -442,13 +472,15 @@ model AuditLog {
   actorId    String?
   actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
   action     String
-  targetType String
-  targetId   String
+  targetType String?
+  targetId   String?
   metadata   Json?
   ipHash     String?
+  userAgent  String?
   createdAt  DateTime @default(now())
 
   @@index([actorId, createdAt])
+  @@index([action, createdAt])
   @@index([targetType, targetId])
 }
 
