@@ -1,0 +1,190 @@
+name: biblioshare
+
+services:
+  pg:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: biblioshare
+      POSTGRES_USER: biblioshare
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --locale=C.UTF-8'
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U biblioshare -d biblioshare']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE, FOWNER]
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--save', '60', '1000']
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  meili:
+    image: getmeili/meilisearch:v1.10
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?required}
+      MEILI_ENV: ${MEILI_ENV:-production}
+      MEILI_NO_ANALYTICS: 'true'
+    volumes:
+      - meili_data:/meili_data
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:7700/health']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  clamav:
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    environment:
+      CLAMAV_NO_FRESHCLAMD: 'false'
+    volumes:
+      - clamav_db:/var/lib/clamav
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'echo PING | nc -w 2 localhost 3310 | grep -q PONG']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    security_opt:
+      - no-new-privileges:true
+
+  calibre:
+    image: linuxserver/calibre:7.16.0
+    restart: unless-stopped
+    profiles: [conversion]
+    environment:
+      PUID: '1001'
+      PGID: '1001'
+      TZ: Europe/Paris
+    volumes:
+      - calibre_config:/config
+      - uploads:/uploads
+    networks:
+      - internal
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      APP_URL: ${APP_URL:?required}
+      DATABASE_URL: postgresql://biblioshare:${POSTGRES_PASSWORD}@pg:5432/biblioshare
+      REDIS_URL: redis://redis:6379
+      MEILI_HOST: http://meili:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: '3310'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SESSION_SECRET: ${SESSION_SECRET:?required}
+      CRYPTO_MASTER_KEY: ${CRYPTO_MASTER_KEY:?required}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@biblioshare.local}
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
+      ISBNDB_API_KEY: ${ISBNDB_API_KEY:-}
+    volumes:
+      - uploads:/app/uploads
+      - covers:/app/covers
+    depends_on:
+      pg: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      meili: { condition: service_healthy }
+      clamav: { condition: service_started }
+    networks:
+      - internal
+      - public
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      redis: { condition: service_healthy }
+    networks:
+      - internal
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  backup:
+    image: alpine:3.20
+    restart: 'no'
+    profiles: [backup]
+    command: ['sh', '-c', "echo 'backup placeholder — configuré en Phase 8'"]
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+    internal: false
+  public:
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:
+  meili_data:
+  clamav_db:
+  calibre_config:
+  uploads:
+  covers:
