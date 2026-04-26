@@ -1,3 +1,141 @@
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { t } from '../trpc';
+import { authedProcedure, pendingProcedure } from '../procedures';
+import { db } from '@/lib/db';
+import {
+  generateTotpSecret, buildTotpUri, verifyTotpCode,
+  generateBackupCodes, hashBackupCodes, consumeBackupCode,
+} from '@/lib/totp';
+import { encryptSecret, decryptSecret } from '@/lib/crypto';
+import { recordAudit } from '@/lib/audit-log';
+import { twoFactorLimiter } from '@/lib/rate-limit';
+import { createSessionAdapter } from '@/server/auth/adapter';
 
-export const authRouter = t.router({});
+const codeInput = z.object({ code: z.string().min(6).max(20) });
+
+export const authRouter = t.router({
+  enroll2FA: authedProcedure.mutation(async ({ ctx }) => {
+    const secret = generateTotpSecret();
+    await db.twoFactorSecret.upsert({
+      where: { userId: ctx.user.id },
+      update: { secretCipher: encryptSecret(secret), confirmedAt: null, backupCodes: [] },
+      create: { userId: ctx.user.id, secretCipher: encryptSecret(secret), backupCodes: [] },
+    });
+    return {
+      uri: buildTotpUri({ secret, accountName: ctx.user.email }),
+      secret,
+    };
+  }),
+
+  confirm2FA: authedProcedure
+    .input(codeInput)
+    .mutation(async ({ ctx, input }) => {
+      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+      if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no secret enrolled' });
+      const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+      if (!ok) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'bad code' });
+      const codes = generateBackupCodes();
+      const hashes = await hashBackupCodes(codes);
+      await db.$transaction([
+        db.twoFactorSecret.update({
+          where: { userId: ctx.user.id },
+          data: { confirmedAt: new Date(), backupCodes: hashes },
+        }),
+        db.user.update({ where: { id: ctx.user.id }, data: { twoFactorEnabled: true } }),
+      ]);
+      await recordAudit({ action: 'auth.2fa.enrolled', actor: { id: ctx.user.id } });
+      return { backupCodes: codes };
+    }),
+
+  verify2FA: pendingProcedure
+    .input(codeInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await twoFactorLimiter.consume(ctx.session.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+      if (!sec || !sec.confirmedAt) {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+      }
+      const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+      if (!ok) {
+        await recordAudit({
+          action: 'auth.2fa.failure',
+          actor: { id: ctx.user.id },
+          metadata: { method: 'totp' },
+        });
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+      const adapter = createSessionAdapter(db);
+      const fresh = await adapter.upgradePendingSession({
+        oldSessionId: ctx.session.id,
+        ipHash: ctx.session.ipHash,
+        userAgentHash: ctx.session.userAgentHash,
+      });
+      await db.user.update({ where: { id: ctx.user.id }, data: { lastLoginAt: new Date() } });
+      await recordAudit({ action: 'auth.2fa.success', actor: { id: ctx.user.id } });
+      return { ok: true, sessionToken: fresh.sessionToken };
+    }),
+
+  verifyBackupCode: pendingProcedure
+    .input(z.object({ code: z.string().regex(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await twoFactorLimiter.consume(ctx.session.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+      if (!sec || !sec.confirmedAt) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+      const result = await consumeBackupCode(input.code, sec.backupCodes);
+      if (!result) {
+        await recordAudit({
+          action: 'auth.2fa.failure',
+          actor: { id: ctx.user.id },
+          metadata: { method: 'backup_code' },
+        });
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+      await db.twoFactorSecret.update({
+        where: { userId: ctx.user.id },
+        data: { backupCodes: result.remainingHashes },
+      });
+      const adapter = createSessionAdapter(db);
+      const fresh = await adapter.upgradePendingSession({
+        oldSessionId: ctx.session.id,
+        ipHash: ctx.session.ipHash,
+        userAgentHash: ctx.session.userAgentHash,
+      });
+      await recordAudit({
+        action: 'auth.2fa.backup_code_used',
+        actor: { id: ctx.user.id },
+        metadata: { remaining: result.remainingHashes.length },
+      });
+      return { ok: true, sessionToken: fresh.sessionToken };
+    }),
+
+  disable2FA: authedProcedure
+    .input(z.object({ password: z.string(), code: z.string().min(6) }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role === 'GLOBAL_ADMIN') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'global admin cannot disable 2FA' });
+      }
+      const { verifyPassword } = await import('@/lib/password');
+      const fullUser = await db.user.findUniqueOrThrow({ where: { id: ctx.user.id } });
+      const passwordOk = await verifyPassword(fullUser.passwordHash, input.password);
+      if (!passwordOk) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+      if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+      const codeOk = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+      if (!codeOk) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      await db.$transaction([
+        db.twoFactorSecret.delete({ where: { userId: ctx.user.id } }),
+        db.user.update({ where: { id: ctx.user.id }, data: { twoFactorEnabled: false } }),
+      ]);
+      await recordAudit({ action: 'auth.2fa.disabled', actor: { id: ctx.user.id } });
+      return { ok: true };
+    }),
+});
