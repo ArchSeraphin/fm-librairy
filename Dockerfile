@@ -27,7 +27,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs \
- && apk add --no-cache curl
+ && apk add --no-cache curl \
+ # npm CLI ships picomatch@4.0.3 (CVE-2026-33671 ReDoS) and is never invoked
+ # at runtime (we use `node server.js`). Removing it eliminates the CVE and
+ # ~30 MB of unused surface area.
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

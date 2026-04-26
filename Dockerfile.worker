@@ -18,7 +18,10 @@ FROM node:22-alpine AS runner
 WORKDIR /worker
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 worker
+ && adduser --system --uid 1001 worker \
+ # npm CLI ships picomatch@4.0.3 (CVE-2026-33671 ReDoS) and is never invoked
+ # at runtime (we use `node dist/index.js`).
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=builder --chown=worker:nodejs /worker/dist ./dist
 COPY --from=builder --chown=worker:nodejs /worker/node_modules ./node_modules
