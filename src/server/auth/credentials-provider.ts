@@ -33,7 +33,7 @@ export async function authorizeCredentials(
   const emailH = hashEmail(email);
 
   try {
-    await loginLimiter.consume(`${ipH}:${email}`);
+    await loginLimiter.consume(`${ipH}:${emailH}`);
   } catch {
     await recordAudit({
       action: 'auth.login.locked',
