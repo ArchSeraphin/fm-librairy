@@ -1,36 +1,162 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BiblioShare
 
-## Getting Started
+Webapp self-hosted de gestion collective de bibliothèques numériques (epub, pdf, txt, docx) et physiques. Liseuse en ligne avec annotations privées, outils sociaux légers, administration fine des accès.
 
-First, run the development server:
+> Statut : **Phase 0 — Fondations**. Voir [`docs/superpowers/specs/2026-04-25-biblioshare-design.md`](docs/superpowers/specs/2026-04-25-biblioshare-design.md) pour le design global.
+
+## Stack
+
+- Next.js 15 (App Router), TypeScript strict
+- Prisma 6 + PostgreSQL 16
+- Auth.js v5 + 2FA TOTP (Phase 1)
+- Meilisearch 1.x, Redis 7 + BullMQ
+- ClamAV daemon, Calibre `ebook-convert`
+- Tailwind 3.4 + shadcn/ui + Lucide icons
+- Vitest + Playwright
+
+## Démarrage rapide
+
+### Prérequis
+
+- Node.js 22+
+- pnpm 9+ (`corepack enable && corepack prepare pnpm@9 --activate`)
+- Docker Desktop ou Docker Engine + Docker Compose v2
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo-url> biblioshare
+cd biblioshare
+
+# Dépendances
+pnpm install
+pnpm prisma:generate
+
+# Variables d'environnement (mode dev local)
+cp .env.example .env.local
+sed -i.bak \
+  -e "s/please-generate-with-openssl-rand-hex-32/$(openssl rand -hex 32)/g" \
+  -e "s/please-change-me-min-16-chars/$(openssl rand -hex 16)/g" \
+  -e "s/please-change-me-in-prod/$(openssl rand -hex 16)/g" \
+  .env.local
+rm -f .env.local.bak
+
+# Variables d'environnement (mode docker-compose)
+cp .env.example .env
+sed -i.bak \
+  -e "s/please-generate-with-openssl-rand-hex-32/$(openssl rand -hex 32)/g" \
+  -e "s/please-change-me-min-16-chars/$(openssl rand -hex 16)/g" \
+  -e "s/please-change-me-in-prod/$(openssl rand -hex 16)/g" \
+  .env
+rm -f .env.bak
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> **Note** : `SESSION_SECRET` et `CRYPTO_MASTER_KEY` exigent min 32 chars, `MEILI_MASTER_KEY` min 16 chars (validé par `src/lib/env.ts`). Les commandes `sed` ci-dessus génèrent des secrets conformes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Lancer la stack complète (Docker)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker compose up -d --build
 
-## Learn More
+# Première fois : appliquer la migration Prisma
+docker compose exec app pnpm prisma:migrate:deploy
+```
 
-To learn more about Next.js, take a look at the following resources:
+> **Note** : si la commande échoue avec `EROFS` (read-only filesystem), exécuter la migration depuis l'hôte avec `DATABASE_URL` explicite (cf. mode dev ci-dessous). Le container `app` est `read_only: true` par sécurité ; Prisma CLI peut tenter d'écrire des binaires d'engine en cache.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+L'app est disponible sur http://localhost:3000. Healthcheck : http://localhost:3000/api/health.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Mode dev (Next.js local + services Docker)
 
-## Deploy on Vercel
+```bash
+# Démarrer uniquement les dépendances
+docker compose up -d pg redis meili clamav
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Migrer la DB (depuis l'hôte)
+DATABASE_URL=postgresql://biblioshare:$(grep ^POSTGRES_PASSWORD .env | cut -d= -f2)@localhost:5432/biblioshare \
+  pnpm prisma:migrate:dev
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Lancer Next.js en local (hot reload)
+pnpm dev
+```
+
+> **Note** : pour ce mode, exposer temporairement le port 5432 de `pg` dans `docker-compose.yml`, ou utiliser un tunnel.
+
+## Scripts pnpm
+
+| Script                       | Description                          |
+| ---------------------------- | ------------------------------------ |
+| `pnpm dev`                   | Next.js dev server avec hot reload   |
+| `pnpm build`                 | Build production                     |
+| `pnpm start`                 | Lancer le build production           |
+| `pnpm lint`                  | ESLint                               |
+| `pnpm typecheck`             | Vérification TypeScript              |
+| `pnpm format`                | Prettier write                       |
+| `pnpm format:check`          | Prettier check                       |
+| `pnpm test`                  | Tests unitaires Vitest               |
+| `pnpm test:watch`            | Vitest watch mode                    |
+| `pnpm test:coverage`         | Tests Vitest avec couverture         |
+| `pnpm e2e`                   | Tests Playwright                     |
+| `pnpm e2e:ui`                | Playwright en mode UI                |
+| `pnpm prisma:generate`       | Régénérer le client Prisma           |
+| `pnpm prisma:migrate:dev`    | Créer/appliquer une migration en dev |
+| `pnpm prisma:migrate:deploy` | Appliquer les migrations en prod     |
+| `pnpm prisma:studio`         | UI graphique Prisma                  |
+| `pnpm env:check`             | Valider les variables d'environnement |
+
+## Structure du projet
+
+```
+src/
+  app/             Pages et API routes (Next.js App Router)
+  components/ui/   Primitives UI (shadcn/ui adapté)
+  hooks/           Hooks React partagés
+  i18n/            Traductions et config next-intl
+  lib/             Helpers (db, redis, meili, env, logger, private-scope)
+worker/            Service de jobs asynchrones (BullMQ, build séparé)
+prisma/            Schéma + migrations
+tests/
+  unit/            Tests Vitest
+  e2e/             Tests Playwright
+docs/
+  adr/                  Architecture Decision Records
+  superpowers/specs/    Spécifications de design
+  superpowers/plans/    Plans d'implémentation par phase
+  security/             Documentation sécurité (OWASP, threat model)
+  deployment.md         Guide Coolify
+eslint-rules/      Règles ESLint custom (plugin local)
+```
+
+## Sécurité
+
+- 11 risques critiques identifiés et mitigés (cf. design doc).
+- Headers de sécurité actifs (HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy).
+- Lint rule `local/no-unscoped-prisma` interdit les queries Prisma sans scope (anti-IDOR).
+- Type Brand `PrivateScope` pour annotations strictement privées par construction.
+- Secrets dans `.env.local` (jamais committés). `gitleaks` en CI.
+- ClamAV obligatoire avant publication d'un fichier (Phase 2).
+
+Voir [`docs/security/owasp-mapping.md`](docs/security/owasp-mapping.md) pour la couverture OWASP _(à venir — Task 25)_.
+
+## Déploiement
+
+Voir [`docs/deployment.md`](docs/deployment.md) pour le guide Coolify pas-à-pas _(à venir — Task 24)_.
+
+## Roadmap
+
+| Phase | Titre                                    | Statut          |
+| ----- | ---------------------------------------- | --------------- |
+| 0     | Fondations                               | en cours        |
+| 1     | Auth, 2FA, invitations, rôles            | à venir         |
+| 2     | Catalogue, upload, ClamAV, métadonnées   | à venir         |
+| 3     | Liseuse, annotations, sync               | à venir         |
+| 4     | Recherche, tags, collections             | à venir         |
+| 5     | Conversion, téléchargements              | à venir         |
+| 6     | Livres physiques                         | à venir         |
+| 7     | Social, stats                            | à venir         |
+| 7.5   | Recette utilisateur en local             | à venir         |
+| 8     | Backups NAS, monitoring, hardening final | à venir         |
+
+## Licence
+
+Privée. Tous droits réservés.
