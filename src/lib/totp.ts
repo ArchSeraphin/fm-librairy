@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
 
 const ARGON_OPTS = {
+  // Argon2id (Algorithm enum value 2) — using literal because const enum is incompatible with isolatedModules.
   algorithm: 2,
   memoryCost: 19_456,
   timeCost: 2,
@@ -58,6 +59,9 @@ export async function hashBackupCodes(codes: string[]): Promise<string[]> {
   return Promise.all(codes.map((c) => argonHash(c, ARGON_OPTS)));
 }
 
+// Verifies `attempt` against each stored hash and removes the matched hash.
+// CALLER MUST persist `remainingHashes` atomically — failure to do so allows replay.
+// Returns null if no hash matches.
 export async function consumeBackupCode(
   attempt: string,
   storedHashes: string[],

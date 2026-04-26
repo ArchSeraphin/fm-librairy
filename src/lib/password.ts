@@ -1,6 +1,7 @@
 import { hash, verify } from '@node-rs/argon2';
 
 const PARAMS = {
+  // Argon2id (Algorithm enum value 2) — using literal because const enum is incompatible with isolatedModules.
   algorithm: 2,
   memoryCost: 19_456,
   timeCost: 2,
