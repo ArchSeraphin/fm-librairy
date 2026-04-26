@@ -53,3 +53,8 @@ export function constantTimeEqual(a: string, b: string): boolean {
   const bb = Buffer.from(b);
   return timingSafeEqual(ba, bb);
 }
+
+export function hashEmail(email: string): string {
+  const salt = getEnv().IP_HASH_SALT; // réutilisé volontairement, c'est juste un anti-leak
+  return createHash('sha256').update(`email:${salt}:${email.toLowerCase()}`).digest('hex').slice(0, 32);
+}
