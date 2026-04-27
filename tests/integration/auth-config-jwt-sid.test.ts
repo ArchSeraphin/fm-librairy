@@ -67,15 +67,25 @@ describe('isStillPendingForSession — gap #7bis', () => {
 
   it('renvoie true si la session appartient à un autre user (rejet hijack)', async () => {
     const u1 = await prisma.user.create({
-      data: { email: 'sid7d-u1@x.test', displayName: 'X', passwordHash: 'h', twoFactorEnabled: true },
+      data: {
+        email: 'sid7d-u1@x.test',
+        displayName: 'X',
+        passwordHash: 'h',
+        twoFactorEnabled: true,
+      },
     });
     const u2 = await prisma.user.create({
-      data: { email: 'sid7d-u2@x.test', displayName: 'Y', passwordHash: 'h', twoFactorEnabled: true },
+      data: {
+        email: 'sid7d-u2@x.test',
+        displayName: 'Y',
+        passwordHash: 'h',
+        twoFactorEnabled: true,
+      },
     });
     const s = await prisma.session.create({
       data: {
         sessionToken: 'tk-D',
-        userId: u2.id,  // belongs to u2
+        userId: u2.id, // belongs to u2
         expiresAt: new Date(Date.now() + 1e9),
         ipHash: 'D',
         userAgentHash: 'D',

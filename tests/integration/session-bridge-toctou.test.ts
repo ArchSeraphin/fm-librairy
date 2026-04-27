@@ -53,11 +53,7 @@ describe('session-bridge — gap #5 TOCTOU', () => {
             { isolationLevel: 'Serializable' },
           );
         } catch (err) {
-          if (
-            retries > 0 &&
-            err instanceof Error &&
-            (err as { code?: string }).code === 'P2034'
-          ) {
+          if (retries > 0 && err instanceof Error && (err as { code?: string }).code === 'P2034') {
             continue;
           }
           throw err;

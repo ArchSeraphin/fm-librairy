@@ -47,11 +47,7 @@ export async function getCurrentSessionAndUser(): Promise<{ session: Session; us
       break;
     } catch (err) {
       // Postgres error 40001 = serialization failure; retry up to 3 times.
-      if (
-        retries > 0 &&
-        err instanceof Error &&
-        (err as { code?: string }).code === 'P2034'
-      ) {
+      if (retries > 0 && err instanceof Error && (err as { code?: string }).code === 'P2034') {
         continue;
       }
       throw err;

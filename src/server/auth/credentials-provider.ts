@@ -96,7 +96,11 @@ export async function authorizeCredentials(
       await recordAudit({
         action: 'auth.login.failure',
         actor: { id: user.id },
-        metadata: { reason: 'bad_password', attempts: updated.failedLoginAttempts, locked: shouldLock },
+        metadata: {
+          reason: 'bad_password',
+          attempts: updated.failedLoginAttempts,
+          locked: shouldLock,
+        },
         req,
       });
       return null;
