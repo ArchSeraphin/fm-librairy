@@ -3,7 +3,11 @@ import { auth } from '@/server/auth';
 import { db } from '@/lib/db';
 import { SEVEN_DAYS_MS } from '@/lib/permissions';
 
-const PUBLIC_PATHS = ['/login', '/api/auth', '/_next', '/favicon.ico', '/fonts'];
+// '/' is matched only via the `path === p` clause of startsWithAny; it does
+// not act as a catch-all because `path.startsWith('//')` is false for any
+// normal path. Keeps the landing page public (Phase 0 placeholder, future
+// marketing surface) while still guarding everything else.
+const PUBLIC_PATHS = ['/', '/login', '/api/auth', '/_next', '/favicon.ico', '/fonts'];
 
 const PENDING_ALLOWED = [
   '/login/2fa',
