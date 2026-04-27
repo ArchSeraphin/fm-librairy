@@ -2,7 +2,7 @@
 
 Webapp self-hosted de gestion collective de bibliothèques numériques (epub, pdf, txt, docx) et physiques. Liseuse en ligne avec annotations privées, outils sociaux légers, administration fine des accès.
 
-> Statut : **Phase 0 — Fondations**. Voir [`docs/superpowers/specs/2026-04-25-biblioshare-design.md`](docs/superpowers/specs/2026-04-25-biblioshare-design.md) pour le design global.
+> Statut : **Phase 1A — Auth core livrée**. Voir [`docs/superpowers/specs/2026-04-25-biblioshare-design.md`](docs/superpowers/specs/2026-04-25-biblioshare-design.md) pour le design global.
 
 ## Stack
 
@@ -127,6 +127,26 @@ docs/
 eslint-rules/      Règles ESLint custom (plugin local)
 ```
 
+## Authentification (Phase 1A)
+
+BiblioShare utilise Auth.js v5 avec un Credentials provider, des sessions DB hardenées (rotation, expiration absolue 30j / inactive 7j, fingerprint UA+IP), et un 2FA TOTP obligatoire pour les Admin globaux après 7 jours.
+
+### Bootstrap initial
+
+Voir [`docs/deployment.md`](docs/deployment.md) section « Initialisation post-déploiement ».
+
+```bash
+BOOTSTRAP_ADMIN_EMAIL=ops@example.test pnpm bootstrap:admin
+```
+
+La commande affiche email, mot de passe initial et délai (7j) avant que le 2FA ne devienne obligatoire.
+
+### Architecture
+
+- Spec design : [`docs/superpowers/specs/2026-04-26-phase-1-auth-design.md`](docs/superpowers/specs/2026-04-26-phase-1-auth-design.md)
+- Plan d'implémentation : [`docs/superpowers/plans/2026-04-26-phase-1a-auth-core.md`](docs/superpowers/plans/2026-04-26-phase-1a-auth-core.md)
+- Hardening pass : [`docs/superpowers/plans/2026-04-27-phase-1a-hardening.md`](docs/superpowers/plans/2026-04-27-phase-1a-hardening.md)
+
 ## Sécurité
 
 - 11 risques critiques identifiés et mitigés (cf. design doc).
@@ -146,8 +166,9 @@ Voir [`docs/deployment.md`](docs/deployment.md) pour le guide Coolify pas-à-pas
 
 | Phase | Titre                                    | Statut   |
 | ----- | ---------------------------------------- | -------- |
-| 0     | Fondations                               | en cours |
-| 1     | Auth, 2FA, invitations, rôles            | à venir  |
+| 0     | Fondations                               | complète |
+| 1A    | Auth core (login + 2FA + admin)          | complète |
+| 1B    | Invitations + reset password             | à venir  |
 | 2     | Catalogue, upload, ClamAV, métadonnées   | à venir  |
 | 3     | Liseuse, annotations, sync               | à venir  |
 | 4     | Recherche, tags, collections             | à venir  |

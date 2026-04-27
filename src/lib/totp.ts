@@ -1,4 +1,4 @@
-import { TOTP, NobleCryptoPlugin, ScureBase32Plugin, generateSync, verifySync } from 'otplib';
+import { TOTP, NobleCryptoPlugin, ScureBase32Plugin, verifySync } from 'otplib';
 import { randomBytes } from 'node:crypto';
 import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
 
