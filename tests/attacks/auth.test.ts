@@ -5,7 +5,7 @@ import { authorizeCredentials } from '@/server/auth/credentials-provider';
 import { hashPassword } from '@/lib/password';
 import { encryptSecret, hashEmail, hashIp } from '@/lib/crypto';
 import { generateTotpSecret } from '@/lib/totp';
-import { loginLimiter, twoFactorLimiter } from '@/lib/rate-limit';
+import { loginLimiter, loginIpOnlyLimiter, twoFactorLimiter } from '@/lib/rate-limit';
 import { appRouter } from '@/server/trpc/routers/_app';
 
 const prisma = getTestPrisma();
@@ -21,14 +21,16 @@ function genCode(secret: string): string {
 }
 
 const REQ = { ip: '1.2.3.4', userAgent: 'UA' };
+const ipH = hashIp(REQ.ip);
 
 // Rate-limit key matches credentials-provider:36 → `${hashIp(ip)}:${hashEmail(email)}`
 function loginKey(email: string): string {
-  return `${hashIp(REQ.ip)}:${hashEmail(email)}`;
+  return `${ipH}:${hashEmail(email)}`;
 }
 
 beforeEach(async () => {
   await truncateAll();
+  await loginIpOnlyLimiter.delete(ipH);
 });
 
 describe('A1 — Bruteforce login', () => {

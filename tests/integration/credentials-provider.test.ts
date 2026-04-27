@@ -2,9 +2,14 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { authorizeCredentials } from '@/server/auth/credentials-provider';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 import { hashPassword } from '@/lib/password';
-import { loginLimiter } from '@/lib/rate-limit';
+import { hashIp, hashEmail } from '@/lib/crypto';
+import { loginLimiter, loginIpOnlyLimiter } from '@/lib/rate-limit';
 
 const prisma = getTestPrisma();
+
+const REQ = { ip: '1.2.3.4', userAgent: 'UA' };
+const ipH = hashIp(REQ.ip);
+const loginKey = (email: string) => `${ipH}:${hashEmail(email)}`;
 
 async function mkUser(opts: {
   email: string;
@@ -25,12 +30,21 @@ async function mkUser(opts: {
 
 beforeEach(async () => {
   await truncateAll();
-  await loginLimiter.delete('iphash:test1@x.test');
-  await loginLimiter.delete('iphash:test2@x.test');
-  await loginLimiter.delete('iphash:test3@x.test');
+  await loginIpOnlyLimiter.delete(ipH);
+  for (const e of [
+    'test1@x.test',
+    'test2@x.test',
+    'test3@x.test',
+    'lockd@x.test',
+    'multi@x.test',
+    'reset@x.test',
+    'timing@x.test',
+    'unknown@x.test',
+    'race4@x.test',
+  ]) {
+    await loginLimiter.delete(loginKey(e));
+  }
 });
-
-const REQ = { ip: '1.2.3.4', userAgent: 'UA' };
 
 describe('authorizeCredentials', () => {
   it("happy path : retourne l'user", async () => {
