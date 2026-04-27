@@ -3712,7 +3712,7 @@ git commit -m "feat(auth): add logout route + button (revokes all DB sessions)"
 - Create: `tests/e2e/helpers/totp.ts`
 - Create: `tests/e2e/helpers/db.ts`
 
-- [ ] **Step 21.1: Helpers E2E**
+- [x] **Step 21.1: Helpers E2E** — _`tests/e2e/helpers/totp.ts` adapté otplib v13 (generateSync + plugins, plan utilisait `authenticator.generate` v12 obsolète). `tests/e2e/helpers/db.ts` réécrit pour cleanup ciblé `@e2e.test` + flush `rl:*` + `2fa-replay:*` au lieu de `prisma.deleteMany()` qui aurait wiped la dev DB._
 
 `tests/e2e/helpers/totp.ts` :
 
@@ -3732,7 +3732,7 @@ export function getPrisma(): PrismaClient {
 }
 ```
 
-- [ ] **Step 21.2: Créer le spec E2E**
+- [x] **Step 21.2: Créer le spec E2E** — _Adaptations : URL post-login `/admin` puis `/` pour USER (pas `/`), OtpInput contrôlé via `keyboard.type` (pas `input[name="code"]`), texte du lien backup `Utiliser un code de récupération` (pas `code de secours`). Scénarios 3 et 4 assertent **état serveur** (audit + `session.pending2fa`) plutôt que l'URL — quirk update() JWT cookie tracké en security gap. Scénario 5 attend chaque POST `/api/auth/callback/credentials` avant le suivant (sinon `page.goto` abort la requête → DB intacte). 2 bugs Phase 1A trouvés au passage : i18n flat-dotted keys (`submit.pending` etc.) que next-intl rejette → renamed camelCase ; OtpInput.handleChange `!next.includes('')` toujours faux → onComplete jamais déclenché → fix supprimé la condition morte._
 
 `tests/e2e/auth-1a.spec.ts` :
 
@@ -3907,7 +3907,7 @@ test('Scénario 5: lockout après 20 échecs', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 21.3: Lancer les E2E**
+- [x] **Step 21.3: Lancer les E2E** — _5/5 verts (~35s). Infra : `playwright.config.ts` ajoute globalSetup pour charger `.env.local` dans process.env du runner ; `webServer.command` force `NODE_ENV=development` (Playwright défaut `test` fait que Next dev skip `.env.local` → `CRYPTO_MASTER_KEY` divergent). DB partagée avec dev, isolation par préfixe d'email._
 
 ```bash
 pnpm e2e tests/e2e/auth-1a.spec.ts
@@ -3915,7 +3915,7 @@ pnpm e2e tests/e2e/auth-1a.spec.ts
 
 Expected: 5 scénarios verts.
 
-- [ ] **Step 21.4: Commit**
+- [x] **Step 21.4: Commit** — _2 commits : `8028e3f` `fix(ui): Phase 1A bugs surfaced by E2E (i18n + OtpInput onComplete)` + `d4bbf9a` `test(e2e): add 5 auth scenarios for Phase 1A`._
 
 ```bash
 git add tests/e2e/
