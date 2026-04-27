@@ -31,12 +31,14 @@ async function mkUser(opts: {
 beforeEach(async () => {
   await truncateAll();
   await loginIpOnlyLimiter.delete(ipH);
+  // Every email exercised in this file MUST be listed here so loginLimiter cleanup is effective.
   for (const e of [
     'test1@x.test',
     'test2@x.test',
     'test3@x.test',
     'lockd@x.test',
     'multi@x.test',
+    'noone@x.test',
     'reset@x.test',
     'timing@x.test',
     'unknown@x.test',
