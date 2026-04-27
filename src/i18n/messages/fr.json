@@ -9,5 +9,109 @@
     "loading": "Chargement…",
     "error": "Une erreur est survenue.",
     "retry": "Réessayer"
+  },
+  "auth": {
+    "layout": {
+      "invite": "Accès sur invitation uniquement."
+    },
+    "login": {
+      "title": "Connexion",
+      "description": "Accédez à votre bibliothèque",
+      "email": {
+        "label": "Adresse e-mail",
+        "placeholder": "vous@exemple.com"
+      },
+      "password": {
+        "label": "Mot de passe",
+        "toggleShow": "Afficher le mot de passe",
+        "toggleHide": "Masquer le mot de passe"
+      },
+      "submit": "Se connecter",
+      "submit.pending": "Connexion en cours…",
+      "forgotPassword": "Mot de passe oublié ?",
+      "forgotPassword.disabled": "Disponible dans une prochaine mise à jour",
+      "error": {
+        "invalid": "Identifiants incorrects ou compte verrouillé.",
+        "locked": "Compte temporairement verrouillé. Réessayez dans quelques minutes."
+      }
+    },
+    "tfa": {
+      "title": "Vérification en deux étapes",
+      "description": "Entrez le code à 6 chiffres de votre application d'authentification",
+      "codeLabel": "Code à 6 chiffres",
+      "submit": "Vérifier",
+      "submit.pending": "Vérification…",
+      "useBackupCode": "Utiliser un code de récupération",
+      "backToLogin": "Retour à la connexion",
+      "error": {
+        "invalid": "Code invalide.",
+        "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes."
+      }
+    },
+    "backup": {
+      "title": "Code de récupération",
+      "description": "Saisissez l'un de vos codes à usage unique",
+      "label": "Code de récupération",
+      "placeholder": "XXXX-XXXX",
+      "hint": "Code à 8 caractères, format XXXX-XXXX (lettres et chiffres)",
+      "submit": "Vérifier",
+      "submit.pending": "Vérification…",
+      "backToTotp": "Retour au code à 6 chiffres",
+      "error": {
+        "invalid": "Code invalide ou déjà utilisé.",
+        "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes."
+      }
+    },
+    "tfaSetup": {
+      "title": "Activer la 2FA",
+      "description": "Étape 1 sur 2 — scanner le QR code avec votre application d'authentification",
+      "qrAlt": "QR code à scanner avec votre application d'authentification",
+      "manualLabel": "Ou saisir manuellement le secret :",
+      "copySecret": "Copier le secret",
+      "copied": "Copié",
+      "codeLabel": "Code de vérification",
+      "submit": "Confirmer et continuer",
+      "submit.pending": "Vérification…",
+      "error": {
+        "invalid": "Code invalide. Vérifiez l'heure de votre appareil.",
+        "expired": "La session de configuration a expiré. Recommencez."
+      }
+    },
+    "recovery": {
+      "title": "Codes de récupération",
+      "description": "Étape 2 sur 2 — conserver ces codes en lieu sûr",
+      "warning": "Ne sera plus jamais affiché. À conserver maintenant.",
+      "copyAll": "Copier",
+      "copied": "Copié",
+      "download": "Télécharger",
+      "confirm": "J'ai sauvegardé ces codes en lieu sûr",
+      "continue": "Continuer",
+      "continuing": "Redirection…"
+    },
+    "banner": {
+      "urgent": {
+        "daysPlural": "2FA obligatoire — il vous reste {count} jours.",
+        "daysSingular": "2FA obligatoire — il vous reste {count} jour."
+      },
+      "lastDay": {
+        "hours": "2FA obligatoire — il vous reste {count}h."
+      },
+      "cta": "Activer maintenant",
+      "cta.urgent": "Activer obligatoirement"
+    }
+  },
+  "admin": {
+    "header": {
+      "phase": "Phase 1A",
+      "signOut": "Déconnexion"
+    },
+    "welcome": {
+      "title": "Bienvenue",
+      "subtitle": "Phase 1A — auth seulement",
+      "body": "Les fonctionnalités de gestion arriveront en Phase 2 (catalogue) et Phase 3 (emprunts).",
+      "todoTitle": "Pour l'instant, vous pouvez :",
+      "todoEnableTfa": "Activer la 2FA si ce n'est pas fait",
+      "todoSignOut": "Vous déconnecter"
+    }
   }
 }
