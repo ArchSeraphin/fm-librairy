@@ -136,6 +136,7 @@ export const authRouter = t.router({
         ipHash: ctx.session.ipHash,
         userAgentHash: ctx.session.userAgentHash,
       });
+      await db.user.update({ where: { id: ctx.user.id }, data: { lastLoginAt: new Date() } });
       await recordAudit({
         action: 'auth.2fa.backup_code_used',
         actor: { id: ctx.user.id },
