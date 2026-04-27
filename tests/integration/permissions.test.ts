@@ -1,11 +1,17 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { assertIsGlobalAdmin, assertGlobalAdmin2faTimerOk, PermissionError } from '@/lib/permissions';
+import {
+  assertIsGlobalAdmin,
+  assertGlobalAdmin2faTimerOk,
+  PermissionError,
+} from '@/lib/permissions';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 import { hashPassword } from '@/lib/password';
 
 const prisma = getTestPrisma();
 
-async function makeUser(opts: Partial<{ role: 'GLOBAL_ADMIN' | 'USER'; twoFactorEnabled: boolean; createdAt: Date }>) {
+async function makeUser(
+  opts: Partial<{ role: 'GLOBAL_ADMIN' | 'USER'; twoFactorEnabled: boolean; createdAt: Date }>,
+) {
   return prisma.user.create({
     data: {
       email: `u-${Date.now()}-${Math.random()}@x.test`,
@@ -52,7 +58,11 @@ describe('assertGlobalAdmin2faTimerOk', () => {
 
   it('jette si !twoFactorEnabled et > 7j', async () => {
     const eightDaysAgo = new Date(Date.now() - 8 * 24 * 3600 * 1000);
-    const u = await makeUser({ role: 'GLOBAL_ADMIN', twoFactorEnabled: false, createdAt: eightDaysAgo });
+    const u = await makeUser({
+      role: 'GLOBAL_ADMIN',
+      twoFactorEnabled: false,
+      createdAt: eightDaysAgo,
+    });
     await expect(assertGlobalAdmin2faTimerOk(u)).rejects.toThrow(PermissionError);
   });
 });

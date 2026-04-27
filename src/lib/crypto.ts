@@ -1,4 +1,11 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+} from 'node:crypto';
 import { getEnv } from './env';
 
 const ALGO = 'aes-256-gcm';
@@ -25,7 +32,8 @@ export function decryptSecret(payload: string): string {
   if (!ivB64 || !tagB64 || !dataB64) throw new Error('Invalid cipher payload');
   const iv = Buffer.from(ivB64, 'base64');
   const tag = Buffer.from(tagB64, 'base64');
-  if (tag.length !== TAG_LENGTH) throw new Error(`Invalid GCM tag length: expected ${TAG_LENGTH} bytes, got ${tag.length}`);
+  if (tag.length !== TAG_LENGTH)
+    throw new Error(`Invalid GCM tag length: expected ${TAG_LENGTH} bytes, got ${tag.length}`);
   const data = Buffer.from(dataB64, 'base64');
   const decipher = createDecipheriv(ALGO, deriveKey(), iv, { authTagLength: TAG_LENGTH });
   decipher.setAuthTag(tag);
@@ -56,5 +64,8 @@ export function constantTimeEqual(a: string, b: string): boolean {
 
 export function hashEmail(email: string): string {
   const salt = getEnv().IP_HASH_SALT; // réutilisé volontairement, c'est juste un anti-leak
-  return createHash('sha256').update(`email:${salt}:${email.toLowerCase()}`).digest('hex').slice(0, 32);
+  return createHash('sha256')
+    .update(`email:${salt}:${email.toLowerCase()}`)
+    .digest('hex')
+    .slice(0, 32);
 }

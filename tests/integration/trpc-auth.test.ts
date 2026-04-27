@@ -33,8 +33,12 @@ describe('auth.enroll2FA', () => {
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 't1', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: false,
+        sessionToken: 't1',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -57,8 +61,12 @@ describe('auth.confirm2FA', () => {
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 't2', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: false,
+        sessionToken: 't2',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -81,8 +89,12 @@ describe('auth.confirm2FA', () => {
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 't3', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: false,
+        sessionToken: 't3',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -93,17 +105,31 @@ describe('auth.confirm2FA', () => {
 describe('auth.verify2FA', () => {
   it('upgrade la session pending → full + log success', async () => {
     const u = await prisma.user.create({
-      data: { email: 'v@x.test', displayName: 'V', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'v@x.test',
+        displayName: 'V',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     const rawSecret = generateTotpSecret();
     const codes = generateBackupCodes();
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret(rawSecret), backupCodes: await hashBackupCodes(codes), confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret(rawSecret),
+        backupCodes: await hashBackupCodes(codes),
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 'pending-tok', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: true,
+        sessionToken: 'pending-tok',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -115,26 +141,44 @@ describe('auth.verify2FA', () => {
     expect(old).toBeNull();
     const fresh = await prisma.session.findUnique({ where: { sessionToken: out.sessionToken } });
     expect(fresh?.pending2fa).toBe(false);
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.2fa.success', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.2fa.success', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 
   it('refuse code invalide + log failure', async () => {
     const u = await prisma.user.create({
-      data: { email: 'vf@x.test', displayName: 'VF', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'vf@x.test',
+        displayName: 'VF',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret(generateTotpSecret()), backupCodes: [], confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret(generateTotpSecret()),
+        backupCodes: [],
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 'pending-tok-2', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: true,
+        sessionToken: 'pending-tok-2',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
     await expect(caller.auth.verify2FA({ code: '000000' })).rejects.toThrow();
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.2fa.failure', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.2fa.failure', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 });
@@ -142,16 +186,30 @@ describe('auth.verify2FA', () => {
 describe('auth.verifyBackupCode', () => {
   it('consomme un code de secours valide', async () => {
     const u = await prisma.user.create({
-      data: { email: 'bk@x.test', displayName: 'BK', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'bk@x.test',
+        displayName: 'BK',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     const codes = generateBackupCodes();
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret('x'), backupCodes: await hashBackupCodes(codes), confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret('x'),
+        backupCodes: await hashBackupCodes(codes),
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 'pending-bk', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: true,
+        sessionToken: 'pending-bk',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));

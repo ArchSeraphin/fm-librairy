@@ -4,8 +4,12 @@ import { t } from '../trpc';
 import { authedProcedure, pendingProcedure } from '../procedures';
 import { db } from '@/lib/db';
 import {
-  generateTotpSecret, buildTotpUri, verifyTotpCode,
-  generateBackupCodes, hashBackupCodes, consumeBackupCode,
+  generateTotpSecret,
+  buildTotpUri,
+  verifyTotpCode,
+  generateBackupCodes,
+  hashBackupCodes,
+  consumeBackupCode,
 } from '@/lib/totp';
 import { encryptSecret, decryptSecret } from '@/lib/crypto';
 import { recordAudit } from '@/lib/audit-log';
@@ -36,65 +40,61 @@ export const authRouter = t.router({
     };
   }),
 
-  confirm2FA: authedProcedure
-    .input(codeInput)
-    .mutation(async ({ ctx, input }) => {
-      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
-      if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no secret enrolled' });
-      const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
-      if (!ok) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'bad code' });
-      const codes = generateBackupCodes();
-      const hashes = await hashBackupCodes(codes);
-      await db.$transaction([
-        db.twoFactorSecret.update({
-          where: { userId: ctx.user.id },
-          data: { confirmedAt: new Date(), backupCodes: hashes },
-        }),
-        db.user.update({ where: { id: ctx.user.id }, data: { twoFactorEnabled: true } }),
-      ]);
-      await recordAudit({ action: 'auth.2fa.enrolled', actor: { id: ctx.user.id } });
-      return { backupCodes: codes };
-    }),
+  confirm2FA: authedProcedure.input(codeInput).mutation(async ({ ctx, input }) => {
+    const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+    if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no secret enrolled' });
+    const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+    if (!ok) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'bad code' });
+    const codes = generateBackupCodes();
+    const hashes = await hashBackupCodes(codes);
+    await db.$transaction([
+      db.twoFactorSecret.update({
+        where: { userId: ctx.user.id },
+        data: { confirmedAt: new Date(), backupCodes: hashes },
+      }),
+      db.user.update({ where: { id: ctx.user.id }, data: { twoFactorEnabled: true } }),
+    ]);
+    await recordAudit({ action: 'auth.2fa.enrolled', actor: { id: ctx.user.id } });
+    return { backupCodes: codes };
+  }),
 
-  verify2FA: pendingProcedure
-    .input(codeInput)
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await twoFactorLimiter.consume(ctx.session.id);
-      } catch {
-        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
-      }
-      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
-      if (!sec || !sec.confirmedAt) {
-        throw new TRPCError({ code: 'PRECONDITION_FAILED' });
-      }
-      const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
-      if (!ok) {
-        await recordAudit({
-          action: 'auth.2fa.failure',
-          actor: { id: ctx.user.id },
-          metadata: { method: 'totp' },
-        });
-        throw new TRPCError({ code: 'UNAUTHORIZED' });
-      }
-      if (!(await claimTotpCode(ctx.user.id, input.code))) {
-        await recordAudit({
-          action: 'auth.2fa.failure',
-          actor: { id: ctx.user.id },
-          metadata: { method: 'totp', reason: 'replay' },
-        });
-        throw new TRPCError({ code: 'UNAUTHORIZED' });
-      }
-      const adapter = createSessionAdapter(db);
-      const fresh = await adapter.upgradePendingSession({
-        oldSessionId: ctx.session.id,
-        ipHash: ctx.session.ipHash,
-        userAgentHash: ctx.session.userAgentHash,
+  verify2FA: pendingProcedure.input(codeInput).mutation(async ({ ctx, input }) => {
+    try {
+      await twoFactorLimiter.consume(ctx.session.id);
+    } catch {
+      throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+    }
+    const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+    if (!sec || !sec.confirmedAt) {
+      throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+    }
+    const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+    if (!ok) {
+      await recordAudit({
+        action: 'auth.2fa.failure',
+        actor: { id: ctx.user.id },
+        metadata: { method: 'totp' },
       });
-      await db.user.update({ where: { id: ctx.user.id }, data: { lastLoginAt: new Date() } });
-      await recordAudit({ action: 'auth.2fa.success', actor: { id: ctx.user.id } });
-      return { ok: true, sessionToken: fresh.sessionToken };
-    }),
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    if (!(await claimTotpCode(ctx.user.id, input.code))) {
+      await recordAudit({
+        action: 'auth.2fa.failure',
+        actor: { id: ctx.user.id },
+        metadata: { method: 'totp', reason: 'replay' },
+      });
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    const adapter = createSessionAdapter(db);
+    const fresh = await adapter.upgradePendingSession({
+      oldSessionId: ctx.session.id,
+      ipHash: ctx.session.ipHash,
+      userAgentHash: ctx.session.userAgentHash,
+    });
+    await db.user.update({ where: { id: ctx.user.id }, data: { lastLoginAt: new Date() } });
+    await recordAudit({ action: 'auth.2fa.success', actor: { id: ctx.user.id } });
+    return { ok: true, sessionToken: fresh.sessionToken };
+  }),
 
   verifyBackupCode: pendingProcedure
     .input(z.object({ code: z.string().regex(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/) }))

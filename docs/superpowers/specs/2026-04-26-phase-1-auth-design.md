@@ -10,7 +10,7 @@
 
 Cette phase livre un système d'authentification multi-utilisateurs avec 2FA TOTP, invitations cryptographiques, reset password, sessions DB, rate limiting, et permissions à 3 couches branchées sur AuditLog. Elle implémente les risques A1-A8, B1, B3, et la partie auth de H3 du modèle de risque (Annexe A du design global).
 
-**Critère de fin de Phase 1** (issu du design global) : *« flux invitation → création → 2FA → login fonctionnel ; toutes tentatives non autorisées renvoient 403 + AuditLog »*.
+**Critère de fin de Phase 1** (issu du design global) : _« flux invitation → création → 2FA → login fonctionnel ; toutes tentatives non autorisées renvoient 403 + AuditLog »_.
 
 Phase 1 étant cotée `L`, elle est découpée en trois sous-phases livrables indépendamment, dans l'ordre suivant :
 
@@ -251,23 +251,24 @@ Cœur technique de la Phase 1.
 // src/server/auth/config.ts
 export const authConfig: NextAuthConfig = {
   adapter: PrismaSessionAdapter(prisma),
-  session: { strategy: "database" },
-  pages: { signIn: "/login", error: "/login" },
+  session: { strategy: 'database' },
+  pages: { signIn: '/login', error: '/login' },
   cookies: {
     sessionToken: {
-      name: "biblioshare.session",
+      name: 'biblioshare.session',
       options: {
         httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
       },
     },
   },
   callbacks: { session: attachContext },
   events: {
-    signIn:  ({ user })    => recordAudit({ action: "auth.login.success", actor: { id: user.id } }),
-    signOut: ({ session }) => recordAudit({ action: "auth.session.revoked", actor: { id: session.userId } }),
+    signIn: ({ user }) => recordAudit({ action: 'auth.login.success', actor: { id: user.id } }),
+    signOut: ({ session }) =>
+      recordAudit({ action: 'auth.session.revoked', actor: { id: session.userId } }),
   },
   providers: [credentialsProvider],
 };
@@ -299,17 +300,17 @@ authorize: async (creds, req) => {
   const user = await prisma.user.findUnique({ where: { email } });
   await constantTimeDelay(150); // mitigation A2
 
-  if (!user || user.status !== "ACTIVE") {
+  if (!user || user.status !== 'ACTIVE') {
     await recordAudit({
-      action: "auth.login.failure",
-      target: { type: "EMAIL", id: hashEmail(email) },
-      metadata: { reason: "unknown_or_suspended" },
+      action: 'auth.login.failure',
+      target: { type: 'EMAIL', id: hashEmail(email) },
+      metadata: { reason: 'unknown_or_suspended' },
     });
     return null;
   }
 
   if (user.lockedUntil && user.lockedUntil > new Date()) {
-    await recordAudit({ action: "auth.login.locked", actor: { id: user.id } });
+    await recordAudit({ action: 'auth.login.locked', actor: { id: user.id } });
     return null;
   }
 
@@ -317,16 +318,16 @@ authorize: async (creds, req) => {
   if (!valid) {
     await incrementFailedAttempts(user.id); // 20 → lockedUntil = now + 1h
     await recordAudit({
-      action: "auth.login.failure",
+      action: 'auth.login.failure',
       actor: { id: user.id },
-      metadata: { reason: "bad_password" },
+      metadata: { reason: 'bad_password' },
     });
     return null;
   }
 
   await resetFailedAttempts(user.id);
   return { id: user.id, email: user.email, name: user.displayName };
-}
+};
 ```
 
 Garanties : timing uniforme user-existe vs user-inconnu (A2), échecs comptés en DB pour lockout long (A1), rate limit Redis pour lockout court (A1), AuditLog systématique.
@@ -343,11 +344,11 @@ verify2FA: pendingProcedure
     const ok = await verifyTotp(ctx.session.userId, input.code);
     if (!ok) {
       await recordAudit({
-        action: "auth.2fa.failure",
+        action: 'auth.2fa.failure',
         actor: { id: ctx.session.userId },
-        metadata: { method: "totp" },
+        metadata: { method: 'totp' },
       });
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Code invalide" });
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Code invalide' });
     }
 
     // Upgrade session (regen ID = mitigation A7)
@@ -367,7 +368,7 @@ verify2FA: pendingProcedure
     ]);
     setSessionCookie(ctx.res, newToken);
 
-    await recordAudit({ action: "auth.2fa.success", actor: { id: ctx.session.userId } });
+    await recordAudit({ action: 'auth.2fa.success', actor: { id: ctx.session.userId } });
     await prisma.user.update({
       where: { id: ctx.session.userId },
       data: { lastLoginAt: new Date() },
@@ -380,13 +381,14 @@ verify2FA: pendingProcedure
 
 ### 4.5 États de session — state machine
 
-| État              | `pending2fa` | Routes/procedures autorisées                                                                  |
-| ----------------- | ------------ | --------------------------------------------------------------------------------------------- |
-| **none**          | —            | Routes publiques, `/login`, `/api/auth/*`, `/invitations/[token]`, `/password/*` (1B+)         |
+| État              | `pending2fa` | Routes/procedures autorisées                                                                       |
+| ----------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| **none**          | —            | Routes publiques, `/login`, `/api/auth/*`, `/invitations/[token]`, `/password/*` (1B+)             |
 | **pending**       | `true`       | `/login/2fa`, `/login/2fa/backup`, `/logout`, procedures `auth.verify2FA`, `auth.verifyBackupCode` |
-| **authenticated** | `false`      | Tout ce que les permissions du user autorisent                                                |
+| **authenticated** | `false`      | Tout ce que les permissions du user autorisent                                                     |
 
 Enforcement :
+
 - Middleware Next : redirect `/login/2fa` si pending sur URL non allowlistée.
 - tRPC `pendingProcedure` n'accepte que pending=true ; `authedProcedure` n'accepte que pending=false.
 
@@ -401,9 +403,9 @@ Dans `middleware.ts` :
 ```ts
 const elapsed = Date.now() - user.createdAt.getTime();
 const SEVEN_DAYS = 7 * 24 * 3600 * 1000;
-if (user.role === "GLOBAL_ADMIN" && !user.twoFactorEnabled && elapsed > SEVEN_DAYS) {
+if (user.role === 'GLOBAL_ADMIN' && !user.twoFactorEnabled && elapsed > SEVEN_DAYS) {
   if (!isAllowlistPath(req.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL("/2fa/setup", req.url));
+    return NextResponse.redirect(new URL('/2fa/setup', req.url));
   }
 }
 ```
@@ -423,39 +425,40 @@ Implémentation de l'ADR 0003 — defense in depth pour empêcher qu'un oubli à
 export const publicProcedure = t.procedure;
 
 export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.session || ctx.session.pending2fa) throw new TRPCError({ code: "UNAUTHORIZED" });
+  if (!ctx.session || ctx.session.pending2fa) throw new TRPCError({ code: 'UNAUTHORIZED' });
   return next({ ctx: { ...ctx, session: ctx.session, user: ctx.user! } });
 });
 
 export const pendingProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.session || !ctx.session.pending2fa) throw new TRPCError({ code: "FORBIDDEN" });
+  if (!ctx.session || !ctx.session.pending2fa) throw new TRPCError({ code: 'FORBIDDEN' });
   return next({ ctx });
 });
 
 export const globalAdminProcedure = authedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.user.role !== "GLOBAL_ADMIN") {
+  if (ctx.user.role !== 'GLOBAL_ADMIN') {
     await recordAudit({
-      action: "permission.denied",
+      action: 'permission.denied',
       actor: { id: ctx.user.id },
-      metadata: { required: "GLOBAL_ADMIN" },
+      metadata: { required: 'GLOBAL_ADMIN' },
     });
-    throw new TRPCError({ code: "FORBIDDEN" });
+    throw new TRPCError({ code: 'FORBIDDEN' });
   }
   // Double-rideau forçage 2FA (cf. §4.7) — cohérent avec le middleware Next
   const elapsed = Date.now() - ctx.user.createdAt.getTime();
   if (!ctx.user.twoFactorEnabled && elapsed > SEVEN_DAYS_MS) {
     await recordAudit({
-      action: "permission.denied",
+      action: 'permission.denied',
       actor: { id: ctx.user.id },
-      metadata: { reason: "global_admin_2fa_overdue" },
+      metadata: { reason: 'global_admin_2fa_overdue' },
     });
-    throw new TRPCError({ code: "FORBIDDEN" });
+    throw new TRPCError({ code: 'FORBIDDEN' });
   }
   return next({ ctx });
 });
 ```
 
 **Lint rule custom à ajouter dans `eslint-rules/`** :
+
 - `no-bare-trpc-procedure` : refuse `t.procedure.query/.mutation` sans wrapper d'auth (sauf allowlist : `/api/auth/*`, procedures `health`).
 - `no-direct-audit-write` : refuse `prisma.auditLog.create` direct, force le passage par `recordAudit`.
 
@@ -464,18 +467,18 @@ export const globalAdminProcedure = authedProcedure.use(async ({ ctx, next }) =>
 ```ts
 // src/lib/permissions.ts
 export async function assertCanInviteToLibrary(actor: User, libraryId: string) {
-  if (actor.role === "GLOBAL_ADMIN") return;
+  if (actor.role === 'GLOBAL_ADMIN') return;
   const member = await prisma.libraryMember.findUnique({
     where: { userId_libraryId: { userId: actor.id, libraryId } },
   });
-  if (!member || member.role !== "LIBRARY_ADMIN") {
+  if (!member || member.role !== 'LIBRARY_ADMIN') {
     await recordAudit({
-      action: "permission.denied",
+      action: 'permission.denied',
       actor: { id: actor.id },
-      target: { type: "LIBRARY", id: libraryId },
-      metadata: { perm: "invite" },
+      target: { type: 'LIBRARY', id: libraryId },
+      metadata: { perm: 'invite' },
     });
-    throw new PermissionError("invite_to_library");
+    throw new PermissionError('invite_to_library');
   }
 }
 // + un assertCan* par cellule de la matrice ADR 0003 §4.2
@@ -493,20 +496,34 @@ Lint rule custom (déjà présente depuis Phase 0, à vérifier en 1A) interdisa
 // src/lib/audit-log.ts
 export type AuditAction =
   // 1A
-  | "auth.login.success" | "auth.login.failure" | "auth.login.locked"
-  | "auth.session.created" | "auth.session.revoked" | "auth.session.expired"
-  | "auth.2fa.enrolled" | "auth.2fa.disabled" | "auth.2fa.success" | "auth.2fa.failure"
-  | "auth.2fa.backup_code_used" | "auth.2fa.recovery_codes_regenerated"
-  | "permission.denied"
+  | 'auth.login.success'
+  | 'auth.login.failure'
+  | 'auth.login.locked'
+  | 'auth.session.created'
+  | 'auth.session.revoked'
+  | 'auth.session.expired'
+  | 'auth.2fa.enrolled'
+  | 'auth.2fa.disabled'
+  | 'auth.2fa.success'
+  | 'auth.2fa.failure'
+  | 'auth.2fa.backup_code_used'
+  | 'auth.2fa.recovery_codes_regenerated'
+  | 'permission.denied'
   // 1B
-  | "auth.password.reset_requested" | "auth.password.reset_consumed" | "auth.password.changed"
-  | "auth.invitation.created" | "auth.invitation.consumed"
-  | "auth.invitation.expired" | "auth.invitation.revoked"
+  | 'auth.password.reset_requested'
+  | 'auth.password.reset_consumed'
+  | 'auth.password.changed'
+  | 'auth.invitation.created'
+  | 'auth.invitation.consumed'
+  | 'auth.invitation.expired'
+  | 'auth.invitation.revoked'
   // 1C
-  | "admin.user.suspended" | "admin.user.reactivated"
-  | "admin.user.deleted" | "admin.user.role_changed";
+  | 'admin.user.suspended'
+  | 'admin.user.reactivated'
+  | 'admin.user.deleted'
+  | 'admin.user.role_changed';
 
-export type AuditTargetType = "USER" | "LIBRARY" | "INVITATION" | "SESSION" | "EMAIL" | "AUTH";
+export type AuditTargetType = 'USER' | 'LIBRARY' | 'INVITATION' | 'SESSION' | 'EMAIL' | 'AUTH';
 
 export async function recordAudit(input: {
   action: AuditAction;
@@ -518,6 +535,7 @@ export async function recordAudit(input: {
 ```
 
 Garanties :
+
 - Hash IP+UA avec sels rotatifs (`lib/crypto.ts`).
 - **Insertion non bloquante par défaut** (fire-and-forget avec `await`, erreur loggée pino, jamais propagée — un fail audit ne casse pas l'action user).
 - **Exception synchrone bloquante** : `permission.denied` et `auth.2fa.failure` — si l'écriture échoue, on renvoie 503 (pas de zone aveugle sur les tentatives).
@@ -525,11 +543,11 @@ Garanties :
 
 ### 5.5 Cleanup jobs (BullMQ, worker existant)
 
-| Job                          | Cadence    | Action                                                                              |
-| ---------------------------- | ---------- | ----------------------------------------------------------------------------------- |
-| `cleanup-expired-sessions`   | toutes 1h  | Supprime `Session` où `expiresAt < now` ou `lastActivityAt < now - 7d`              |
-| `cleanup-expired-tokens`     | toutes 1h  | Supprime `Invitation` et `PasswordResetToken` expirés ; log `auth.invitation.expired` pour chaque invitation expirée non consumée |
-| `rotate-hash-salts`          | mensuel    | Phase 1A : warning si TTL > 30j. Implémentation rotation = Phase 8.                 |
+| Job                        | Cadence   | Action                                                                                                                            |
+| -------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `cleanup-expired-sessions` | toutes 1h | Supprime `Session` où `expiresAt < now` ou `lastActivityAt < now - 7d`                                                            |
+| `cleanup-expired-tokens`   | toutes 1h | Supprime `Invitation` et `PasswordResetToken` expirés ; log `auth.invitation.expired` pour chaque invitation expirée non consumée |
+| `rotate-hash-salts`        | mensuel   | Phase 1A : warning si TTL > 30j. Implémentation rotation = Phase 8.                                                               |
 
 ---
 
@@ -540,8 +558,8 @@ Garanties :
 `src/lib/rate-limit.ts`. Backend Redis (déjà présent depuis Phase 0). Lib : `rate-limiter-flexible`.
 
 ```ts
-import { RateLimiterRedis, RateLimiterMemory } from "rate-limiter-flexible";
-import { redis } from "./redis";
+import { RateLimiterRedis, RateLimiterMemory } from 'rate-limiter-flexible';
+import { redis } from './redis';
 
 // Insurance fallback : si Redis tombe, on continue à limiter en mémoire locale.
 // Évite le mode "fail open" (laisser tout passer en cas de panne = trou de sécu).
@@ -551,42 +569,51 @@ const memInsurance = (points: number, duration: number) =>
 const baseOpts = { storeClient: redis, useRedisPackage: true };
 
 export const loginLimiter = new RateLimiterRedis({
-  ...baseOpts, keyPrefix: "rl:login",
-  points: 5, duration: 15 * 60,
+  ...baseOpts,
+  keyPrefix: 'rl:login',
+  points: 5,
+  duration: 15 * 60,
   blockDuration: 60 * 60,
   insuranceLimiter: memInsurance(5, 15 * 60),
 });
 
 export const twoFactorLimiter = new RateLimiterRedis({
-  ...baseOpts, keyPrefix: "rl:2fa",
-  points: 5, duration: 5 * 60,
+  ...baseOpts,
+  keyPrefix: 'rl:2fa',
+  points: 5,
+  duration: 5 * 60,
   blockDuration: 15 * 60,
   insuranceLimiter: memInsurance(5, 5 * 60),
 });
 
 export const resetRequestLimiter = new RateLimiterRedis({
-  ...baseOpts, keyPrefix: "rl:reset",
-  points: 3, duration: 60 * 60,
+  ...baseOpts,
+  keyPrefix: 'rl:reset',
+  points: 3,
+  duration: 60 * 60,
   insuranceLimiter: memInsurance(3, 60 * 60),
 });
 
 export const invitationLimiter = new RateLimiterRedis({
-  ...baseOpts, keyPrefix: "rl:invite",
-  points: 10, duration: 60 * 60,
+  ...baseOpts,
+  keyPrefix: 'rl:invite',
+  points: 10,
+  duration: 60 * 60,
   insuranceLimiter: memInsurance(10, 60 * 60),
 });
 ```
 
 **Stratégie de clé** :
 
-| Limiteur     | Clé                                | Raison                                                           |
-| ------------ | ---------------------------------- | ---------------------------------------------------------------- |
-| login        | `${ipHash}:${email.toLowerCase()}` | Bruteforce d'un compte ET d'une IP qui scanne des emails         |
-| 2fa          | `${sessionId}`                     | Session pending unique par tentative, lié à l'utilisateur        |
-| reset        | `${email.toLowerCase()}`           | Réponse uniforme 200 toujours, quota silencieux                  |
-| invitation   | `${userId}`                        | Compte propre à l'inviteur, indépendant de l'IP                  |
+| Limiteur   | Clé                                | Raison                                                    |
+| ---------- | ---------------------------------- | --------------------------------------------------------- |
+| login      | `${ipHash}:${email.toLowerCase()}` | Bruteforce d'un compte ET d'une IP qui scanne des emails  |
+| 2fa        | `${sessionId}`                     | Session pending unique par tentative, lié à l'utilisateur |
+| reset      | `${email.toLowerCase()}`           | Réponse uniforme 200 toujours, quota silencieux           |
+| invitation | `${userId}`                        | Compte propre à l'inviteur, indépendant de l'IP           |
 
 **Comportement quota atteint** :
+
 - login : `auth.login.locked` audit, retour `null` dans `authorize` (= échec uniforme).
 - 2fa : 429 dans la procedure tRPC, message générique.
 - reset : `auth.password.reset_requested` toujours loggué avec metadata `rate_limited: true`, **réponse HTTP 200 toujours** (mitigation A2).
@@ -599,17 +626,20 @@ export const invitationLimiter = new RateLimiterRedis({
 `scripts/bootstrap-admin.ts`, exécuté via `pnpm bootstrap:admin`.
 
 **Comportement** :
+
 - **Idempotent par défaut** : refuse si un GLOBAL_ADMIN existe.
 - **`--force` = mode récupération** : promeut un user existant (par email) ; ne crée pas. Trace dans AuditLog avec `metadata.source = "bootstrap_force"`.
 - Mot de passe **affiché une seule fois** dans stdout. Loggé pino avec `redact` actif.
 - Pas de log fichier du password.
 
 **Variables d'env** :
+
 - `BOOTSTRAP_ADMIN_EMAIL` (requis)
 - `BOOTSTRAP_ADMIN_PASSWORD` (optionnel, généré aléatoire 24 chars si absent)
 - `BOOTSTRAP_ADMIN_NAME` (optionnel, défaut `"Admin"`)
 
 **`package.json`** :
+
 ```json
 "scripts": {
   "bootstrap:admin": "tsx scripts/bootstrap-admin.ts"
@@ -636,17 +666,18 @@ Aucun mockup dans ce document. Les wireframes sont produits en début de chaque 
 
 ### 7.1 Sous-phase 1A — pages auth de base
 
-| Route                         | Sujet              | Contenu informationnel                                                                                                | Sortie                          |
-| ----------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `/login`                      | Login étape 1      | Email + password + lien « Mot de passe oublié ? » (1B)                                                                | OK→`/login/2fa` ou `/`          |
-| `/login/2fa`                  | Challenge TOTP     | Champ 6 chiffres, lien « Utiliser un code de secours »                                                                | OK→`/`                          |
-| `/login/2fa/backup`           | Code de secours    | Champ alphanumérique, warning « ce code sera invalidé »                                                               | OK→`/`                          |
-| `/2fa/setup`                  | Enrolment          | QR code + champ confirmation + secret en texte (fallback)                                                             | OK→`/2fa/setup/recovery-codes`  |
-| `/2fa/setup/recovery-codes`   | 8 codes            | Liste copiable + bouton télécharger .txt + checkbox « j'ai sauvegardé »                                               | OK→`/`                          |
-| `/admin` (placeholder)        | Page Admin global  | Stub minimal en 1A — « Bienvenue ». Étoffé en 1C.                                                                     | —                               |
-| `/logout`                     | Déconnexion        | Server Action POST, supprime session, redirect `/login`                                                               | →`/login`                       |
+| Route                       | Sujet             | Contenu informationnel                                                  | Sortie                         |
+| --------------------------- | ----------------- | ----------------------------------------------------------------------- | ------------------------------ |
+| `/login`                    | Login étape 1     | Email + password + lien « Mot de passe oublié ? » (1B)                  | OK→`/login/2fa` ou `/`         |
+| `/login/2fa`                | Challenge TOTP    | Champ 6 chiffres, lien « Utiliser un code de secours »                  | OK→`/`                         |
+| `/login/2fa/backup`         | Code de secours   | Champ alphanumérique, warning « ce code sera invalidé »                 | OK→`/`                         |
+| `/2fa/setup`                | Enrolment         | QR code + champ confirmation + secret en texte (fallback)               | OK→`/2fa/setup/recovery-codes` |
+| `/2fa/setup/recovery-codes` | 8 codes           | Liste copiable + bouton télécharger .txt + checkbox « j'ai sauvegardé » | OK→`/`                         |
+| `/admin` (placeholder)      | Page Admin global | Stub minimal en 1A — « Bienvenue ». Étoffé en 1C.                       | —                              |
+| `/logout`                   | Déconnexion       | Server Action POST, supprime session, redirect `/login`                 | →`/login`                      |
 
 **Transitions enforcement** :
+
 - Pas de session → `/login`
 - Session pending2fa → `/login/2fa` (sauf si déjà sur la page)
 - Session full + Admin global + pas de 2FA + > 7j → `/2fa/setup`
@@ -654,26 +685,27 @@ Aucun mockup dans ce document. Les wireframes sont produits en début de chaque 
 
 ### 7.2 Sous-phase 1B — invitations & reset
 
-| Route                       | Sujet                | Contenu informationnel                                                                          | Sortie                |
-| --------------------------- | -------------------- | ----------------------------------------------------------------------------------------------- | --------------------- |
-| `/invitations/[token]`      | Création de compte   | Email pré-rempli read-only + champs displayName/password/confirm. Texte invitation.             | OK→`/2fa/setup` ou `/` |
-| `/password/forgot`          | Demande reset        | Champ email + bouton. Réponse uniforme « Si l'email existe, vous recevrez un lien. »            | →message statique     |
-| `/password/reset/[token]`   | Saisie nouveau MdP   | Champs new+confirm avec règles (12 chars min, classes mixtes ou passphrase).                    | OK→`/login`           |
+| Route                     | Sujet              | Contenu informationnel                                                               | Sortie                 |
+| ------------------------- | ------------------ | ------------------------------------------------------------------------------------ | ---------------------- |
+| `/invitations/[token]`    | Création de compte | Email pré-rempli read-only + champs displayName/password/confirm. Texte invitation.  | OK→`/2fa/setup` ou `/` |
+| `/password/forgot`        | Demande reset      | Champ email + bouton. Réponse uniforme « Si l'email existe, vous recevrez un lien. » | →message statique      |
+| `/password/reset/[token]` | Saisie nouveau MdP | Champs new+confirm avec règles (12 chars min, classes mixtes ou passphrase).         | OK→`/login`            |
 
 **Cas d'erreur explicites** :
+
 - Token invitation expiré/consommé → page « Lien expiré ou déjà utilisé. Demandez à l'inviteur. »
 - Token reset expiré/consommé → idem.
 - Pas de leak d'info sur `/password/forgot`.
 
 ### 7.3 Sous-phase 1C — panel Admin & gestion compte
 
-| Route                  | Sujet                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------- |
-| `/account/security`    | Liste sessions actives (révoquer), regen recovery codes, désactiver 2FA, changer MdP            |
-| `/admin`               | Dashboard : nb users, nb invitations actives, derniers events audit                             |
-| `/admin/users`         | Table users : suspendre/réactiver/supprimer/changer rôle, créer invitation directe              |
-| `/admin/invitations`   | Table invitations : revoke, voir statut, renvoyer email                                         |
-| `/admin/audit-log`     | Table paginée filtrable par action/actor/target/date                                            |
+| Route                | Sujet                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `/account/security`  | Liste sessions actives (révoquer), regen recovery codes, désactiver 2FA, changer MdP |
+| `/admin`             | Dashboard : nb users, nb invitations actives, derniers events audit                  |
+| `/admin/users`       | Table users : suspendre/réactiver/supprimer/changer rôle, créer invitation directe   |
+| `/admin/invitations` | Table invitations : revoke, voir statut, renvoyer email                              |
+| `/admin/audit-log`   | Table paginée filtrable par action/actor/target/date                                 |
 
 ### 7.4 Conventions UI Phase 1
 
@@ -691,37 +723,37 @@ TDD obligatoire (ADR + conventions Phase 0).
 
 ### 8.1 Pyramide
 
-| Niveau          | Outil                                                                          | Cible                                                                  | Coverage cible       |
-| --------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------- |
-| **Unit**        | Vitest                                                                         | Modules `src/lib/*` purs (pas de DB, pas de Next)                      | ≥ 90 %               |
-| **Integration** | Vitest + testcontainers (`@testcontainers/postgresql`, `@testcontainers/redis`) | Procedures tRPC, middlewares, Auth.js, AuditLog, rate limiters réels   | ≥ 80 %               |
-| **E2E**         | Playwright                                                                     | Flux utilisateur de bout en bout                                       | scénarios listés 8.4 |
+| Niveau          | Outil                                                                           | Cible                                                                | Coverage cible       |
+| --------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------- |
+| **Unit**        | Vitest                                                                          | Modules `src/lib/*` purs (pas de DB, pas de Next)                    | ≥ 90 %               |
+| **Integration** | Vitest + testcontainers (`@testcontainers/postgresql`, `@testcontainers/redis`) | Procedures tRPC, middlewares, Auth.js, AuditLog, rate limiters réels | ≥ 80 %               |
+| **E2E**         | Playwright                                                                      | Flux utilisateur de bout en bout                                     | scénarios listés 8.4 |
 
 **Setup testcontainers** : `tests/setup/containers.ts` démarre PG + Redis isolés par worker Vitest. Migrations Prisma rejouées par worker. Cleanup truncate entre tests. Pas de mocks Prisma — la matrice de permissions doit être testée contre la vraie DB.
 
 ### 8.2 Modules unit-testés (Phase 1A)
 
-| Module                  | Tests clés                                                                                                              |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `lib/crypto.ts`         | AES-256-GCM round-trip, HMAC déterministe, hash IP avec sel constant déterministe, hash IP différent entre deux sels    |
-| `lib/tokens.ts`         | Génération 32 octets random unique sur 10k itérations, hash argon2 vérifie correctement, token tampered rejette         |
-| `lib/password.ts`       | Hash argon2id avec params spec (19 MB / 2 / 1), verify pass valide, verify fail sur tamper                              |
-| `lib/totp.ts`           | Gen secret 20 octets, verify code valide ±1 step, code expiré refusé, backup codes : gen 8, hash, verify retire le code |
-| `lib/rate-limit.ts`     | Sliding window correct, lockout après 20, fallback memory en panne Redis, clé composite IP+email                        |
-| `lib/audit-log.ts`      | Action typée enforcée, redact metadata sensibles (password, secret, token), hash IP avec sel courant                    |
-| `lib/permissions.ts`    | `assertCan*` pour chaque cellule de la matrice §4.2 ADR 0003 Phase 1A (auth+invitations only)                           |
+| Module               | Tests clés                                                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `lib/crypto.ts`      | AES-256-GCM round-trip, HMAC déterministe, hash IP avec sel constant déterministe, hash IP différent entre deux sels    |
+| `lib/tokens.ts`      | Génération 32 octets random unique sur 10k itérations, hash argon2 vérifie correctement, token tampered rejette         |
+| `lib/password.ts`    | Hash argon2id avec params spec (19 MB / 2 / 1), verify pass valide, verify fail sur tamper                              |
+| `lib/totp.ts`        | Gen secret 20 octets, verify code valide ±1 step, code expiré refusé, backup codes : gen 8, hash, verify retire le code |
+| `lib/rate-limit.ts`  | Sliding window correct, lockout après 20, fallback memory en panne Redis, clé composite IP+email                        |
+| `lib/audit-log.ts`   | Action typée enforcée, redact metadata sensibles (password, secret, token), hash IP avec sel courant                    |
+| `lib/permissions.ts` | `assertCan*` pour chaque cellule de la matrice §4.2 ADR 0003 Phase 1A (auth+invitations only)                           |
 
 ### 8.3 Tests d'intégration (Phase 1A)
 
-| Cible                                | Test                                                                                          |
-| ------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `auth.login` (Credentials authorize) | Happy path, bad password, user suspendu, user inconnu, timing constant ±20 ms                  |
+| Cible                                | Test                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `auth.login` (Credentials authorize) | Happy path, bad password, user suspendu, user inconnu, timing constant ±20 ms                    |
 | Session creation (adapter)           | User avec 2FA → `pending2fa=true`. Sans 2FA → `pending2fa=false`. Token unique sur 1000 sessions |
-| `auth.verify2FA` procedure           | Code valide → upgrade session. Code invalide → 401 + audit. Backup code valide → retiré        |
-| `requireAuth` middleware tRPC        | Pas de session → 401. Pending → 401. Full → pass. Expirée → 401                                |
-| `requireGlobalAdmin`                 | User normal → 403 + `permission.denied` audit. Admin global sans 2FA après 7j → 403           |
-| Bootstrap CLI                        | Premier run → user créé. Second run → refus. `--force` sur user existant → promotion + audit  |
-| Lockout                              | 20 échecs login → `lockedUntil` posé. 21ᵉ tentative refusée même avec bon password            |
+| `auth.verify2FA` procedure           | Code valide → upgrade session. Code invalide → 401 + audit. Backup code valide → retiré          |
+| `requireAuth` middleware tRPC        | Pas de session → 401. Pending → 401. Full → pass. Expirée → 401                                  |
+| `requireGlobalAdmin`                 | User normal → 403 + `permission.denied` audit. Admin global sans 2FA après 7j → 403              |
+| Bootstrap CLI                        | Premier run → user créé. Second run → refus. `--force` sur user existant → promotion + audit     |
+| Lockout                              | 20 échecs login → `lockedUntil` posé. 21ᵉ tentative refusée même avec bon password               |
 
 ### 8.4 E2E Playwright (Phase 1A) — 5 scénarios
 
@@ -735,16 +767,16 @@ TDD obligatoire (ADR + conventions Phase 0).
 
 `tests/attacks/auth.test.ts`, exécuté dans la suite intégration.
 
-| #   | Risque mappé      | Test                                                                                                |
-| --- | ----------------- | --------------------------------------------------------------------------------------------------- |
-| A1  | Bruteforce login  | 5 tentatives < 15 min → 6ᵉ rate limited. Reset après TTL. 20 cumulés → `lockedUntil` 1h            |
-| A1b | Bruteforce 2FA    | 5 codes invalides en 5 min sur même session pending → block. Sessions différentes → indépendant     |
-| A2  | Énumération       | Login user inconnu vs user connu mauvais MdP : timing identique ±20 ms (1000 itérations)           |
-| A3  | Cookie hijack     | Modifier cookie session → rejette. UA hash différent → log + rejette                                |
-| A5  | 2FA downgrade     | Désactivation sans MdP → refuse. Sans code TOTP → refuse. Admin global → refuse même avec creds    |
-| A6  | TOTP DB leak      | DB read direct du `secretCipher` → pas exploitable sans `MASTER_ENCRYPTION_KEY` en env             |
-| A7  | Session fixation  | Cookie session pré-existant avant login → après login, ID différent. Vieille session supprimée    |
-| A8  | CSRF              | POST `/api/auth/callback/credentials` sans token → refuse. Server Action sans token → refuse      |
+| #   | Risque mappé     | Test                                                                                            |
+| --- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| A1  | Bruteforce login | 5 tentatives < 15 min → 6ᵉ rate limited. Reset après TTL. 20 cumulés → `lockedUntil` 1h         |
+| A1b | Bruteforce 2FA   | 5 codes invalides en 5 min sur même session pending → block. Sessions différentes → indépendant |
+| A2  | Énumération      | Login user inconnu vs user connu mauvais MdP : timing identique ±20 ms (1000 itérations)        |
+| A3  | Cookie hijack    | Modifier cookie session → rejette. UA hash différent → log + rejette                            |
+| A5  | 2FA downgrade    | Désactivation sans MdP → refuse. Sans code TOTP → refuse. Admin global → refuse même avec creds |
+| A6  | TOTP DB leak     | DB read direct du `secretCipher` → pas exploitable sans `MASTER_ENCRYPTION_KEY` en env          |
+| A7  | Session fixation | Cookie session pré-existant avant login → après login, ID différent. Vieille session supprimée  |
+| A8  | CSRF             | POST `/api/auth/callback/credentials` sans token → refuse. Server Action sans token → refuse    |
 
 ### 8.6 Ordre d'attaque TDD pour 1A
 
@@ -806,19 +838,19 @@ Séquence stricte (chaque étape = test rouge → impl → vert) :
 
 Mapping vers Annexe A du design global.
 
-| #   | Risque                                                | Phase 1 | Statut design |
-| --- | ----------------------------------------------------- | ------- | ------------- |
-| A1  | Bruteforce login / 2FA                                | 1A      | §4.3, §6.1, §8.5 |
-| A2  | Énumération d'emails                                  | 1A+1B   | §4.3 (timing), §6.1 (reset), §8.5 |
-| A3  | Vol de session (cookie hijack)                        | 1A      | §2.2, §4.1, §4.2 |
-| A4  | Réutilisation magic link / reset token                | 1B      | §1.B (single-use, hashé) |
-| A5  | Contournement 2FA (downgrade)                         | 1A+1C   | §4.6, §8.5 |
-| A6  | Vol secret TOTP en DB                                 | 1A      | §3.1 (`lib/crypto.ts`), §8.5 |
-| A7  | Session fixation                                      | 1A      | §4.4 (regen ID), §8.5 |
-| A8  | CSRF                                                  | 1A      | §7.4, §8.5 |
-| B1  | Accès cross-bibliothèque (IDOR)                       | 1+2     | §5.3, lint rule Phase 0 |
-| B3  | Escalade via Admin Biblio                             | 1C      | §5.2, ADR 0003 |
-| H3  | Droit à l'effacement                                  | 1+8     | À cabler en 1C (cascade endpoint) |
+| #   | Risque                                 | Phase 1 | Statut design                     |
+| --- | -------------------------------------- | ------- | --------------------------------- |
+| A1  | Bruteforce login / 2FA                 | 1A      | §4.3, §6.1, §8.5                  |
+| A2  | Énumération d'emails                   | 1A+1B   | §4.3 (timing), §6.1 (reset), §8.5 |
+| A3  | Vol de session (cookie hijack)         | 1A      | §2.2, §4.1, §4.2                  |
+| A4  | Réutilisation magic link / reset token | 1B      | §1.B (single-use, hashé)          |
+| A5  | Contournement 2FA (downgrade)          | 1A+1C   | §4.6, §8.5                        |
+| A6  | Vol secret TOTP en DB                  | 1A      | §3.1 (`lib/crypto.ts`), §8.5      |
+| A7  | Session fixation                       | 1A      | §4.4 (regen ID), §8.5             |
+| A8  | CSRF                                   | 1A      | §7.4, §8.5                        |
+| B1  | Accès cross-bibliothèque (IDOR)        | 1+2     | §5.3, lint rule Phase 0           |
+| B3  | Escalade via Admin Biblio              | 1C      | §5.2, ADR 0003                    |
+| H3  | Droit à l'effacement                   | 1+8     | À cabler en 1C (cascade endpoint) |
 
 ---
 

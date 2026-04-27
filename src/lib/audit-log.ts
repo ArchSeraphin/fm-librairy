@@ -31,13 +31,7 @@ export type AuditAction =
   | 'admin.user.deleted'
   | 'admin.user.role_changed';
 
-export type AuditTargetType =
-  | 'USER'
-  | 'LIBRARY'
-  | 'INVITATION'
-  | 'SESSION'
-  | 'EMAIL'
-  | 'AUTH';
+export type AuditTargetType = 'USER' | 'LIBRARY' | 'INVITATION' | 'SESSION' | 'EMAIL' | 'AUTH';
 
 const SENSITIVE_KEYS = new Set([
   'password',

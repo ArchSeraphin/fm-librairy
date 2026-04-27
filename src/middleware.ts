@@ -3,13 +3,24 @@ import { auth } from '@/server/auth';
 import { db } from '@/lib/db';
 import { SEVEN_DAYS_MS } from '@/lib/permissions';
 
-const PUBLIC_PATHS = [
-  '/login', '/api/auth', '/_next', '/favicon.ico', '/fonts',
+const PUBLIC_PATHS = ['/login', '/api/auth', '/_next', '/favicon.ico', '/fonts'];
+
+const PENDING_ALLOWED = [
+  '/login/2fa',
+  '/login/2fa/backup',
+  '/api/auth',
+  '/api/trpc/auth.verify2FA',
+  '/api/trpc/auth.verifyBackupCode',
 ];
 
-const PENDING_ALLOWED = ['/login/2fa', '/login/2fa/backup', '/api/auth', '/api/trpc/auth.verify2FA', '/api/trpc/auth.verifyBackupCode'];
-
-const ADMIN_2FA_ALLOWED = ['/2fa/setup', '/2fa/setup/recovery-codes', '/api/auth', '/api/trpc/auth.enroll2FA', '/api/trpc/auth.confirm2FA', '/logout'];
+const ADMIN_2FA_ALLOWED = [
+  '/2fa/setup',
+  '/2fa/setup/recovery-codes',
+  '/api/auth',
+  '/api/trpc/auth.enroll2FA',
+  '/api/trpc/auth.confirm2FA',
+  '/logout',
+];
 
 function startsWithAny(path: string, list: string[]): boolean {
   return list.some((p) => path === p || path.startsWith(p + '/') || path.startsWith(p + '?'));

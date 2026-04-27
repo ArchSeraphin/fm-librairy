@@ -10,7 +10,9 @@ export class PermissionError extends Error {
   }
 }
 
-export function assertIsGlobalAdmin(actor: Pick<User, 'id' | 'role'>): asserts actor is User & { role: 'GLOBAL_ADMIN' } {
+export function assertIsGlobalAdmin(
+  actor: Pick<User, 'id' | 'role'>,
+): asserts actor is User & { role: 'GLOBAL_ADMIN' } {
   if (actor.role !== 'GLOBAL_ADMIN') {
     void recordAudit({
       action: 'permission.denied',

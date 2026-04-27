@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { encryptSecret, decryptSecret, hashIp, hashUa, hmac, constantTimeEqual } from '@/lib/crypto';
+import {
+  encryptSecret,
+  decryptSecret,
+  hashIp,
+  hashUa,
+  hmac,
+  constantTimeEqual,
+} from '@/lib/crypto';
 
 beforeAll(() => {
   process.env.CRYPTO_MASTER_KEY = 'a'.repeat(32);

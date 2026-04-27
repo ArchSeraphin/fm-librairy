@@ -26,7 +26,8 @@ describe('createSession', () => {
     const u = await mkUser(true);
     const s = await adapter.createSession({
       userId: u.id,
-      ipHash: 'iphash', userAgentHash: 'uahash',
+      ipHash: 'iphash',
+      userAgentHash: 'uahash',
     });
     expect(s.pending2fa).toBe(true);
     expect(s.sessionToken).toMatch(/^[A-Za-z0-9_-]{43,}$/);
@@ -64,7 +65,8 @@ describe('getSession', () => {
         sessionToken: 'tok-expired-test',
         userId: u.id,
         expiresAt: new Date(Date.now() - 1000),
-        ipHash: 'i', userAgentHash: 'u',
+        ipHash: 'i',
+        userAgentHash: 'u',
       },
     });
     expect(await adapter.getSession(s.sessionToken)).toBeNull();
@@ -80,7 +82,8 @@ describe('getSession', () => {
         userId: u.id,
         expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
         lastActivityAt: eightDaysAgo,
-        ipHash: 'i', userAgentHash: 'u',
+        ipHash: 'i',
+        userAgentHash: 'u',
       },
     });
     expect(await adapter.getSession(s.sessionToken)).toBeNull();

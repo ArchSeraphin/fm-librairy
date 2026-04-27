@@ -6,7 +6,12 @@ import { loginLimiter } from '@/lib/rate-limit';
 
 const prisma = getTestPrisma();
 
-async function mkUser(opts: { email: string; password: string; status?: 'ACTIVE' | 'SUSPENDED'; lockedUntil?: Date }) {
+async function mkUser(opts: {
+  email: string;
+  password: string;
+  status?: 'ACTIVE' | 'SUSPENDED';
+  lockedUntil?: Date;
+}) {
   return prisma.user.create({
     data: {
       email: opts.email,
@@ -28,7 +33,7 @@ beforeEach(async () => {
 const REQ = { ip: '1.2.3.4', userAgent: 'UA' };
 
 describe('authorizeCredentials', () => {
-  it('happy path : retourne l\'user', async () => {
+  it("happy path : retourne l'user", async () => {
     const u = await mkUser({ email: 'test1@x.test', password: 'goodpass' });
     const result = await authorizeCredentials({ email: 'test1@x.test', password: 'goodpass' }, REQ);
     expect(result?.id).toBe(u.id);
@@ -40,7 +45,9 @@ describe('authorizeCredentials', () => {
     expect(result).toBeNull();
     const fresh = await prisma.user.findUnique({ where: { id: u.id } });
     expect(fresh?.failedLoginAttempts).toBe(1);
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.login.failure', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.login.failure', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 
@@ -63,7 +70,9 @@ describe('authorizeCredentials', () => {
     const u = await mkUser({ email: 'lockd@x.test', password: 'goodpass', lockedUntil: future });
     const result = await authorizeCredentials({ email: 'lockd@x.test', password: 'goodpass' }, REQ);
     expect(result).toBeNull();
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.login.locked', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.login.locked', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 

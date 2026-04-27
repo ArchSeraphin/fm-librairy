@@ -13,27 +13,27 @@ Tout est déjà défini dans `src/app/globals.css` et `tailwind.config.ts`. Ce s
 
 ### Palette utilisée
 
-| Rôle | Token | Usage Phase 1A |
-| --- | --- | --- |
-| Fond page auth | `bg-muted` (220 13% 96%) | `(auth)/layout.tsx` |
-| Fond page admin | `bg-background` (0 0% 100%) | `admin/layout.tsx` |
-| Card | `bg-card` + `shadow` (déjà via `<Card>`) | tous écrans |
-| Texte principal | `text-foreground` | titres, body |
-| Texte secondaire | `text-muted-foreground` | descriptions, hints |
-| Accent (CTA, focus) | `bg-accent` / `text-accent` / `bg-accent/10` | icône signature, focus ring |
-| Erreur | `bg-destructive/10 border-destructive/20 text-destructive` | `<Alert variant="destructive">` |
-| Succès | `bg-success/10 text-success` | confirmation banner (rare) |
-| Warning (banner 2FA) | `bg-warning/10 border-warning/30` + `text-foreground` | `<TwoFactorBanner>` |
+| Rôle                 | Token                                                      | Usage Phase 1A                  |
+| -------------------- | ---------------------------------------------------------- | ------------------------------- |
+| Fond page auth       | `bg-muted` (220 13% 96%)                                   | `(auth)/layout.tsx`             |
+| Fond page admin      | `bg-background` (0 0% 100%)                                | `admin/layout.tsx`              |
+| Card                 | `bg-card` + `shadow` (déjà via `<Card>`)                   | tous écrans                     |
+| Texte principal      | `text-foreground`                                          | titres, body                    |
+| Texte secondaire     | `text-muted-foreground`                                    | descriptions, hints             |
+| Accent (CTA, focus)  | `bg-accent` / `text-accent` / `bg-accent/10`               | icône signature, focus ring     |
+| Erreur               | `bg-destructive/10 border-destructive/20 text-destructive` | `<Alert variant="destructive">` |
+| Succès               | `bg-success/10 text-success`                               | confirmation banner (rare)      |
+| Warning (banner 2FA) | `bg-warning/10 border-warning/30` + `text-foreground`      | `<TwoFactorBanner>`             |
 
 ### Typographie
 
-| Élément | Police | Classe Tailwind |
-| --- | --- | --- |
-| Titres écrans (CardTitle) | Geist Sans | `text-xl font-semibold tracking-tight` |
-| Body | Geist Sans | `text-sm` ou `text-base` |
-| Labels formulaires | Geist Sans | `text-sm font-medium` |
-| Codes (TOTP secret, recovery codes) | Geist Mono | `font-mono text-sm tracking-wider` |
-| Wordmark | Geist Sans | `text-base font-semibold tracking-tight` |
+| Élément                             | Police     | Classe Tailwind                          |
+| ----------------------------------- | ---------- | ---------------------------------------- |
+| Titres écrans (CardTitle)           | Geist Sans | `text-xl font-semibold tracking-tight`   |
+| Body                                | Geist Sans | `text-sm` ou `text-base`                 |
+| Labels formulaires                  | Geist Sans | `text-sm font-medium`                    |
+| Codes (TOTP secret, recovery codes) | Geist Mono | `font-mono text-sm tracking-wider`       |
+| Wordmark                            | Geist Sans | `text-base font-semibold tracking-tight` |
 
 ### Composants shadcn réutilisés
 
@@ -158,12 +158,12 @@ Voir §9 — `Alert`, `Label`, `Checkbox`, `OtpInput`, `Stepper`, `BrandMark`.
 
 ### États
 
-| État | Comportement |
-| --- | --- |
-| `idle` | Form neutre, pas d'Alert. |
-| `pending` | `<Button disabled>` + `<Loader2 className="animate-spin">` à la place du libellé. Champs `disabled`. |
-| `error` | Alert destructive avec `auth.login.error.invalid` au-dessus du form, `aria-live="polite"`. Form reste rempli côté client (pas de reset). |
-| `locked` | Même Alert mais avec `auth.login.error.locked`. (Différenciation côté serveur uniquement après lockout — sinon traité comme `invalid`.) |
+| État      | Comportement                                                                                                                             |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `idle`    | Form neutre, pas d'Alert.                                                                                                                |
+| `pending` | `<Button disabled>` + `<Loader2 className="animate-spin">` à la place du libellé. Champs `disabled`.                                     |
+| `error`   | Alert destructive avec `auth.login.error.invalid` au-dessus du form, `aria-live="polite"`. Form reste rempli côté client (pas de reset). |
+| `locked`  | Même Alert mais avec `auth.login.error.locked`. (Différenciation côté serveur uniquement après lockout — sinon traité comme `invalid`.)  |
 
 ### Interactions
 
@@ -232,11 +232,11 @@ auth.login.error.locked           → « Compte temporairement verrouillé. Rée
 
 ### États
 
-| État | Comportement |
-| --- | --- |
-| `idle` | OtpInput vide, autofocus sur la première cellule. Submit `disabled` tant que < 6 chiffres saisis. |
-| `pending` | Cellules `disabled`, bouton `<Loader2>`. |
-| `error` | Alert avec `auth.tfa.error.invalid`, OtpInput se vide (les 6 cellules clear), focus retour cellule 1. |
+| État          | Comportement                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `idle`        | OtpInput vide, autofocus sur la première cellule. Submit `disabled` tant que < 6 chiffres saisis.                         |
+| `pending`     | Cellules `disabled`, bouton `<Loader2>`.                                                                                  |
+| `error`       | Alert avec `auth.tfa.error.invalid`, OtpInput se vide (les 6 cellules clear), focus retour cellule 1.                     |
 | `auto-submit` | Quand l'utilisateur tape la 6ème cellule, submit déclenché automatiquement (UX standard). Pas besoin de cliquer Vérifier. |
 
 ### Interactions OtpInput
@@ -328,11 +328,11 @@ Côté handler : on strip le tiret avant envoi à l'API (`code.replace(/-/g, '')
 
 ### États
 
-| État | Comportement |
-| --- | --- |
-| `idle` | Champ vide, autofocus. Submit `disabled` tant que < 8 chars. |
-| `pending` | `disabled` + Loader2. |
-| `error` | Alert avec `auth.backup.error.invalid`. Champ reste rempli (utilisateur peut corriger une faute de frappe). |
+| État      | Comportement                                                                                                |
+| --------- | ----------------------------------------------------------------------------------------------------------- |
+| `idle`    | Champ vide, autofocus. Submit `disabled` tant que < 8 chars.                                                |
+| `pending` | `disabled` + Loader2.                                                                                       |
+| `error`   | Alert avec `auth.backup.error.invalid`. Champ reste rempli (utilisateur peut corriger une faute de frappe). |
 
 ### Clés i18n
 
@@ -404,13 +404,13 @@ Au mount : `useEffect` → `trpc.auth.startTwoFactorSetup.mutate()` → reçoit 
 
 ### États
 
-| État | Comportement |
-| --- | --- |
-| `loading-qr` | Skeleton sur le bloc QR + secret. |
-| `idle` | OtpInput vide, submit `disabled` jusqu'à 6 chiffres. |
-| `pending` | `<Loader2>`, OtpInput cellules `disabled`. |
-| `error` | Alert + clear OtpInput + focus cellule 1. |
-| `success` | Pas d'écran intermédiaire — redirection immédiate vers `/2fa/setup/recovery-codes`. |
+| État         | Comportement                                                                        |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `loading-qr` | Skeleton sur le bloc QR + secret.                                                   |
+| `idle`       | OtpInput vide, submit `disabled` jusqu'à 6 chiffres.                                |
+| `pending`    | `<Loader2>`, OtpInput cellules `disabled`.                                          |
+| `error`      | Alert + clear OtpInput + focus cellule 1.                                           |
+| `success`    | Pas d'écran intermédiaire — redirection immédiate vers `/2fa/setup/recovery-codes`. |
 
 ### Submit
 
@@ -495,13 +495,13 @@ auth.tfaSetup.error.expired      → « La session de configuration a expiré. R
 
 ### États
 
-| État | Comportement |
-| --- | --- |
-| `loading` | Skeleton grille (8 placeholders). |
-| `idle` | Codes affichés, checkbox `unchecked`, Continue `disabled`. |
-| `confirmed` | Checkbox `checked`, Continue activé. |
-| `submitting` | Continue `<Loader2>`. |
-| `done` | Redirection `/admin` (ou `callbackUrl`). |
+| État         | Comportement                                               |
+| ------------ | ---------------------------------------------------------- |
+| `loading`    | Skeleton grille (8 placeholders).                          |
+| `idle`       | Codes affichés, checkbox `unchecked`, Continue `disabled`. |
+| `confirmed`  | Checkbox `checked`, Continue activé.                       |
+| `submitting` | Continue `<Loader2>`.                                      |
+| `done`       | Redirection `/admin` (ou `callbackUrl`).                   |
 
 ### Sécurité UX
 
@@ -544,12 +544,12 @@ auth.recovery.continue       → « Continuer »
 
 ### Variantes
 
-| Variante | Conditions | Style | CTA |
-| --- | --- | --- | --- |
-| `urgent-7d-3d` | `daysLeft >= 3` | `bg-warning/10 border-warning/30` | « Activer maintenant » → `/2fa/setup` |
-| `critical-3d-1d` | `daysLeft < 3 && daysLeft >= 1` | `bg-warning/15 border-warning/40` + texte plus fort | idem |
-| `last-day` | `< 24h restant` | `bg-destructive/10 border-destructive/30 text-destructive` | « Activer obligatoirement » |
-| (none) | `daysLeft < 0` ou 2FA déjà active | banner non rendu (le middleware aura déjà bloqué l'accès) | — |
+| Variante         | Conditions                        | Style                                                      | CTA                                   |
+| ---------------- | --------------------------------- | ---------------------------------------------------------- | ------------------------------------- |
+| `urgent-7d-3d`   | `daysLeft >= 3`                   | `bg-warning/10 border-warning/30`                          | « Activer maintenant » → `/2fa/setup` |
+| `critical-3d-1d` | `daysLeft < 3 && daysLeft >= 1`   | `bg-warning/15 border-warning/40` + texte plus fort        | idem                                  |
+| `last-day`       | `< 24h restant`                   | `bg-destructive/10 border-destructive/30 text-destructive` | « Activer obligatoirement »           |
+| (none)           | `daysLeft < 0` ou 2FA déjà active | banner non rendu (le middleware aura déjà bloqué l'accès)  | —                                     |
 
 ### Logique countdown
 
@@ -558,13 +558,10 @@ auth.recovery.continue       → « Continuer »
 // Calculated server-side at first GLOBAL_ADMIN session creation: createdAt + 7 days
 
 const daysLeft = Math.ceil(
-  (new Date(session.user.twoFactorRequiredBy).getTime() - Date.now()) / 86400000
+  (new Date(session.user.twoFactorRequiredBy).getTime() - Date.now()) / 86400000,
 );
 
-const variant =
-  daysLeft < 1 ? 'last-day' :
-  daysLeft < 3 ? 'critical' :
-  'urgent';
+const variant = daysLeft < 1 ? 'last-day' : daysLeft < 3 ? 'critical' : 'urgent';
 
 // Texte conditionnel :
 //   daysLeft >= 1 → « il vous reste {daysLeft} jour(s) »
@@ -661,14 +658,14 @@ admin.welcome.todoSignOut    → « Vous déconnecter »
 
 ## 9. Composants nouveaux à créer (Task 18)
 
-| Composant | Fichier | Pourquoi | Source |
-| --- | --- | --- | --- |
-| `Alert` (+ `AlertTitle`, `AlertDescription`) | `src/components/ui/alert.tsx` | Erreurs inline non-toast (form validation, état serveur). Variants `default`, `destructive`, `warning`. | shadcn/ui « alert » canonique, ajouter variant `warning` (HSL var `--warning`). |
-| `Label` | `src/components/ui/label.tsx` | A11y formulaires — cohérence avec `<Input>`. | shadcn/ui « label » canonique (Radix). |
-| `Checkbox` | `src/components/ui/checkbox.tsx` | Confirmation recovery codes. | shadcn/ui « checkbox » canonique (Radix). |
-| `OtpInput` | `src/components/auth/OtpInput.tsx` | Saisie TOTP 6 chiffres. Pas de dépendance externe — implémenter à la main avec 6 `<input>` + refs. | Custom (~80 lignes). Voir §4 pour le contrat. |
-| `Stepper` | `src/components/ui/stepper.tsx` | Indicateur 1/2 → 2/2 sur le flow setup TOTP. Très simple : 2 `<div>` + 2 `<span>` numérotés. | Custom (~30 lignes). Pas de Radix. |
-| `BrandMark` | `src/components/brand/BrandMark.tsx` | Wordmark + icône `Library` réutilisable (auth layout, admin header). | Custom (~20 lignes). |
+| Composant                                    | Fichier                              | Pourquoi                                                                                                | Source                                                                          |
+| -------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `Alert` (+ `AlertTitle`, `AlertDescription`) | `src/components/ui/alert.tsx`        | Erreurs inline non-toast (form validation, état serveur). Variants `default`, `destructive`, `warning`. | shadcn/ui « alert » canonique, ajouter variant `warning` (HSL var `--warning`). |
+| `Label`                                      | `src/components/ui/label.tsx`        | A11y formulaires — cohérence avec `<Input>`.                                                            | shadcn/ui « label » canonique (Radix).                                          |
+| `Checkbox`                                   | `src/components/ui/checkbox.tsx`     | Confirmation recovery codes.                                                                            | shadcn/ui « checkbox » canonique (Radix).                                       |
+| `OtpInput`                                   | `src/components/auth/OtpInput.tsx`   | Saisie TOTP 6 chiffres. Pas de dépendance externe — implémenter à la main avec 6 `<input>` + refs.      | Custom (~80 lignes). Voir §4 pour le contrat.                                   |
+| `Stepper`                                    | `src/components/ui/stepper.tsx`      | Indicateur 1/2 → 2/2 sur le flow setup TOTP. Très simple : 2 `<div>` + 2 `<span>` numérotés.            | Custom (~30 lignes). Pas de Radix.                                              |
+| `BrandMark`                                  | `src/components/brand/BrandMark.tsx` | Wordmark + icône `Library` réutilisable (auth layout, admin header).                                    | Custom (~20 lignes).                                                            |
 
 ### Notes d'implémentation Alert
 
@@ -680,24 +677,26 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: 'bg-background text-foreground',
-        destructive: 'border-destructive/30 bg-destructive/10 text-destructive [&>svg]:text-destructive',
+        destructive:
+          'border-destructive/30 bg-destructive/10 text-destructive [&>svg]:text-destructive',
         warning: 'border-warning/30 bg-warning/10 text-foreground [&>svg]:text-warning',
       },
     },
     defaultVariants: { variant: 'default' },
-  }
+  },
 );
 ```
 
 ### Notes d'implémentation OtpInput
 
 Contrat externe :
+
 ```ts
 interface OtpInputProps {
-  length: number;             // 6 pour TOTP
-  value: string;              // controlled
+  length: number; // 6 pour TOTP
+  value: string; // controlled
   onChange: (next: string) => void;
-  onComplete?: (code: string) => void;  // appelé quand length atteinte
+  onComplete?: (code: string) => void; // appelé quand length atteinte
   disabled?: boolean;
   autoFocus?: boolean;
   ariaLabel?: string;
@@ -705,6 +704,7 @@ interface OtpInputProps {
 ```
 
 Implémentation :
+
 - `useRef<(HTMLInputElement | null)[]>([])` × length.
 - Pour chaque cellule : `<input value={value[i] ?? ''} onChange={...} onKeyDown={...} onPaste={...} />`.
 - `onPaste` : capture la string, slice à `length`, distribue, focus dernière cellule, appelle `onComplete` si rempli.
@@ -716,7 +716,7 @@ Implémentation :
 
 ```tsx
 interface StepperProps {
-  currentStep: number;        // 1-indexed
+  currentStep: number; // 1-indexed
   totalSteps: number;
   className?: string;
 }
@@ -743,8 +743,8 @@ interface StepperProps {
 ```tsx
 interface BrandMarkProps {
   className?: string;
-  showWordmark?: boolean;     // default true
-  size?: 'sm' | 'md';         // default 'md'
+  showWordmark?: boolean; // default true
+  size?: 'sm' | 'md'; // default 'md'
 }
 
 // Render :

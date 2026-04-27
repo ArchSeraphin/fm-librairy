@@ -4,7 +4,7 @@
 
 **Goal:** Livrer un système d'auth password+TOTP pour BiblioShare avec un Admin global créé via CLI, protégé par 2FA forcé après 7 jours, sessions DB hardenées, rate limiting, AuditLog branché, et permissions à 3 couches.
 
-**Architecture:** Auth.js v5 + Credentials provider + adapter Prisma custom. Pattern two-step pour 2FA (cookie `pending2fa` 5 min → upgrade session full avec regen ID). Modules `lib/*` purs (testables sans DB) séparés du `server/*` (tRPC + Auth.js). Defense in depth : middleware Next + middlewares tRPC + assertCan* + lint rule Prisma scope.
+**Architecture:** Auth.js v5 + Credentials provider + adapter Prisma custom. Pattern two-step pour 2FA (cookie `pending2fa` 5 min → upgrade session full avec regen ID). Modules `lib/*` purs (testables sans DB) séparés du `server/*` (tRPC + Auth.js). Defense in depth : middleware Next + middlewares tRPC + assertCan\* + lint rule Prisma scope.
 
 **Tech Stack:** Next.js 15 + Auth.js v5 (next-auth@5) + Prisma 6 + Postgres 16 + Redis 7 + ioredis + Vitest 4 + testcontainers + Playwright + otplib + @node-rs/argon2 + rate-limiter-flexible + zod + pino.
 
@@ -19,6 +19,7 @@
 ## Task 0: Setup branche et dépendances
 
 **Files:**
+
 - Modify: `package.json` (deps + scripts)
 - Modify: `vitest.config.ts` (ajout tier integration)
 - Create: `vitest.integration.config.ts`
@@ -161,6 +162,7 @@ git commit -m "chore(phase-1a): add deps and integration test harness"
 ## Task 1: lib/crypto.ts — AES-256-GCM, HMAC, hash IP/UA salés
 
 **Files:**
+
 - Create: `src/lib/crypto.ts`
 - Create: `tests/unit/crypto.test.ts`
 - Modify: `src/lib/env.ts` (ajout `IP_HASH_SALT`, `UA_HASH_SALT`)
@@ -199,7 +201,14 @@ Créer `tests/unit/crypto.test.ts` :
 
 ```ts
 import { describe, it, expect, beforeAll } from 'vitest';
-import { encryptSecret, decryptSecret, hashIp, hashUa, hmac, constantTimeEqual } from '@/lib/crypto';
+import {
+  encryptSecret,
+  decryptSecret,
+  hashIp,
+  hashUa,
+  hmac,
+  constantTimeEqual,
+} from '@/lib/crypto';
 
 beforeAll(() => {
   process.env.CRYPTO_MASTER_KEY = 'a'.repeat(32);
@@ -279,7 +288,14 @@ Expected: FAIL — `Cannot find module '@/lib/crypto'`.
 - [ ] **Step 1.5: Implémenter `src/lib/crypto.ts`**
 
 ```ts
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+} from 'node:crypto';
 import { getEnv } from './env';
 
 const ALGO = 'aes-256-gcm';
@@ -354,6 +370,7 @@ git commit -m "feat(crypto): add AES-256-GCM, HMAC, salted IP/UA hashing"
 ## Task 2: lib/tokens.ts — génération + hash + verify de tokens 32 octets
 
 **Files:**
+
 - Create: `src/lib/tokens.ts`
 - Create: `tests/unit/tokens.test.ts`
 
@@ -461,6 +478,7 @@ git commit -m "feat(tokens): add 32-byte token gen + argon2id hash/verify"
 ## Task 3: lib/password.ts — wrapper argon2id
 
 **Files:**
+
 - Create: `src/lib/password.ts`
 - Create: `tests/unit/password.test.ts`
 
@@ -549,6 +567,7 @@ git commit -m "feat(password): add argon2id password hash + verify"
 ## Task 4: lib/totp.ts — TOTP enrolment + verify + backup codes
 
 **Files:**
+
 - Create: `src/lib/totp.ts`
 - Create: `tests/unit/totp.test.ts`
 
@@ -739,6 +758,7 @@ git commit -m "feat(totp): add TOTP secret/uri/verify + 8 backup codes lifecycle
 ## Task 5: Migration Prisma 002_phase1_auth
 
 **Files:**
+
 - Modify: `prisma/schema.prisma` (Session, VerificationToken, modifs Invitation/AuditLog/User)
 - Create: `prisma/migrations/<timestamp>_phase1_auth/migration.sql` (généré)
 
@@ -844,6 +864,7 @@ pnpm prisma migrate dev --name phase1_auth
 ```
 
 Expected: nouvelle migration créée dans `prisma/migrations/<timestamp>_phase1_auth/`. Inspecter le SQL pour vérifier qu'il contient :
+
 - `CREATE TABLE "Session"`, `CREATE TABLE "VerificationToken"`
 - `ALTER TABLE "Invitation" DROP CONSTRAINT` (l'unique sur consumedById)
 - `ALTER TABLE "AuditLog" ALTER COLUMN "targetType" DROP NOT NULL`
@@ -870,6 +891,7 @@ git commit -m "feat(db): add Session, VerificationToken, User lockout fields, Au
 ## Task 6: lib/audit-log.ts — service writer typé (integration tests)
 
 **Files:**
+
 - Create: `src/lib/audit-log.ts`
 - Create: `tests/integration/audit-log.test.ts`
 
@@ -889,7 +911,7 @@ beforeEach(async () => {
 });
 
 describe('recordAudit', () => {
-  it('insère une ligne avec action seule (pas d\'actor, pas de target)', async () => {
+  it("insère une ligne avec action seule (pas d'actor, pas de target)", async () => {
     await recordAudit({ action: 'auth.login.failure', metadata: { reason: 'unknown' } });
     const rows = await prisma.auditLog.findMany({ where: { action: 'auth.login.failure' } });
     expect(rows).toHaveLength(1);
@@ -898,7 +920,7 @@ describe('recordAudit', () => {
     expect(rows[0].metadata).toEqual({ reason: 'unknown' });
   });
 
-  it('hashe l\'IP avant de stocker', async () => {
+  it("hashe l'IP avant de stocker", async () => {
     await recordAudit({ action: 'auth.login.success', req: { ip: '1.2.3.4', userAgent: 'UA/1' } });
     const row = await prisma.auditLog.findFirst({ where: { action: 'auth.login.success' } });
     expect(row?.ipHash).toBeDefined();
@@ -918,13 +940,13 @@ describe('recordAudit', () => {
     expect(meta.token).toBe('[REDACTED]');
   });
 
-  it('n\'arrête pas l\'action user en cas d\'erreur DB (mode non-bloquant par défaut)', async () => {
+  it("n'arrête pas l'action user en cas d'erreur DB (mode non-bloquant par défaut)", async () => {
     // Action inconnue → toujours acceptée car le type AuditAction est lâche au runtime
     // (la garantie est compile-time). Ce test vérifie qu'aucune exception ne remonte.
     await expect(recordAudit({ action: 'auth.login.success' })).resolves.toBeUndefined();
   });
 
-  it('mode bloquant : permission.denied propage l\'erreur si la DB échoue', async () => {
+  it("mode bloquant : permission.denied propage l'erreur si la DB échoue", async () => {
     // On ferme la connexion à la DB pour simuler une panne
     const broken = getTestPrisma();
     await broken.$disconnect();
@@ -953,24 +975,45 @@ import { getLogger } from './logger';
 
 export type AuditAction =
   // 1A
-  | 'auth.login.success' | 'auth.login.failure' | 'auth.login.locked'
-  | 'auth.session.created' | 'auth.session.revoked' | 'auth.session.expired'
-  | 'auth.2fa.enrolled' | 'auth.2fa.disabled' | 'auth.2fa.success' | 'auth.2fa.failure'
-  | 'auth.2fa.backup_code_used' | 'auth.2fa.recovery_codes_regenerated'
+  | 'auth.login.success'
+  | 'auth.login.failure'
+  | 'auth.login.locked'
+  | 'auth.session.created'
+  | 'auth.session.revoked'
+  | 'auth.session.expired'
+  | 'auth.2fa.enrolled'
+  | 'auth.2fa.disabled'
+  | 'auth.2fa.success'
+  | 'auth.2fa.failure'
+  | 'auth.2fa.backup_code_used'
+  | 'auth.2fa.recovery_codes_regenerated'
   | 'permission.denied'
   // 1B (déclarés ici dès maintenant pour éviter une migration d'union plus tard)
-  | 'auth.password.reset_requested' | 'auth.password.reset_consumed' | 'auth.password.changed'
-  | 'auth.invitation.created' | 'auth.invitation.consumed'
-  | 'auth.invitation.expired' | 'auth.invitation.revoked'
+  | 'auth.password.reset_requested'
+  | 'auth.password.reset_consumed'
+  | 'auth.password.changed'
+  | 'auth.invitation.created'
+  | 'auth.invitation.consumed'
+  | 'auth.invitation.expired'
+  | 'auth.invitation.revoked'
   // 1C
-  | 'admin.user.suspended' | 'admin.user.reactivated'
-  | 'admin.user.deleted' | 'admin.user.role_changed';
+  | 'admin.user.suspended'
+  | 'admin.user.reactivated'
+  | 'admin.user.deleted'
+  | 'admin.user.role_changed';
 
 export type AuditTargetType = 'USER' | 'LIBRARY' | 'INVITATION' | 'SESSION' | 'EMAIL' | 'AUTH';
 
 const SENSITIVE_KEYS = new Set([
-  'password', 'passwordHash', 'token', 'tokenHash', 'secret', 'secretCipher',
-  'authorization', 'cookie', 'sessionToken',
+  'password',
+  'passwordHash',
+  'token',
+  'tokenHash',
+  'secret',
+  'secretCipher',
+  'authorization',
+  'cookie',
+  'sessionToken',
 ]);
 
 function redact(input: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
@@ -1035,6 +1078,7 @@ git commit -m "feat(audit): add typed AuditLog writer with redact and blocking m
 ## Task 7: lib/rate-limit.ts — 4 limiteurs (login, 2fa, reset, invitation)
 
 **Files:**
+
 - Create: `src/lib/rate-limit.ts`
 - Create: `tests/integration/rate-limit.test.ts`
 
@@ -1044,7 +1088,12 @@ Créer `tests/integration/rate-limit.test.ts` :
 
 ```ts
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loginLimiter, twoFactorLimiter, resetRequestLimiter, invitationLimiter } from '@/lib/rate-limit';
+import {
+  loginLimiter,
+  twoFactorLimiter,
+  resetRequestLimiter,
+  invitationLimiter,
+} from '@/lib/rate-limit';
 
 describe('loginLimiter', () => {
   beforeEach(async () => {
@@ -1174,9 +1223,10 @@ git commit -m "feat(rate-limit): add 4 limiters (login/2fa/reset/invite) with me
 
 ---
 
-## Task 8: lib/permissions.ts — assertCan* Phase 1A subset
+## Task 8: lib/permissions.ts — assertCan\* Phase 1A subset
 
 **Files:**
+
 - Create: `src/lib/permissions.ts`
 - Create: `tests/integration/permissions.test.ts`
 
@@ -1186,13 +1236,19 @@ Créer `tests/integration/permissions.test.ts` :
 
 ```ts
 import { describe, it, expect, beforeEach } from 'vitest';
-import { assertIsGlobalAdmin, assertGlobalAdmin2faTimerOk, PermissionError } from '@/lib/permissions';
+import {
+  assertIsGlobalAdmin,
+  assertGlobalAdmin2faTimerOk,
+  PermissionError,
+} from '@/lib/permissions';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 import { hashPassword } from '@/lib/password';
 
 const prisma = getTestPrisma();
 
-async function makeUser(opts: Partial<{ role: 'GLOBAL_ADMIN' | 'USER'; twoFactorEnabled: boolean; createdAt: Date }>) {
+async function makeUser(
+  opts: Partial<{ role: 'GLOBAL_ADMIN' | 'USER'; twoFactorEnabled: boolean; createdAt: Date }>,
+) {
   return prisma.user.create({
     data: {
       email: `u-${Date.now()}-${Math.random()}@x.test`,
@@ -1237,7 +1293,11 @@ describe('assertGlobalAdmin2faTimerOk', () => {
 
   it('jette si !twoFactorEnabled et > 7j', async () => {
     const eightDaysAgo = new Date(Date.now() - 8 * 24 * 3600 * 1000);
-    const u = await makeUser({ role: 'GLOBAL_ADMIN', twoFactorEnabled: false, createdAt: eightDaysAgo });
+    const u = await makeUser({
+      role: 'GLOBAL_ADMIN',
+      twoFactorEnabled: false,
+      createdAt: eightDaysAgo,
+    });
     await expect(assertGlobalAdmin2faTimerOk(u)).rejects.toThrow(PermissionError);
   });
 });
@@ -1266,7 +1326,9 @@ export class PermissionError extends Error {
   }
 }
 
-export function assertIsGlobalAdmin(actor: Pick<User, 'id' | 'role'>): asserts actor is User & { role: 'GLOBAL_ADMIN' } {
+export function assertIsGlobalAdmin(
+  actor: Pick<User, 'id' | 'role'>,
+): asserts actor is User & { role: 'GLOBAL_ADMIN' } {
   if (actor.role !== 'GLOBAL_ADMIN') {
     void recordAudit({
       action: 'permission.denied',
@@ -1315,6 +1377,7 @@ git commit -m "feat(permissions): add assertIsGlobalAdmin + 2FA timer assertion"
 ## Task 9: server/auth/adapter.ts — Prisma adapter custom
 
 **Files:**
+
 - Create: `src/server/auth/adapter.ts`
 - Create: `tests/integration/auth-adapter.test.ts`
 
@@ -1353,7 +1416,8 @@ describe('createSession', () => {
     const u = await mkUser(true);
     const s = await adapter.createSession({
       userId: u.id,
-      ipHash: 'iphash', userAgentHash: 'uahash',
+      ipHash: 'iphash',
+      userAgentHash: 'uahash',
     });
     expect(s.pending2fa).toBe(true);
     expect(s.sessionToken).toMatch(/^[A-Za-z0-9_-]{43,}$/);
@@ -1391,7 +1455,8 @@ describe('getSession', () => {
         sessionToken: 'tok-expired-test',
         userId: u.id,
         expiresAt: new Date(Date.now() - 1000),
-        ipHash: 'i', userAgentHash: 'u',
+        ipHash: 'i',
+        userAgentHash: 'u',
       },
     });
     expect(await adapter.getSession(s.sessionToken)).toBeNull();
@@ -1407,7 +1472,8 @@ describe('getSession', () => {
         userId: u.id,
         expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
         lastActivityAt: eightDaysAgo,
-        ipHash: 'i', userAgentHash: 'u',
+        ipHash: 'i',
+        userAgentHash: 'u',
       },
     });
     expect(await adapter.getSession(s.sessionToken)).toBeNull();
@@ -1489,10 +1555,12 @@ export function createSessionAdapter(prisma: PrismaClient) {
       const lastTouch = lastTouchByToken.get(sessionToken) ?? 0;
       if (now - lastTouch > TOUCH_DEBOUNCE_MS) {
         lastTouchByToken.set(sessionToken, now);
-        await prisma.session.update({
-          where: { id: s.id },
-          data: { lastActivityAt: new Date(now) },
-        }).catch(() => undefined);
+        await prisma.session
+          .update({
+            where: { id: s.id },
+            data: { lastActivityAt: new Date(now) },
+          })
+          .catch(() => undefined);
       }
       return s;
     },
@@ -1551,6 +1619,7 @@ git commit -m "feat(auth): add custom Prisma session adapter with pending2fa + f
 ## Task 10: server/auth/credentials-provider.ts — étape 1 du login
 
 **Files:**
+
 - Create: `src/server/auth/credentials-provider.ts`
 - Create: `tests/integration/credentials-provider.test.ts`
 - Modify: `src/lib/audit-log.ts` si besoin (ajouter helpers email-hash)
@@ -1564,7 +1633,10 @@ Ajouter au bas de `src/lib/crypto.ts` :
 ```ts
 export function hashEmail(email: string): string {
   const salt = getEnv().IP_HASH_SALT; // réutilisé volontairement, c'est juste un anti-leak
-  return createHash('sha256').update(`email:${salt}:${email.toLowerCase()}`).digest('hex').slice(0, 32);
+  return createHash('sha256')
+    .update(`email:${salt}:${email.toLowerCase()}`)
+    .digest('hex')
+    .slice(0, 32);
 }
 ```
 
@@ -1581,7 +1653,12 @@ import { loginLimiter } from '@/lib/rate-limit';
 
 const prisma = getTestPrisma();
 
-async function mkUser(opts: { email: string; password: string; status?: 'ACTIVE' | 'SUSPENDED'; lockedUntil?: Date }) {
+async function mkUser(opts: {
+  email: string;
+  password: string;
+  status?: 'ACTIVE' | 'SUSPENDED';
+  lockedUntil?: Date;
+}) {
   return prisma.user.create({
     data: {
       email: opts.email,
@@ -1603,7 +1680,7 @@ beforeEach(async () => {
 const REQ = { ip: '1.2.3.4', userAgent: 'UA' };
 
 describe('authorizeCredentials', () => {
-  it('happy path : retourne l\'user', async () => {
+  it("happy path : retourne l'user", async () => {
     const u = await mkUser({ email: 'test1@x.test', password: 'goodpass' });
     const result = await authorizeCredentials({ email: 'test1@x.test', password: 'goodpass' }, REQ);
     expect(result?.id).toBe(u.id);
@@ -1615,7 +1692,9 @@ describe('authorizeCredentials', () => {
     expect(result).toBeNull();
     const fresh = await prisma.user.findUnique({ where: { id: u.id } });
     expect(fresh?.failedLoginAttempts).toBe(1);
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.login.failure', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.login.failure', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 
@@ -1638,7 +1717,9 @@ describe('authorizeCredentials', () => {
     const u = await mkUser({ email: 'lockd@x.test', password: 'goodpass', lockedUntil: future });
     const result = await authorizeCredentials({ email: 'lockd@x.test', password: 'goodpass' }, REQ);
     expect(result).toBeNull();
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.login.locked', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.login.locked', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 
@@ -1811,6 +1892,7 @@ git commit -m "feat(auth): add credentials authorize step-1 with lockout + const
 ## Task 11: Auth.js v5 config + handler route
 
 **Files:**
+
 - Create: `src/server/auth/config.ts`
 - Create: `src/server/auth/index.ts` (export `auth`, `signIn`, `signOut`, `handlers`)
 - Create: `src/app/api/auth/[...nextauth]/route.ts`
@@ -1951,6 +2033,7 @@ git commit -m "feat(auth): wire Auth.js v5 with credentials provider + session b
 ## Task 12: tRPC infra (init, context, procedures)
 
 **Files:**
+
 - Create: `src/server/trpc/trpc.ts`
 - Create: `src/server/trpc/context.ts`
 - Create: `src/server/trpc/procedures.ts`
@@ -2094,6 +2177,7 @@ git commit -m "feat(trpc): add tRPC infra with public/pending/authed/globalAdmin
 ## Task 13: server/trpc/routers/auth.ts — procedures 2FA et enrolment
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/auth.ts` (remplacer le stub)
 - Create: `tests/integration/trpc-auth.test.ts`
 
@@ -2127,8 +2211,12 @@ describe('auth.enroll2FA', () => {
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 't1', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: false,
+        sessionToken: 't1',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -2151,8 +2239,12 @@ describe('auth.confirm2FA', () => {
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 't2', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: false,
+        sessionToken: 't2',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -2175,8 +2267,12 @@ describe('auth.confirm2FA', () => {
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 't3', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: false,
+        sessionToken: 't3',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -2187,17 +2283,31 @@ describe('auth.confirm2FA', () => {
 describe('auth.verify2FA', () => {
   it('upgrade la session pending → full + log success', async () => {
     const u = await prisma.user.create({
-      data: { email: 'v@x.test', displayName: 'V', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'v@x.test',
+        displayName: 'V',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     const rawSecret = generateTotpSecret();
     const codes = generateBackupCodes();
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret(rawSecret), backupCodes: await hashBackupCodes(codes), confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret(rawSecret),
+        backupCodes: await hashBackupCodes(codes),
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 'pending-tok', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: true,
+        sessionToken: 'pending-tok',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -2209,26 +2319,44 @@ describe('auth.verify2FA', () => {
     expect(old).toBeNull();
     const fresh = await prisma.session.findUnique({ where: { sessionToken: out.sessionToken } });
     expect(fresh?.pending2fa).toBe(false);
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.2fa.success', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.2fa.success', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 
   it('refuse code invalide + log failure', async () => {
     const u = await prisma.user.create({
-      data: { email: 'vf@x.test', displayName: 'VF', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'vf@x.test',
+        displayName: 'VF',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret(generateTotpSecret()), backupCodes: [], confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret(generateTotpSecret()),
+        backupCodes: [],
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 'pending-tok-2', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: true,
+        sessionToken: 'pending-tok-2',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
     await expect(caller.auth.verify2FA({ code: '000000' })).rejects.toThrow();
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.2fa.failure', actorId: u.id } });
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.2fa.failure', actorId: u.id },
+    });
     expect(audit).not.toBeNull();
   });
 });
@@ -2236,16 +2364,30 @@ describe('auth.verify2FA', () => {
 describe('auth.verifyBackupCode', () => {
   it('consomme un code de secours valide', async () => {
     const u = await prisma.user.create({
-      data: { email: 'bk@x.test', displayName: 'BK', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'bk@x.test',
+        displayName: 'BK',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     const codes = generateBackupCodes();
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret('x'), backupCodes: await hashBackupCodes(codes), confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret('x'),
+        backupCodes: await hashBackupCodes(codes),
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
       data: {
-        sessionToken: 'pending-bk', userId: u.id, expiresAt: new Date(Date.now() + 1e9),
-        ipHash: 'i', userAgentHash: 'u', pending2fa: true,
+        sessionToken: 'pending-bk',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
       },
     });
     const caller = appRouter.createCaller(await buildCtx({ user: u, session }));
@@ -2274,8 +2416,12 @@ import { t } from '../trpc';
 import { authedProcedure, pendingProcedure } from '../procedures';
 import { db } from '@/lib/db';
 import {
-  generateTotpSecret, buildTotpUri, verifyTotpCode,
-  generateBackupCodes, hashBackupCodes, consumeBackupCode,
+  generateTotpSecret,
+  buildTotpUri,
+  verifyTotpCode,
+  generateBackupCodes,
+  hashBackupCodes,
+  consumeBackupCode,
 } from '@/lib/totp';
 import { encryptSecret, decryptSecret } from '@/lib/crypto';
 import { recordAudit } from '@/lib/audit-log';
@@ -2298,57 +2444,53 @@ export const authRouter = t.router({
     };
   }),
 
-  confirm2FA: authedProcedure
-    .input(codeInput)
-    .mutation(async ({ ctx, input }) => {
-      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
-      if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no secret enrolled' });
-      const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
-      if (!ok) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'bad code' });
-      const codes = generateBackupCodes();
-      const hashes = await hashBackupCodes(codes);
-      await db.$transaction([
-        db.twoFactorSecret.update({
-          where: { userId: ctx.user.id },
-          data: { confirmedAt: new Date(), backupCodes: hashes },
-        }),
-        db.user.update({ where: { id: ctx.user.id }, data: { twoFactorEnabled: true } }),
-      ]);
-      await recordAudit({ action: 'auth.2fa.enrolled', actor: { id: ctx.user.id } });
-      return { backupCodes: codes };
-    }),
+  confirm2FA: authedProcedure.input(codeInput).mutation(async ({ ctx, input }) => {
+    const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+    if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no secret enrolled' });
+    const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+    if (!ok) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'bad code' });
+    const codes = generateBackupCodes();
+    const hashes = await hashBackupCodes(codes);
+    await db.$transaction([
+      db.twoFactorSecret.update({
+        where: { userId: ctx.user.id },
+        data: { confirmedAt: new Date(), backupCodes: hashes },
+      }),
+      db.user.update({ where: { id: ctx.user.id }, data: { twoFactorEnabled: true } }),
+    ]);
+    await recordAudit({ action: 'auth.2fa.enrolled', actor: { id: ctx.user.id } });
+    return { backupCodes: codes };
+  }),
 
-  verify2FA: pendingProcedure
-    .input(codeInput)
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await twoFactorLimiter.consume(ctx.session.id);
-      } catch {
-        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
-      }
-      const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
-      if (!sec || !sec.confirmedAt) {
-        throw new TRPCError({ code: 'PRECONDITION_FAILED' });
-      }
-      const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
-      if (!ok) {
-        await recordAudit({
-          action: 'auth.2fa.failure',
-          actor: { id: ctx.user.id },
-          metadata: { method: 'totp' },
-        });
-        throw new TRPCError({ code: 'UNAUTHORIZED' });
-      }
-      const adapter = createSessionAdapter(db);
-      const fresh = await adapter.upgradePendingSession({
-        oldSessionId: ctx.session.id,
-        ipHash: ctx.session.ipHash,
-        userAgentHash: ctx.session.userAgentHash,
+  verify2FA: pendingProcedure.input(codeInput).mutation(async ({ ctx, input }) => {
+    try {
+      await twoFactorLimiter.consume(ctx.session.id);
+    } catch {
+      throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+    }
+    const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
+    if (!sec || !sec.confirmedAt) {
+      throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+    }
+    const ok = verifyTotpCode(decryptSecret(sec.secretCipher), input.code);
+    if (!ok) {
+      await recordAudit({
+        action: 'auth.2fa.failure',
+        actor: { id: ctx.user.id },
+        metadata: { method: 'totp' },
       });
-      await db.user.update({ where: { id: ctx.user.id }, data: { lastLoginAt: new Date() } });
-      await recordAudit({ action: 'auth.2fa.success', actor: { id: ctx.user.id } });
-      return { ok: true, sessionToken: fresh.sessionToken };
-    }),
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+    const adapter = createSessionAdapter(db);
+    const fresh = await adapter.upgradePendingSession({
+      oldSessionId: ctx.session.id,
+      ipHash: ctx.session.ipHash,
+      userAgentHash: ctx.session.userAgentHash,
+    });
+    await db.user.update({ where: { id: ctx.user.id }, data: { lastLoginAt: new Date() } });
+    await recordAudit({ action: 'auth.2fa.success', actor: { id: ctx.user.id } });
+    return { ok: true, sessionToken: fresh.sessionToken };
+  }),
 
   verifyBackupCode: pendingProcedure
     .input(z.object({ code: z.string().regex(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/) }))
@@ -2431,6 +2573,7 @@ git commit -m "feat(trpc): add auth router (enroll/confirm/verify 2FA + backup +
 ## Task 14: middleware.ts — enforcement Next
 
 **Files:**
+
 - Create: `src/middleware.ts`
 
 - [ ] **Step 14.1: Implémenter `src/middleware.ts`**
@@ -2441,13 +2584,24 @@ import { auth } from '@/server/auth';
 import { db } from '@/lib/db';
 import { SEVEN_DAYS_MS } from '@/lib/permissions';
 
-const PUBLIC_PATHS = [
-  '/login', '/api/auth', '/_next', '/favicon.ico', '/fonts',
+const PUBLIC_PATHS = ['/login', '/api/auth', '/_next', '/favicon.ico', '/fonts'];
+
+const PENDING_ALLOWED = [
+  '/login/2fa',
+  '/login/2fa/backup',
+  '/api/auth',
+  '/api/trpc/auth.verify2FA',
+  '/api/trpc/auth.verifyBackupCode',
 ];
 
-const PENDING_ALLOWED = ['/login/2fa', '/login/2fa/backup', '/api/auth', '/api/trpc/auth.verify2FA', '/api/trpc/auth.verifyBackupCode'];
-
-const ADMIN_2FA_ALLOWED = ['/2fa/setup', '/2fa/setup/recovery-codes', '/api/auth', '/api/trpc/auth.enroll2FA', '/api/trpc/auth.confirm2FA', '/logout'];
+const ADMIN_2FA_ALLOWED = [
+  '/2fa/setup',
+  '/2fa/setup/recovery-codes',
+  '/api/auth',
+  '/api/trpc/auth.enroll2FA',
+  '/api/trpc/auth.confirm2FA',
+  '/logout',
+];
 
 function startsWithAny(path: string, list: string[]): boolean {
   return list.some((p) => path === p || path.startsWith(p + '/') || path.startsWith(p + '?'));
@@ -2513,6 +2667,7 @@ git commit -m "feat(middleware): enforce auth, pending 2FA redirect, global admi
 ## Task 15: Lint rules custom (no-bare-trpc-procedure, no-direct-audit-write)
 
 **Files:**
+
 - Create: `eslint-rules/no-bare-trpc-procedure.js`
 - Create: `eslint-rules/no-direct-audit-write.js`
 - Modify: `eslint-rules/index.js`
@@ -2533,7 +2688,7 @@ git commit -m "feat(middleware): enforce auth, pending 2FA redirect, global admi
 module.exports = {
   meta: {
     type: 'problem',
-    docs: { description: 'Force l\'utilisation de procedures wrappers (anti-IDOR)' },
+    docs: { description: "Force l'utilisation de procedures wrappers (anti-IDOR)" },
     schema: [],
     messages: {
       bareT:
@@ -2651,6 +2806,7 @@ git commit -m "feat(lint): add no-bare-trpc-procedure and no-direct-audit-write 
 ## Task 16: scripts/bootstrap-admin.ts — CLI idempotent
 
 **Files:**
+
 - Create: `scripts/bootstrap-admin.ts`
 - Create: `tests/integration/bootstrap-admin.test.ts`
 
@@ -2670,8 +2826,11 @@ beforeEach(async () => {
 });
 
 describe('bootstrap-admin', () => {
-  it('crée un GLOBAL_ADMIN si aucun n\'existe', async () => {
-    const out = await runBootstrap({ email: 'ops@x.test', password: 'pass-32-chars-min-for-security!' });
+  it("crée un GLOBAL_ADMIN si aucun n'existe", async () => {
+    const out = await runBootstrap({
+      email: 'ops@x.test',
+      password: 'pass-32-chars-min-for-security!',
+    });
     expect(out.created).toBe(true);
     const u = await prisma.user.findUnique({ where: { email: 'ops@x.test' } });
     expect(u?.role).toBe('GLOBAL_ADMIN');
@@ -2699,11 +2858,11 @@ describe('bootstrap-admin', () => {
     expect(audit).not.toBeNull();
   });
 
-  it('--force échoue si l\'user n\'existe pas', async () => {
+  it("--force échoue si l'user n'existe pas", async () => {
     await runBootstrap({ email: 'first@x.test', password: 'pass-32-chars-min-for-security!' });
-    await expect(
-      runBootstrap({ email: 'ghost@x.test', force: true }),
-    ).rejects.toThrow(/aucun user/i);
+    await expect(runBootstrap({ email: 'ghost@x.test', force: true })).rejects.toThrow(
+      /aucun user/i,
+    );
   });
 });
 ```
@@ -2833,7 +2992,7 @@ Expected: PASS — 4 tests verts.
 
 Ajouter une section « Initialisation post-déploiement » :
 
-```markdown
+````markdown
 ## Initialisation post-déploiement
 
 Après le premier déploiement Coolify, créer le compte Admin global initial :
@@ -2842,6 +3001,7 @@ Après le premier déploiement Coolify, créer le compte Admin global initial :
 docker exec -it biblioshare-app sh -c \
   "BOOTSTRAP_ADMIN_EMAIL=ops@example.com pnpm bootstrap:admin"
 ```
+````
 
 Le mot de passe est affiché une seule fois — copier immédiatement.
 
@@ -2855,14 +3015,15 @@ docker exec -it biblioshare-app sh -c \
 ```
 
 Cette opération est tracée dans `AuditLog`.
-```
+
+````
 
 - [ ] **Step 16.6: Commit**
 
 ```bash
 git add scripts/bootstrap-admin.ts tests/integration/bootstrap-admin.test.ts docs/deployment.md
 git commit -m "feat(bootstrap): add idempotent admin bootstrap CLI with --force recovery mode"
-```
+````
 
 ---
 
@@ -2879,6 +3040,7 @@ skill: frontend-design
 ```
 
 Briefer la skill avec le contexte :
+
 - Design system Phase 0 (Tailwind tokens, palette, typo, shadcn/ui).
 - Pas d'emojis, icônes Lucide exclusivement.
 - Routes à designer pour 1A : `/login`, `/login/2fa`, `/login/2fa/backup`, `/2fa/setup`, `/2fa/setup/recovery-codes`.
@@ -2902,6 +3064,7 @@ git commit -m "docs(phase-1a): add UI wireframes for auth pages"
 ## Task 18: Implémentation UI — pages + composants
 
 **Files:**
+
 - Create: `src/app/(auth)/layout.tsx`
 - Create: `src/app/(auth)/login/page.tsx`
 - Create: `src/app/(auth)/login/2fa/page.tsx`
@@ -3024,11 +3187,18 @@ export function LoginForm() {
       <h1 className="text-2xl font-semibold">Connexion</h1>
       <Input name="email" type="email" required placeholder="email@exemple.fr" />
       <Input name="password" type="password" required placeholder="Mot de passe" />
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Connexion…' : 'Se connecter'}
       </Button>
-      <a href="/password/forgot" className="block text-center text-sm text-slate-600 hover:underline">
+      <a
+        href="/password/forgot"
+        className="block text-center text-sm text-slate-600 hover:underline"
+      >
         Mot de passe oublié ?
       </a>
     </form>
@@ -3042,7 +3212,9 @@ export function LoginForm() {
 
 ```tsx
 import { TwoFactorChallenge } from '@/components/auth/TwoFactorChallenge';
-export default function Page() { return <TwoFactorChallenge />; }
+export default function Page() {
+  return <TwoFactorChallenge />;
+}
 ```
 
 `src/components/auth/TwoFactorChallenge.tsx` :
@@ -3075,12 +3247,26 @@ export function TwoFactorChallenge() {
       <p className="text-sm text-slate-600">
         Saisissez le code à 6 chiffres depuis votre application d'authentification.
       </p>
-      <Input name="code" required pattern="[0-9]{6}" inputMode="numeric" placeholder="000000" autoFocus />
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      <Input
+        name="code"
+        required
+        pattern="[0-9]{6}"
+        inputMode="numeric"
+        placeholder="000000"
+        autoFocus
+      />
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
       <Button type="submit" disabled={verify.isPending} className="w-full">
         Valider
       </Button>
-      <a href="/login/2fa/backup" className="block text-center text-sm text-slate-600 hover:underline">
+      <a
+        href="/login/2fa/backup"
+        className="block text-center text-sm text-slate-600 hover:underline"
+      >
         Utiliser un code de secours
       </a>
     </form>
@@ -3120,9 +3306,21 @@ export function BackupCodeForm() {
       <p className="text-sm text-amber-700">
         Ce code sera invalidé après usage. Pensez à régénérer vos codes après connexion.
       </p>
-      <Input name="code" required pattern="[A-Z0-9]{4}-[A-Z0-9]{4}" placeholder="XXXX-XXXX" autoFocus />
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={verify.isPending} className="w-full">Valider</Button>
+      <Input
+        name="code"
+        required
+        pattern="[A-Z0-9]{4}-[A-Z0-9]{4}"
+        placeholder="XXXX-XXXX"
+        autoFocus
+      />
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={verify.isPending} className="w-full">
+        Valider
+      </Button>
     </form>
   );
 }
@@ -3132,7 +3330,9 @@ export function BackupCodeForm() {
 
 ```tsx
 import { BackupCodeForm } from '@/components/auth/BackupCodeForm';
-export default function Page() { return <BackupCodeForm />; }
+export default function Page() {
+  return <BackupCodeForm />;
+}
 ```
 
 - [ ] **Step 18.6: Page /2fa/setup**
@@ -3169,7 +3369,9 @@ export function TwoFactorSetup() {
     onError: (e) => setError(e.message),
   });
 
-  useEffect(() => { if (!qr) enroll.mutate(); }, []); // eslint-disable-line
+  useEffect(() => {
+    if (!qr) enroll.mutate();
+  }, []); // eslint-disable-line
 
   return (
     <div className="space-y-4">
@@ -3181,7 +3383,9 @@ export function TwoFactorSetup() {
           {secret && (
             <details className="text-sm">
               <summary className="cursor-pointer">Saisir manuellement</summary>
-              <code className="mt-2 block break-all rounded bg-slate-100 p-2 text-xs">{secret}</code>
+              <code className="mt-2 block break-all rounded bg-slate-100 p-2 text-xs">
+                {secret}
+              </code>
             </details>
           )}
           <form
@@ -3193,7 +3397,11 @@ export function TwoFactorSetup() {
             className="space-y-3"
           >
             <Input name="code" required pattern="[0-9]{6}" placeholder="Code de l'app" />
-            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
             <Button type="submit" disabled={confirm.isPending} className="w-full">
               Activer
             </Button>
@@ -3209,7 +3417,9 @@ export function TwoFactorSetup() {
 
 ```tsx
 import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
-export default function Page() { return <TwoFactorSetup />; }
+export default function Page() {
+  return <TwoFactorSetup />;
+}
 ```
 
 - [ ] **Step 18.7: Page /2fa/setup/recovery-codes**
@@ -3229,7 +3439,10 @@ export function RecoveryCodesDisplay() {
 
   useEffect(() => {
     const raw = sessionStorage.getItem('biblio.recoveryCodes');
-    if (!raw) { router.push('/2fa/setup'); return; }
+    if (!raw) {
+      router.push('/2fa/setup');
+      return;
+    }
     setCodes(JSON.parse(raw));
   }, [router]);
 
@@ -3250,19 +3463,28 @@ export function RecoveryCodesDisplay() {
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Codes de secours</h1>
       <p className="text-sm text-slate-600">
-        Sauvegardez ces 8 codes. Chacun peut être utilisé une fois si vous perdez l'accès à votre app.
+        Sauvegardez ces 8 codes. Chacun peut être utilisé une fois si vous perdez l'accès à votre
+        app.
       </p>
       <ul className="grid grid-cols-2 gap-2 rounded bg-slate-100 p-4 font-mono text-sm">
-        {codes.map((c) => <li key={c}>{c}</li>)}
+        {codes.map((c) => (
+          <li key={c}>{c}</li>
+        ))}
       </ul>
       <Button type="button" onClick={download} variant="outline" className="w-full">
         Télécharger en .txt
       </Button>
       <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={confirmed}
+          onChange={(e) => setConfirmed(e.target.checked)}
+        />
         J'ai sauvegardé ces codes en lieu sûr.
       </label>
-      <Button onClick={done} disabled={!confirmed} className="w-full">Continuer</Button>
+      <Button onClick={done} disabled={!confirmed} className="w-full">
+        Continuer
+      </Button>
     </div>
   );
 }
@@ -3272,7 +3494,9 @@ export function RecoveryCodesDisplay() {
 
 ```tsx
 import { RecoveryCodesDisplay } from '@/components/auth/RecoveryCodesDisplay';
-export default function Page() { return <RecoveryCodesDisplay />; }
+export default function Page() {
+  return <RecoveryCodesDisplay />;
+}
 ```
 
 - [ ] **Step 18.8: Banner forçage 2FA**
@@ -3283,7 +3507,11 @@ export default function Page() { return <RecoveryCodesDisplay />; }
 'use client';
 import { useEffect, useState } from 'react';
 
-interface Props { createdAt: string; twoFactorEnabled: boolean; role: string; }
+interface Props {
+  createdAt: string;
+  twoFactorEnabled: boolean;
+  role: string;
+}
 
 export function TwoFactorBanner({ createdAt, twoFactorEnabled, role }: Props) {
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
@@ -3299,8 +3527,12 @@ export function TwoFactorBanner({ createdAt, twoFactorEnabled, role }: Props) {
 
   return (
     <div role="alert" className="border-l-4 border-amber-500 bg-amber-50 p-4 text-amber-900">
-      <p className="font-medium">2FA obligatoire dans {remainingDays} jour{remainingDays > 1 ? 's' : ''}.</p>
-      <a href="/2fa/setup" className="text-sm underline">Configurer maintenant</a>
+      <p className="font-medium">
+        2FA obligatoire dans {remainingDays} jour{remainingDays > 1 ? 's' : ''}.
+      </p>
+      <a href="/2fa/setup" className="text-sm underline">
+        Configurer maintenant
+      </a>
     </div>
   );
 }
@@ -3364,6 +3596,7 @@ git commit -m "feat(ui): add login + 2FA pages, components, banner, admin placeh
 ## Task 19: i18n auth keys
 
 **Files:**
+
 - Create: `src/i18n/messages/fr/auth.json`
 
 - [ ] **Step 19.1: Créer le fichier i18n**
@@ -3410,6 +3643,7 @@ git commit -m "docs(i18n): add fr auth labels reference"
 ## Task 20: Server Action logout
 
 **Files:**
+
 - Create: `src/app/(auth)/logout/route.ts` (route handler POST)
 - Modify: `src/components/auth/LogoutButton.tsx`
 
@@ -3435,7 +3669,9 @@ export async function POST(req: Request) {
   return NextResponse.redirect(new URL('/login', req.url));
 }
 
-export async function GET(req: Request) { return POST(req); }
+export async function GET(req: Request) {
+  return POST(req);
+}
 ```
 
 - [ ] **Step 20.2: Composant bouton logout (utilisé sur /admin et plus tard)**
@@ -3449,7 +3685,9 @@ import { Button } from '@/components/ui/button';
 export function LogoutButton() {
   return (
     <form action="/logout" method="post">
-      <Button type="submit" variant="ghost">Se déconnecter</Button>
+      <Button type="submit" variant="ghost">
+        Se déconnecter
+      </Button>
     </form>
   );
 }
@@ -3469,6 +3707,7 @@ git commit -m "feat(auth): add logout route + button (revokes all DB sessions)"
 ## Task 21: E2E tests (5 scénarios Playwright)
 
 **Files:**
+
 - Create: `tests/e2e/auth-1a.spec.ts`
 - Create: `tests/e2e/helpers/totp.ts`
 - Create: `tests/e2e/helpers/db.ts`
@@ -3555,7 +3794,9 @@ test('Scénario 2: enrolment 2FA → recovery codes → /admin', async ({ page }
 
   // Lire le secret stocké en DB après l'auto-enroll
   await page.waitForSelector('img[alt*="QR"]');
-  const sec = await prisma.twoFactorSecret.findFirstOrThrow({ where: { user: { email: 'admin2@x.test' } } });
+  const sec = await prisma.twoFactorSecret.findFirstOrThrow({
+    where: { user: { email: 'admin2@x.test' } },
+  });
   const { decryptSecret } = await import('../../src/lib/crypto');
   const rawSecret = decryptSecret(sec.secretCipher);
 
@@ -3569,7 +3810,8 @@ test('Scénario 2: enrolment 2FA → recovery codes → /admin', async ({ page }
 });
 
 test('Scénario 3: login complet avec 2FA actif', async ({ page }) => {
-  const { generateTotpSecret, generateBackupCodes, hashBackupCodes } = await import('../../src/lib/totp');
+  const { generateTotpSecret, generateBackupCodes, hashBackupCodes } =
+    await import('../../src/lib/totp');
   const { encryptSecret } = await import('../../src/lib/crypto');
   const secret = generateTotpSecret();
   const u = await prisma.user.create({
@@ -3601,7 +3843,8 @@ test('Scénario 3: login complet avec 2FA actif', async ({ page }) => {
 });
 
 test('Scénario 4: login + backup code consommé', async ({ page }) => {
-  const { generateTotpSecret, generateBackupCodes, hashBackupCodes } = await import('../../src/lib/totp');
+  const { generateTotpSecret, generateBackupCodes, hashBackupCodes } =
+    await import('../../src/lib/totp');
   const { encryptSecret } = await import('../../src/lib/crypto');
   const codes = generateBackupCodes();
   const u = await prisma.user.create({
@@ -3684,6 +3927,7 @@ git commit -m "test(e2e): add 5 auth scenarios for phase 1A"
 ## Task 22: Attack tests dédiés
 
 **Files:**
+
 - Create: `tests/attacks/auth.test.ts`
 
 - [ ] **Step 22.1: Créer le spec attack**
@@ -3713,9 +3957,15 @@ describe('A1 — Bruteforce login', () => {
     });
     await loginLimiter.delete('iphash:bf@x.test');
     for (let i = 0; i < 5; i++) {
-      await authorizeCredentials({ email: 'bf@x.test', password: 'wrong' }, { ip: '1.2.3.4', userAgent: 'UA' });
+      await authorizeCredentials(
+        { email: 'bf@x.test', password: 'wrong' },
+        { ip: '1.2.3.4', userAgent: 'UA' },
+      );
     }
-    const result = await authorizeCredentials({ email: 'bf@x.test', password: 'good' }, { ip: '1.2.3.4', userAgent: 'UA' });
+    const result = await authorizeCredentials(
+      { email: 'bf@x.test', password: 'good' },
+      { ip: '1.2.3.4', userAgent: 'UA' },
+    );
     expect(result).toBeNull();
   });
 });
@@ -3723,20 +3973,39 @@ describe('A1 — Bruteforce login', () => {
 describe('A1b — Bruteforce 2FA', () => {
   it('5 codes invalides sur même session pending → block', async () => {
     const u = await prisma.user.create({
-      data: { email: 'bf2@x.test', displayName: 'X', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'bf2@x.test',
+        displayName: 'X',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret(generateTotpSecret()), backupCodes: [], confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret(generateTotpSecret()),
+        backupCodes: [],
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
-      data: { sessionToken: 'tk-bf2', userId: u.id, expiresAt: new Date(Date.now() + 1e9), ipHash: 'i', userAgentHash: 'u', pending2fa: true },
+      data: {
+        sessionToken: 'tk-bf2',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
+      },
     });
     await twoFactorLimiter.delete(session.id);
     const caller = appRouter.createCaller({ user: u, session });
     for (let i = 0; i < 5; i++) {
       await expect(caller.auth.verify2FA({ code: '000000' })).rejects.toThrow();
     }
-    await expect(caller.auth.verify2FA({ code: '000000' })).rejects.toThrow(/TOO_MANY_REQUESTS|429/);
+    await expect(caller.auth.verify2FA({ code: '000000' })).rejects.toThrow(
+      /TOO_MANY_REQUESTS|429/,
+    );
   });
 });
 
@@ -3752,10 +4021,16 @@ describe('A2 — Énumération via timing', () => {
       await loginLimiter.delete(`iphash:real@x.test`);
       await loginLimiter.delete(`iphash:ghost@x.test`);
       const a = performance.now();
-      await authorizeCredentials({ email: 'ghost@x.test', password: 'x' }, { ip: '1.2.3.4', userAgent: 'UA' });
+      await authorizeCredentials(
+        { email: 'ghost@x.test', password: 'x' },
+        { ip: '1.2.3.4', userAgent: 'UA' },
+      );
       tU.push(performance.now() - a);
       const b = performance.now();
-      await authorizeCredentials({ email: 'real@x.test', password: 'wrong' }, { ip: '1.2.3.4', userAgent: 'UA' });
+      await authorizeCredentials(
+        { email: 'real@x.test', password: 'wrong' },
+        { ip: '1.2.3.4', userAgent: 'UA' },
+      );
       tK.push(performance.now() - b);
     }
     const avgU = tU.reduce((s, x) => s + x, 0) / N;
@@ -3782,14 +4057,31 @@ describe('A6 — TOTP secret en DB non exploitable sans clé', () => {
 describe('A7 — Session fixation', () => {
   it('après upgrade 2FA, le session token change', async () => {
     const u = await prisma.user.create({
-      data: { email: 'fix@x.test', displayName: 'X', passwordHash: await hashPassword('x'), twoFactorEnabled: true },
+      data: {
+        email: 'fix@x.test',
+        displayName: 'X',
+        passwordHash: await hashPassword('x'),
+        twoFactorEnabled: true,
+      },
     });
     const raw = generateTotpSecret();
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret(raw), backupCodes: [], confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret(raw),
+        backupCodes: [],
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
-      data: { sessionToken: 'old-tok-fixation', userId: u.id, expiresAt: new Date(Date.now() + 1e9), ipHash: 'i', userAgentHash: 'u', pending2fa: true },
+      data: {
+        sessionToken: 'old-tok-fixation',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: true,
+      },
     });
     await twoFactorLimiter.delete(session.id);
     const caller = appRouter.createCaller({ user: u, session });
@@ -3804,13 +4096,31 @@ describe('A7 — Session fixation', () => {
 describe('A5 — 2FA downgrade impossible sans re-auth', () => {
   it('disable2FA refuse sans password', async () => {
     const u = await prisma.user.create({
-      data: { email: 'dis@x.test', displayName: 'X', passwordHash: await hashPassword('correct'), twoFactorEnabled: true, role: 'USER' },
+      data: {
+        email: 'dis@x.test',
+        displayName: 'X',
+        passwordHash: await hashPassword('correct'),
+        twoFactorEnabled: true,
+        role: 'USER',
+      },
     });
     await prisma.twoFactorSecret.create({
-      data: { userId: u.id, secretCipher: encryptSecret('x'), backupCodes: [], confirmedAt: new Date() },
+      data: {
+        userId: u.id,
+        secretCipher: encryptSecret('x'),
+        backupCodes: [],
+        confirmedAt: new Date(),
+      },
     });
     const session = await prisma.session.create({
-      data: { sessionToken: 'tk-dis', userId: u.id, expiresAt: new Date(Date.now() + 1e9), ipHash: 'i', userAgentHash: 'u', pending2fa: false },
+      data: {
+        sessionToken: 'tk-dis',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
+      },
     });
     const caller = appRouter.createCaller({ user: u, session });
     await expect(caller.auth.disable2FA({ password: 'wrong', code: '000000' })).rejects.toThrow();
@@ -3818,13 +4128,28 @@ describe('A5 — 2FA downgrade impossible sans re-auth', () => {
 
   it('disable2FA refuse pour Admin global', async () => {
     const u = await prisma.user.create({
-      data: { email: 'admdis@x.test', displayName: 'X', passwordHash: await hashPassword('p'), twoFactorEnabled: true, role: 'GLOBAL_ADMIN' },
+      data: {
+        email: 'admdis@x.test',
+        displayName: 'X',
+        passwordHash: await hashPassword('p'),
+        twoFactorEnabled: true,
+        role: 'GLOBAL_ADMIN',
+      },
     });
     const session = await prisma.session.create({
-      data: { sessionToken: 'tk-admdis', userId: u.id, expiresAt: new Date(Date.now() + 1e9), ipHash: 'i', userAgentHash: 'u', pending2fa: false },
+      data: {
+        sessionToken: 'tk-admdis',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 1e9),
+        ipHash: 'i',
+        userAgentHash: 'u',
+        pending2fa: false,
+      },
     });
     const caller = appRouter.createCaller({ user: u, session });
-    await expect(caller.auth.disable2FA({ password: 'p', code: '000000' })).rejects.toThrow(/global admin/i);
+    await expect(caller.auth.disable2FA({ password: 'p', code: '000000' })).rejects.toThrow(
+      /global admin/i,
+    );
   });
 });
 ```
@@ -3849,6 +4174,7 @@ git commit -m "test(attacks): add A1, A1b, A2, A5, A6, A7 dedicated attack tests
 ## Task 23: Cleanup jobs (worker BullMQ)
 
 **Files:**
+
 - Create: `worker/jobs/cleanup-expired-sessions.ts`
 - Create: `worker/jobs/cleanup-expired-tokens.ts`
 - Modify: `worker/index.ts` (enregistrer les jobs)
@@ -3872,10 +4198,7 @@ export async function cleanupExpiredSessions(prisma: PrismaClient): Promise<{ de
   const cutoffActivity = new Date(Date.now() - INACTIVITY_TTL_MS);
   const r = await prisma.session.deleteMany({
     where: {
-      OR: [
-        { expiresAt: { lt: new Date() } },
-        { lastActivityAt: { lt: cutoffActivity } },
-      ],
+      OR: [{ expiresAt: { lt: new Date() } }, { lastActivityAt: { lt: cutoffActivity } }],
     },
   });
   return { deleted: r.count };
@@ -3887,7 +4210,9 @@ export async function cleanupExpiredSessions(prisma: PrismaClient): Promise<{ de
 ```ts
 import { PrismaClient } from '@prisma/client';
 
-export async function cleanupExpiredTokens(prisma: PrismaClient): Promise<{ invitations: number; resets: number }> {
+export async function cleanupExpiredTokens(
+  prisma: PrismaClient,
+): Promise<{ invitations: number; resets: number }> {
   const now = new Date();
   // Log expired invitations before deleting
   const expiredInvitations = await prisma.invitation.findMany({
@@ -3947,14 +4272,22 @@ const worker = new Worker(
 
 // Ajout cron : toutes les heures à hh:00 et hh:05
 async function scheduleCleanup() {
-  await queue.upsertJobScheduler('cleanup-sessions-hourly', { pattern: '0 * * * *' }, {
-    name: 'cleanup-expired-sessions',
-    data: {},
-  });
-  await queue.upsertJobScheduler('cleanup-tokens-hourly', { pattern: '5 * * * *' }, {
-    name: 'cleanup-expired-tokens',
-    data: {},
-  });
+  await queue.upsertJobScheduler(
+    'cleanup-sessions-hourly',
+    { pattern: '0 * * * *' },
+    {
+      name: 'cleanup-expired-sessions',
+      data: {},
+    },
+  );
+  await queue.upsertJobScheduler(
+    'cleanup-tokens-hourly',
+    { pattern: '5 * * * *' },
+    {
+      name: 'cleanup-expired-tokens',
+      data: {},
+    },
+  );
 }
 
 void scheduleCleanup();
@@ -3994,9 +4327,29 @@ describe('cleanupExpiredSessions', () => {
     });
     await prisma.session.createMany({
       data: [
-        { sessionToken: 's1', userId: u.id, expiresAt: new Date(Date.now() - 1000), ipHash: 'i', userAgentHash: 'u' },
-        { sessionToken: 's2', userId: u.id, expiresAt: new Date(Date.now() + 1e9), lastActivityAt: new Date(Date.now() - 8 * 24 * 3600 * 1000), ipHash: 'i', userAgentHash: 'u' },
-        { sessionToken: 's3', userId: u.id, expiresAt: new Date(Date.now() + 1e9), lastActivityAt: new Date(), ipHash: 'i', userAgentHash: 'u' },
+        {
+          sessionToken: 's1',
+          userId: u.id,
+          expiresAt: new Date(Date.now() - 1000),
+          ipHash: 'i',
+          userAgentHash: 'u',
+        },
+        {
+          sessionToken: 's2',
+          userId: u.id,
+          expiresAt: new Date(Date.now() + 1e9),
+          lastActivityAt: new Date(Date.now() - 8 * 24 * 3600 * 1000),
+          ipHash: 'i',
+          userAgentHash: 'u',
+        },
+        {
+          sessionToken: 's3',
+          userId: u.id,
+          expiresAt: new Date(Date.now() + 1e9),
+          lastActivityAt: new Date(),
+          ipHash: 'i',
+          userAgentHash: 'u',
+        },
       ],
     });
     const r = await cleanupExpiredSessions(prisma);
@@ -4013,7 +4366,12 @@ describe('cleanupExpiredTokens', () => {
       data: { email: 'c2@x.test', displayName: 'X', passwordHash: await hashPassword('x') },
     });
     await prisma.invitation.create({
-      data: { email: 'inv@x.test', invitedById: u.id, tokenHash: 'h-old', expiresAt: new Date(Date.now() - 1000) },
+      data: {
+        email: 'inv@x.test',
+        invitedById: u.id,
+        tokenHash: 'h-old',
+        expiresAt: new Date(Date.now() - 1000),
+      },
     });
     await prisma.passwordResetToken.create({
       data: { userId: u.id, tokenHash: 'rh-old', expiresAt: new Date(Date.now() - 1000) },
@@ -4047,6 +4405,7 @@ git commit -m "feat(worker): add hourly cleanup jobs for sessions and expired to
 ## Task 24: Smoke test final + tag
 
 **Files:**
+
 - Modify: `README.md` (section auth ajoutée)
 
 - [ ] **Step 24.1: Lancer toute la suite de tests**
@@ -4145,6 +4504,7 @@ git push origin phase-1a-complete
 - [ ] **Step 24.8: Mémoire — mise à jour fin de 1A**
 
 Mettre à jour `MEMORY.md` du projet (auto-mémoire) avec une nouvelle entrée :
+
 - Titre : « Phase 1A — clôture »
 - Description : auth core livrée, tag `phase-1a-complete`, prochaine étape = 1B (invitations + reset)
 

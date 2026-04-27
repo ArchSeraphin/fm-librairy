@@ -10,7 +10,10 @@ beforeEach(async () => {
 
 describe('bootstrap-admin', () => {
   it("crée un GLOBAL_ADMIN si aucun n'existe", async () => {
-    const out = await runBootstrap({ email: 'ops@x.test', password: 'pass-32-chars-min-for-security!' });
+    const out = await runBootstrap({
+      email: 'ops@x.test',
+      password: 'pass-32-chars-min-for-security!',
+    });
     expect(out.created).toBe(true);
     expect(out.promoted).toBe(false);
     const u = await prisma.user.findUnique({ where: { email: 'ops@x.test' } });
@@ -41,8 +44,8 @@ describe('bootstrap-admin', () => {
 
   it("--force échoue si l'user n'existe pas", async () => {
     await runBootstrap({ email: 'first@x.test', password: 'pass-32-chars-min-for-security!' });
-    await expect(
-      runBootstrap({ email: 'ghost@x.test', force: true }),
-    ).rejects.toThrow(/aucun user/i);
+    await expect(runBootstrap({ email: 'ghost@x.test', force: true })).rejects.toThrow(
+      /aucun user/i,
+    );
   });
 });

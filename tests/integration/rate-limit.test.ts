@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loginLimiter, twoFactorLimiter, resetRequestLimiter, invitationLimiter } from '@/lib/rate-limit';
+import {
+  loginLimiter,
+  twoFactorLimiter,
+  resetRequestLimiter,
+  invitationLimiter,
+} from '@/lib/rate-limit';
 
 describe('loginLimiter', () => {
   beforeEach(async () => {
