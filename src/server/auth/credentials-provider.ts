@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { verifyPassword } from '@/lib/password';
 import { hashIp, hashEmail } from '@/lib/crypto';
 import { recordAudit } from '@/lib/audit-log';
-import { loginLimiter } from '@/lib/rate-limit';
+import { loginLimiter, loginIpOnlyLimiter } from '@/lib/rate-limit';
 
 const CONSTANT_DELAY_MS = 150;
 const LOCKOUT_THRESHOLD = 20;
@@ -31,6 +31,18 @@ export async function authorizeCredentials(
   const email = creds.email.trim().toLowerCase();
   const ipH = hashIp(req.ip);
   const emailH = hashEmail(email);
+
+  try {
+    await loginIpOnlyLimiter.consume(ipH);
+  } catch {
+    await recordAudit({
+      action: 'auth.login.locked',
+      target: { type: 'EMAIL', id: emailH },
+      metadata: { reason: 'ip_rate_limited' },
+      req,
+    });
+    return null;
+  }
 
   try {
     await loginLimiter.consume(`${ipH}:${emailH}`);

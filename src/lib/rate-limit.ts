@@ -15,6 +15,15 @@ export const loginLimiter = new RateLimiterRedis({
   insuranceLimiter: memInsurance(5, 15 * 60),
 });
 
+export const loginIpOnlyLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:login_ip',
+  points: 50,
+  duration: 15 * 60,
+  blockDuration: 60 * 60,
+  insuranceLimiter: memInsurance(50, 15 * 60),
+});
+
 export const twoFactorLimiter = new RateLimiterRedis({
   ...baseOpts(),
   keyPrefix: 'rl:2fa',
