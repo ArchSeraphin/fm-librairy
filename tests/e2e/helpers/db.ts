@@ -1,0 +1,74 @@
+import { PrismaClient } from '@prisma/client';
+import Redis from 'ioredis';
+
+let prisma: PrismaClient | undefined;
+let redis: Redis | undefined;
+
+const TEST_EMAIL_SUFFIX = '@e2e.test';
+
+export function getPrisma(): PrismaClient {
+  if (!prisma) prisma = new PrismaClient();
+  return prisma;
+}
+
+function getRedis(): Redis {
+  if (!redis) {
+    const url = process.env.REDIS_URL;
+    if (!url) throw new Error('REDIS_URL not set — globalSetup did not load .env.local');
+    redis = new Redis(url);
+  }
+  return redis;
+}
+
+// Targeted cleanup: only delete users whose email ends with @e2e.test, plus
+// every record FK-bound to them (sessions, twoFactorSecrets, audit-as-actor).
+// AuditLog rows that target EMAIL hashes (no FK) are scoped to the @e2e.test
+// emails by computing their hashes — keeps dev audit history intact.
+export async function cleanupTestData(): Promise<void> {
+  // Lazy import so .env vars are guaranteed loaded before src/lib/crypto reads them.
+  const { hashEmail } = await import('../../../src/lib/crypto');
+  const p = getPrisma();
+  const testUsers = await p.user.findMany({
+    where: { email: { endsWith: TEST_EMAIL_SUFFIX } },
+    select: { id: true, email: true },
+  });
+  const ids = testUsers.map((u) => u.id);
+  const emailHashes = testUsers.map((u) => hashEmail(u.email));
+  await p.session.deleteMany({ where: { userId: { in: ids } } });
+  await p.twoFactorSecret.deleteMany({ where: { userId: { in: ids } } });
+  await p.auditLog.deleteMany({
+    where: {
+      OR: [
+        { actorId: { in: ids } },
+        { AND: [{ targetType: 'EMAIL' }, { targetId: { in: emailHashes } }] },
+      ],
+    },
+  });
+  await p.user.deleteMany({ where: { email: { endsWith: TEST_EMAIL_SUFFIX } } });
+}
+
+// Hash a raw test email for audit-row lookups (e.g. Scenario 5).
+export async function hashTestEmail(email: string): Promise<string> {
+  const { hashEmail } = await import('../../../src/lib/crypto');
+  return hashEmail(email);
+}
+
+// Flush rate-limit state so each scenario starts with a fresh budget.
+// rate-limit.ts uses keyPrefix `rl:login`, `rl:2fa`, `rl:reset`, `rl:invite`.
+// Scoped to those prefixes — no impact on the rest of Redis.
+export async function flushRateLimit(): Promise<void> {
+  const r = getRedis();
+  for (const prefix of ['rl:login:*', 'rl:2fa:*', 'rl:reset:*', 'rl:invite:*']) {
+    const keys = await r.keys(prefix);
+    if (keys.length) await r.del(...keys);
+  }
+  // TOTP replay nonces (Task 13 fix HIGH+MED) live under `2fa-replay:*` ;
+  // wiping them lets the same TOTP code be reused across test runs.
+  const replayKeys = await r.keys('2fa-replay:*');
+  if (replayKeys.length) await r.del(...replayKeys);
+}
+
+export async function disconnect(): Promise<void> {
+  await prisma?.$disconnect();
+  await redis?.quit();
+}
