@@ -111,7 +111,32 @@ Expected : `200 OK`, headers de sécurité présents (HSTS, X-Frame-Options, X-C
 - Logs container direct : `docker compose logs -f app` sur le VPS.
 - (Optionnel Phase 8) UptimeKuma sur `uptime.<votre-domaine>` pointant vers `/api/health`.
 
-## 11. Mises à jour
+## 11. Initialisation post-déploiement
+
+Après le premier déploiement Coolify, créer le compte Admin global initial :
+
+```bash
+docker exec -it biblioshare-app sh -c \
+  "BOOTSTRAP_ADMIN_EMAIL=ops@example.com pnpm bootstrap:admin"
+```
+
+Le mot de passe est généré et affiché une seule fois — copier immédiatement.
+Pour fournir un mot de passe explicite, ajouter `BOOTSTRAP_ADMIN_PASSWORD=...`.
+
+L'Admin global créé doit obligatoirement activer la 2FA dans les 7 jours.
+
+### Mode récupération
+
+Si l'unique Admin global a perdu son 2FA et son mot de passe, promouvoir un autre user existant :
+
+```bash
+docker exec -it biblioshare-app sh -c \
+  "BOOTSTRAP_ADMIN_EMAIL=other@example.com pnpm bootstrap:admin --force"
+```
+
+L'opération est tracée dans `AuditLog` (`admin.user.role_changed`, `metadata.source = bootstrap_force`).
+
+## 12. Mises à jour
 
 Coolify peut auto-déployer sur push `main` (configurer le webhook GitHub dans Coolify). Sinon, **Redeploy** manuel.
 
