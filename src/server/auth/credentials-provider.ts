@@ -69,19 +69,22 @@ export async function authorizeCredentials(
 
     const valid = await verifyPassword(user.passwordHash, creds.password);
     if (!valid) {
-      const next = user.failedLoginAttempts + 1;
-      const shouldLock = next >= LOCKOUT_THRESHOLD;
-      await db.user.update({
+      const updated = await db.user.update({
         where: { id: user.id },
-        data: {
-          failedLoginAttempts: next,
-          lockedUntil: shouldLock ? new Date(Date.now() + LOCKOUT_DURATION_MS) : user.lockedUntil,
-        },
+        data: { failedLoginAttempts: { increment: 1 } },
+        select: { failedLoginAttempts: true, lockedUntil: true },
       });
+      const shouldLock = updated.failedLoginAttempts >= LOCKOUT_THRESHOLD && !updated.lockedUntil;
+      if (shouldLock) {
+        await db.user.update({
+          where: { id: user.id },
+          data: { lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS) },
+        });
+      }
       await recordAudit({
         action: 'auth.login.failure',
         actor: { id: user.id },
-        metadata: { reason: 'bad_password', attempts: next, locked: shouldLock },
+        metadata: { reason: 'bad_password', attempts: updated.failedLoginAttempts, locked: shouldLock },
         req,
       });
       return null;

@@ -87,6 +87,18 @@ describe('authorizeCredentials', () => {
     expect(fresh!.lockedUntil!.getTime()).toBeGreaterThan(Date.now());
   });
 
+  it('gap #4 — incréments concurrents de failedLoginAttempts ne se perdent pas', async () => {
+    const u = await mkUser({ email: 'race4@x.test', password: 'goodpass' });
+    await prisma.user.update({ where: { id: u.id }, data: { failedLoginAttempts: 0 } });
+    await Promise.all(
+      Array.from({ length: 4 }, () =>
+        authorizeCredentials({ email: 'race4@x.test', password: 'wrong' }, REQ),
+      ),
+    );
+    const fresh = await prisma.user.findUnique({ where: { id: u.id } });
+    expect(fresh?.failedLoginAttempts).toBe(4);
+  });
+
   it('happy path : reset failedLoginAttempts à 0', async () => {
     const u = await mkUser({ email: 'reset@x.test', password: 'goodpass' });
     await prisma.user.update({ where: { id: u.id }, data: { failedLoginAttempts: 5 } });
