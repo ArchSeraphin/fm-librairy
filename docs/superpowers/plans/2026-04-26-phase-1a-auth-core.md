@@ -3599,7 +3599,7 @@ git commit -m "feat(ui): add login + 2FA pages, components, banner, admin placeh
 
 - Create: `src/i18n/messages/fr/auth.json`
 
-- [ ] **Step 19.1: Créer le fichier i18n**
+- [x] **Step 19.1: Créer le fichier i18n** — _Couvert par `src/i18n/messages/fr.json` namespace `auth.*` (login, tfa, backup, tfaSetup, recovery, banner) ; archi consolidée à la racine plutôt que fichier séparé, plus de clés que listées ici (toggleShow/Hide, pending states, plural variants), composants déjà branchés via `useTranslations`._
 
 ```json
 {
@@ -3627,11 +3627,11 @@ git commit -m "feat(ui): add login + 2FA pages, components, banner, admin placeh
 }
 ```
 
-- [ ] **Step 19.2: Itérer plus tard pour brancher next-intl si besoin**
+- [x] **Step 19.2: Itérer plus tard pour brancher next-intl si besoin** — _Déjà branché ; pas de copies en dur dans les composants auth._
 
 Pour Phase 1A, les copies sont en dur dans les composants (rapide). Le branchement next-intl complet est différé en 1C ou plus tard. Cette task documente les clés pour cohérence.
 
-- [ ] **Step 19.3: Commit**
+- [x] **Step 19.3: Commit** — _Pas de commit séparé : clés livrées avec Task 18 UI (commit `ffcec06`)._
 
 ```bash
 git add src/i18n/messages/fr/auth.json
@@ -3647,7 +3647,7 @@ git commit -m "docs(i18n): add fr auth labels reference"
 - Create: `src/app/(auth)/logout/route.ts` (route handler POST)
 - Modify: `src/components/auth/LogoutButton.tsx`
 
-- [ ] **Step 20.1: Route handler logout**
+- [x] **Step 20.1: Route handler logout** — _POST-only (GET=POST shortcut dropped to prevent CSRF forced-logout via `<img src>`/`<a href>`). Audit enrichi avec `req: { ip, userAgent }` et `metadata: { reason: 'user_logout' }`. 303 redirect after state-changing POST._
 
 `src/app/(auth)/logout/route.ts` :
 
@@ -3674,7 +3674,7 @@ export async function GET(req: Request) {
 }
 ```
 
-- [ ] **Step 20.2: Composant bouton logout (utilisé sur /admin et plus tard)**
+- [x] **Step 20.2: Composant bouton logout (utilisé sur /admin et plus tard)** — _Branché dans `AdminHeader.tsx` (pas dans `page.tsx` : c'est là que le bouton signout vivait). AdminHeader devient server component ; LogoutButton conserve `'use client'`. Visual préservé (LogOut icon + i18n key `admin.header.signOut`)._
 
 `src/components/auth/LogoutButton.tsx` :
 
@@ -3695,7 +3695,7 @@ export function LogoutButton() {
 
 Inclure dans `src/app/admin/page.tsx` (en haut à droite ou en bas).
 
-- [ ] **Step 20.3: Commit**
+- [x] **Step 20.3: Commit** — _Commit `5b9c418` `feat(auth): add logout route with DB session purge + audit`._
 
 ```bash
 git add src/app/\(auth\)/logout/ src/components/auth/LogoutButton.tsx src/app/admin/page.tsx
