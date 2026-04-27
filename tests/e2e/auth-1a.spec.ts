@@ -122,12 +122,14 @@ test('Scénario 2: enrolment 2FA complet → recovery codes → /admin', async (
 
 test('Scénario 3: login complet avec 2FA TOTP', async ({ page }) => {
   const secret = generateTotpSecret();
+  // Use GLOBAL_ADMIN role so the /admin page is accessible after 2FA verification
+  // (AdminLayout redirects non-admin users to / before the URL assertion can pass).
   const u = await prisma.user.create({
     data: {
       email: 'user3@e2e.test',
       displayName: 'User TOTP',
       passwordHash: await hashPassword(PASSWORD),
-      role: 'USER',
+      role: 'GLOBAL_ADMIN',
       twoFactorEnabled: true,
       emailVerifiedAt: new Date(),
     },
@@ -146,12 +148,8 @@ test('Scénario 3: login complet avec 2FA TOTP', async ({ page }) => {
 
   await submitOtpAndWait(page, totpFor(secret));
 
-  // Server-side proof of success: the audit log + session upgrade prove that
-  // verify2FA accepted the TOTP and rotated the session. Asserting the post-
-  // verify URL is unreliable here — there's a known quirk where next-auth's
-  // update() doesn't propagate the new JWT cookie to the *next* navigation
-  // fast enough, so middleware can bounce /admin → /login/2fa transiently.
-  // That client-side timing issue is tracked in the security gaps backlog.
+  // Both server-side (audit + session pending2fa=false) and client-side (URL = /admin)
+  // are now asserted — gap #10 closed in hardening pass.
   const successAudit = await prisma.auditLog.findFirst({
     where: { action: 'auth.2fa.success', actorId: u.id },
   });
@@ -161,16 +159,19 @@ test('Scénario 3: login complet avec 2FA TOTP', async ({ page }) => {
     orderBy: { lastActivityAt: 'desc' },
   });
   expect(session.pending2fa).toBe(false);
+  await expect(page).toHaveURL(/\/admin/, { timeout: 10_000 });
 });
 
 test('Scénario 4: login + backup code consommé', async ({ page }) => {
   const codes = generateBackupCodes();
+  // Use GLOBAL_ADMIN role so the /admin page is accessible after 2FA verification
+  // (AdminLayout redirects non-admin users to / before the URL assertion can pass).
   const u = await prisma.user.create({
     data: {
       email: 'user4@e2e.test',
       displayName: 'User Backup',
       passwordHash: await hashPassword(PASSWORD),
-      role: 'USER',
+      role: 'GLOBAL_ADMIN',
       twoFactorEnabled: true,
       emailVerifiedAt: new Date(),
     },
@@ -199,13 +200,14 @@ test('Scénario 4: login + backup code consommé', async ({ page }) => {
   expect(response.status()).toBe(200);
 
   // Server-side proofs: backup_code_used audit + remaining hashes count.
-  // (URL assertion intentionally skipped — see Scénario 3 comment.)
+  // URL assertion enabled — gap #10 closed.
   const usedAudit = await prisma.auditLog.findFirst({
     where: { action: 'auth.2fa.backup_code_used', actorId: u.id },
   });
   expect(usedAudit).not.toBeNull();
   const sec = await prisma.twoFactorSecret.findUniqueOrThrow({ where: { userId: u.id } });
   expect(sec.backupCodes).toHaveLength(7);
+  await expect(page).toHaveURL(/\/admin/, { timeout: 10_000 });
 });
 
 test('Scénario 5: lockout après attempts répétés (rate-limit puis lockout)', async ({ page }) => {

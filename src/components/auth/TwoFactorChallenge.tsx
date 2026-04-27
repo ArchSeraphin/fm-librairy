@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
@@ -22,7 +22,6 @@ import { trpc } from '@/lib/trpc/client';
 
 export function TwoFactorChallenge() {
   const t = useTranslations('auth.tfa');
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
   const { update } = useSession();
@@ -32,9 +31,13 @@ export function TwoFactorChallenge() {
 
   const verify = trpc.auth.verify2FA.useMutation({
     onSuccess: async () => {
-      await update();
-      router.refresh();
-      router.push(callbackUrl);
+      // Pass a non-empty object so next-auth sends POST /api/auth/session (not GET).
+      // Without a body, update() sends GET and the JWT callback trigger==='update'
+      // path never fires — pending2fa stays true in the cookie.
+      await update({});
+      // Force full navigation to guarantee Set-Cookie applied + middleware re-reads JWT.
+      // router.push() keeps the client cache and races the cookie write.
+      window.location.assign(callbackUrl);
     },
     onError: (err) => {
       setError(

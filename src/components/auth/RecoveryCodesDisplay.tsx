@@ -80,9 +80,13 @@ export function RecoveryCodesDisplay() {
   async function handleContinue() {
     setContinuing(true);
     sessionStorage.removeItem(STORAGE_KEY);
-    await update();
-    router.refresh();
-    router.push('/admin');
+    // Pass a non-empty object so next-auth sends POST /api/auth/session (not GET).
+    // Without a body, update() sends GET and the JWT callback trigger==='update'
+    // path never fires — pending2fa stays true in the cookie.
+    await update({});
+    // Force full navigation to guarantee Set-Cookie applied + middleware re-reads JWT.
+    // router.push() keeps the client cache and races the cookie write.
+    window.location.assign('/admin');
   }
 
   if (!codes) {

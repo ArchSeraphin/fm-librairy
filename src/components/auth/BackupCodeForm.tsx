@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, ArrowLeft, KeyRound, Loader2 } from 'lucide-react';
@@ -36,7 +36,6 @@ function format(raw: string): string {
 
 export function BackupCodeForm() {
   const t = useTranslations('auth.backup');
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
   const { update } = useSession();
@@ -46,9 +45,13 @@ export function BackupCodeForm() {
 
   const verify = trpc.auth.verifyBackupCode.useMutation({
     onSuccess: async () => {
-      await update();
-      router.refresh();
-      router.push(callbackUrl);
+      // Pass a non-empty object so next-auth sends POST /api/auth/session (not GET).
+      // Without a body, update() sends GET and the JWT callback trigger==='update'
+      // path never fires — pending2fa stays true in the cookie.
+      await update({});
+      // Force full navigation to guarantee Set-Cookie applied + middleware re-reads JWT.
+      // router.push() keeps the client cache and races the cookie write.
+      window.location.assign(callbackUrl);
     },
     onError: (err) => {
       setError(
