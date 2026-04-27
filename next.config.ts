@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     serverActions: { bodySizeLimit: '100mb' },
+    // @ts-expect-error nodeMiddleware is experimental in Next 15.5 and not yet in ExperimentalConfig types
+    nodeMiddleware: true,
   },
   async headers() {
     return [

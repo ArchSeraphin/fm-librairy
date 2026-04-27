@@ -1,5 +1,6 @@
 # Claude Code local state
 .claude/settings.local.json
+.worktrees/
 
 # Dependencies
 node_modules/

@@ -1,8 +1,11 @@
 {
+  "root": true,
   "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["local"],
   "rules": {
     "local/no-unscoped-prisma": "error",
+    "local/no-bare-trpc-procedure": "error",
+    "local/no-direct-audit-write": "error",
     "no-restricted-syntax": [
       "error",
       {

@@ -4,16 +4,34 @@
 FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+# Workspace files: pnpm-lock.yaml is shared, pnpm-workspace.yaml lists `worker/`,
+# and worker/package.json must exist for the workspace resolver. We `--filter app`
+# so only the Next.js app's deps are installed (worker stays out of this image).
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY worker/package.json ./worker/
 # devDep `eslint-plugin-local: link:eslint-rules` requires the symlink target to exist before install
 COPY eslint-rules ./eslint-rules
 RUN corepack enable && corepack prepare pnpm@9 --activate \
- && pnpm install --frozen-lockfile
+ && pnpm install --frozen-lockfile --filter app...
 
 # Stage 2 — build
 FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# Placeholder env values consumed only by `next build` page-data collection.
+# Real values are injected at runtime by docker-compose / Coolify and are NOT
+# baked into the final runtime image (the `runner` stage has its own ENV).
+# Validators in src/lib/env.ts require min 16/32 chars; placeholders below
+# satisfy the schema without leaking anything sensitive.
+ENV APP_URL=http://localhost:3000 \
+    DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder \
+    REDIS_URL=redis://localhost:6379 \
+    MEILI_HOST=http://localhost:7700 \
+    MEILI_MASTER_KEY=buildplaceholder1234567890abcdef \
+    SESSION_SECRET=00000000000000000000000000000000000000000000000000000000000000000 \
+    CRYPTO_MASTER_KEY=11111111111111111111111111111111111111111111111111111111111111111 \
+    IP_HASH_SALT=buildplaceholder1234 \
+    UA_HASH_SALT=buildplaceholder1234
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable && corepack prepare pnpm@9 --activate \
