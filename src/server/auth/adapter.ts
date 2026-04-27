@@ -54,12 +54,13 @@ export function createSessionAdapter(prisma: PrismaClient) {
       const lastTouch = lastTouchByToken.get(sessionToken) ?? 0;
       if (now - lastTouch > TOUCH_DEBOUNCE_MS) {
         lastTouchByToken.set(sessionToken, now);
-        await prisma.session
+        const fresh = await prisma.session
           .update({
             where: { id: s.id },
             data: { lastActivityAt: new Date(now) },
           })
-          .catch(() => undefined);
+          .catch(() => null);
+        if (fresh) return fresh;
       }
       return s;
     },
