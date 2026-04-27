@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { trpc } from '@/lib/trpc/client';
+import { safeCallbackUrl } from '@/lib/utils';
 
 const RAW_LENGTH = 8; // 8 chars without dash
 const FORMATTED_LENGTH = 9; // XXXX-XXXX
@@ -37,7 +38,7 @@ function format(raw: string): string {
 export function BackupCodeForm() {
   const t = useTranslations('auth.backup');
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'), '/admin');
   const { update } = useSession();
 
   const [value, setValue] = React.useState('');

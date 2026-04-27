@@ -19,11 +19,12 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OtpInput } from '@/components/auth/OtpInput';
 import { trpc } from '@/lib/trpc/client';
+import { safeCallbackUrl } from '@/lib/utils';
 
 export function TwoFactorChallenge() {
   const t = useTranslations('auth.tfa');
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'), '/admin');
   const { update } = useSession();
 
   const [code, setCode] = React.useState('');
