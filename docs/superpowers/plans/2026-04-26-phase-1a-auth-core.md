@@ -3930,7 +3930,7 @@ git commit -m "test(e2e): add 5 auth scenarios for phase 1A"
 
 - Create: `tests/attacks/auth.test.ts`
 
-- [ ] **Step 22.1: Créer le spec attack**
+- [x] **Step 22.1: Créer le spec attack** ✅ (adapté : clés rate-limit recalculées via `hashIp`/`hashEmail`, `authenticator.generate` → helper `genCode` otplib v13, A5 utilise un `genCode(raw)` valide pour bien isoler la branche password-wrong)
 
 `tests/attacks/auth.test.ts` :
 
@@ -4154,7 +4154,7 @@ describe('A5 — 2FA downgrade impossible sans re-auth', () => {
 });
 ```
 
-- [ ] **Step 22.2: Lancer les attack tests**
+- [x] **Step 22.2: Lancer les attack tests** ✅ (7 tests verts en 12.4s, audit `auth.login.locked` avec `reason: rate_limited` confirmé sur A1)
 
 ```bash
 pnpm test:integration tests/attacks/auth.test.ts
@@ -4162,7 +4162,7 @@ pnpm test:integration tests/attacks/auth.test.ts
 
 Expected: tous verts.
 
-- [ ] **Step 22.3: Commit**
+- [x] **Step 22.3: Commit**
 
 ```bash
 git add tests/attacks/
