@@ -1,18 +1,32 @@
 # syntax=docker/dockerfile:1.6
 
+# Build context: repo root (needed for pnpm workspace + Prisma schema).
+# Build with: docker build -f Dockerfile.worker -t biblioshare-worker .
+
 FROM node:24-alpine AS deps
-WORKDIR /worker
-# lockfile copied for --frozen-lockfile reproducibility (deviation from plan)
-COPY worker/package.json worker/pnpm-lock.yaml ./
-RUN corepack enable && corepack prepare pnpm@9 --activate \
- && pnpm install --frozen-lockfile
+WORKDIR /repo
+RUN corepack enable && corepack prepare pnpm@9 --activate
+# Workspace files needed to resolve --filter and the worker package
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY worker/package.json ./worker/
+# devDep `eslint-plugin-local: link:eslint-rules` requires the symlink target to exist before install
+COPY eslint-rules ./eslint-rules
+RUN pnpm install --frozen-lockfile --filter biblioshare-worker...
 
 FROM node:24-alpine AS builder
-WORKDIR /worker
-COPY --from=deps /worker/node_modules ./node_modules
-COPY worker/ .
-RUN corepack enable && corepack prepare pnpm@9 --activate \
- && pnpm build
+WORKDIR /repo
+RUN corepack enable && corepack prepare pnpm@9 --activate
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/worker/node_modules ./worker/node_modules
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY worker/package.json ./worker/
+COPY prisma ./prisma
+COPY worker ./worker
+# Generate Prisma client (writes into shared pnpm store, accessible to worker)
+RUN pnpm --filter biblioshare-worker exec prisma generate
+RUN pnpm --filter biblioshare-worker build
+# Bundle worker into a self-contained deploy dir (resolves workspace symlinks)
+RUN pnpm --filter biblioshare-worker deploy --prod /deploy
 
 FROM node:24-alpine AS runner
 WORKDIR /worker
@@ -23,9 +37,9 @@ RUN addgroup --system --gid 1001 nodejs \
  # at runtime (we use `node dist/index.js`).
  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
-COPY --from=builder --chown=worker:nodejs /worker/dist ./dist
-COPY --from=builder --chown=worker:nodejs /worker/node_modules ./node_modules
-COPY --from=builder --chown=worker:nodejs /worker/package.json ./
+COPY --from=builder --chown=worker:nodejs /deploy/dist ./dist
+COPY --from=builder --chown=worker:nodejs /deploy/node_modules ./node_modules
+COPY --from=builder --chown=worker:nodejs /deploy/package.json ./
 
 USER worker
 

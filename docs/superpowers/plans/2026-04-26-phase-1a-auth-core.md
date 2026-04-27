@@ -4180,14 +4180,15 @@ git commit -m "test(attacks): add A1, A1b, A2, A5, A6, A7 dedicated attack tests
 - Modify: `worker/index.ts` (enregistrer les jobs)
 - Modify: `worker/package.json` (deps si besoin : bullmq, @prisma/client)
 - Create: `tests/integration/cleanup-jobs.test.ts`
+- **Adaptation infra (hors plan)** : ajout de `pnpm-workspace.yaml` (worktree root inclut `worker/`), suppression de `worker/pnpm-lock.yaml`, mise à jour de `Dockerfile`, `Dockerfile.worker`, `docker-compose.yml` (DATABASE_URL + dépendance pg pour le worker). Sans ce setup, `prisma generate` depuis `worker/` écrivait dans le store pnpm racine (à cause de la résolution depuis le schema parent) et le worker n'avait pas de `.prisma/client` dans son arbre → `tsc` échouait sur "no exported member 'PrismaClient'". La workspace partage le store généré.
 
-- [ ] **Step 23.1: Installer bullmq côté worker**
+- [x] **Step 23.1: Installer bullmq côté worker** (avec @prisma/client + prisma CLI pinned `^6.19.3` pour matcher root; ajout `prisma.schema = "../prisma/schema.prisma"` dans `worker/package.json`)
 
 ```bash
 cd worker && pnpm add bullmq @prisma/client && cd ..
 ```
 
-- [ ] **Step 23.2: Créer `worker/jobs/cleanup-expired-sessions.ts`**
+- [x] **Step 23.2: Créer `worker/jobs/cleanup-expired-sessions.ts`** (utilise `import type { PrismaClient }` plutôt que valeur — la fonction reçoit le client en paramètre)
 
 ```ts
 import { PrismaClient } from '@prisma/client';
@@ -4205,7 +4206,7 @@ export async function cleanupExpiredSessions(prisma: PrismaClient): Promise<{ de
 }
 ```
 
-- [ ] **Step 23.3: Créer `worker/jobs/cleanup-expired-tokens.ts`**
+- [x] **Step 23.3: Créer `worker/jobs/cleanup-expired-tokens.ts`** (commentaire explicite sur l'écriture directe `auditLog` côté worker, hors `recordAudit`)
 
 ```ts
 import { PrismaClient } from '@prisma/client';
@@ -4240,7 +4241,7 @@ export async function cleanupExpiredTokens(
 
 Note : ce job écrit directement dans `auditLog` car le worker ne peut pas importer `recordAudit` du frontend (path mapping `@/`). Cette exception est tolérée pour le worker uniquement et documentée par un commentaire ESLint disable si nécessaire.
 
-- [ ] **Step 23.4: Enregistrer les jobs dans `worker/index.ts`**
+- [x] **Step 23.4: Enregistrer les jobs dans `worker/index.ts`** (ajout `DATABASE_URL` à la validation env zod, `worker.on('failed', ...)` pour logger les jobs en erreur, ext `.js` sur les imports relatifs pour ESM nodenext)
 
 Étendre le fichier existant pour ajouter une queue BullMQ qui exécute les deux jobs sur cron toutes les heures :
 
@@ -4303,7 +4304,7 @@ const shutdown = async () => {
 };
 ```
 
-- [ ] **Step 23.5: Test integration cleanup**
+- [x] **Step 23.5: Test integration cleanup** (3 tests au lieu de 2 : ajout d'un cas "ne log pas les invitations consommées même si expirées" pour cadrer la sémantique de la requête `consumedAt: null`)
 
 `tests/integration/cleanup-jobs.test.ts` :
 
@@ -4385,7 +4386,7 @@ describe('cleanupExpiredTokens', () => {
 });
 ```
 
-- [ ] **Step 23.6: Lancer les tests**
+- [x] **Step 23.6: Lancer les tests** (3 tests verts en 1.2s; suite intégrale 52/52 stable)
 
 ```bash
 pnpm test:integration tests/integration/cleanup-jobs.test.ts
@@ -4393,7 +4394,7 @@ pnpm test:integration tests/integration/cleanup-jobs.test.ts
 
 Expected: 2 tests verts.
 
-- [ ] **Step 23.7: Commit**
+- [x] **Step 23.7: Commit**
 
 ```bash
 git add worker/ tests/integration/cleanup-jobs.test.ts

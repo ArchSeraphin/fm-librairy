@@ -159,9 +159,11 @@ services:
     init: true
     environment:
       NODE_ENV: production
+      DATABASE_URL: postgresql://biblioshare:${POSTGRES_PASSWORD}@pg:5432/biblioshare
       REDIS_URL: redis://redis:6379
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
+      pg: { condition: service_healthy }
       redis: { condition: service_healthy }
     networks:
       - internal
