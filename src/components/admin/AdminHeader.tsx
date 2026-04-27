@@ -1,11 +1,7 @@
-'use client';
-
-import { signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { LogOut } from 'lucide-react';
 
 import { BrandMark } from '@/components/brand/BrandMark';
-import { Button } from '@/components/ui/button';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 
 export function AdminHeader() {
   const t = useTranslations('admin.header');
@@ -19,15 +15,7 @@ export function AdminHeader() {
             {t('phase')}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => signOut({ callbackUrl: '/login' })}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <LogOut />
-          <span className="hidden sm:inline">{t('signOut')}</span>
-        </Button>
+        <LogoutButton className="text-muted-foreground hover:text-foreground" />
       </div>
     </header>
   );
