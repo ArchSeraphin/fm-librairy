@@ -25,7 +25,8 @@
     "env:check": "node -e \"import('./src/lib/env.ts').then(m => m.getEnv()).then(() => console.log('env OK')).catch(e => { console.error(e); process.exit(1); })\"",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:watch": "vitest --config vitest.integration.config.ts",
-    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts"
+    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
+    "email:dev": "email dev --port 3001 --dir src/emails"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
@@ -34,6 +35,8 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-toast": "^1.2.15",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.7",
     "@tanstack/react-query": "^5.100.5",
     "@trpc/client": "^11.13.0",
     "@trpc/next": "^11.13.0",
@@ -48,6 +51,7 @@
     "next": "15.5.15",
     "next-auth": "5.0.0-beta.31",
     "next-intl": "^4.9.1",
+    "nodemailer": "^7.0.13",
     "otplib": "^13.4.0",
     "pino": "^10.3.1",
     "prisma": "^6.19.3",
@@ -55,6 +59,7 @@
     "rate-limiter-flexible": "^11.0.1",
     "react": "19.2.5",
     "react-dom": "19.2.5",
+    "resend": "^6.12.2",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
@@ -67,6 +72,7 @@
     "@types/clamscan": "^2.4.1",
     "@types/eslint": "^8.56.12",
     "@types/node": "^24",
+    "@types/nodemailer": "^6.4.23",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -80,6 +86,7 @@
     "postcss": "^8",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.3",
+    "react-email": "^6.0.1",
     "superjson": "^2.2.6",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",

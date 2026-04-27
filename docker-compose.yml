@@ -64,6 +64,27 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI + API
+    environment:
+      MP_MAX_MESSAGES: '5000'
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8025/api/v1/info']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
   clamav:
     image: clamav/clamav:1.4
     restart: unless-stopped
