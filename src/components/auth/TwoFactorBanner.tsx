@@ -54,7 +54,7 @@ export function TwoFactorBanner({ requiredBy }: TwoFactorBannerProps) {
       : daysLeft === 1
         ? t('urgent.daysSingular', { count: 1 })
         : t('urgent.daysPlural', { count: daysLeft });
-  const cta = variant === 'last-day' ? t('cta.urgent') : t('cta');
+  const cta = variant === 'last-day' ? t('ctaUrgent') : t('cta');
 
   return (
     <div

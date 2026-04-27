@@ -153,7 +153,7 @@ export function TwoFactorSetup() {
                 {confirm.isPending ? (
                   <>
                     <Loader2 className="animate-spin" />
-                    {t('submit.pending')}
+                    {t('submitPending')}
                   </>
                 ) : (
                   t('submit')

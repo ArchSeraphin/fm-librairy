@@ -47,7 +47,9 @@ export function OtpInput({
     if (digit && index < length - 1) {
       refs.current[index + 1]?.focus();
     }
-    if (next.length === length && !next.includes('') && next.replace(/\D/g, '').length === length) {
+    // join('') drops empty cells, so length === length already proves every
+    // cell holds a character. The remaining check ensures all chars are digits.
+    if (next.length === length && next.replace(/\D/g, '').length === length) {
       onComplete?.(next);
     }
   };

@@ -91,7 +91,7 @@ export function TwoFactorChallenge() {
             {verify.isPending ? (
               <>
                 <Loader2 className="animate-spin" />
-                {t('submit.pending')}
+                {t('submitPending')}
               </>
             ) : (
               t('submit')

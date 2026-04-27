@@ -27,9 +27,9 @@
         "toggleHide": "Masquer le mot de passe"
       },
       "submit": "Se connecter",
-      "submit.pending": "Connexion en cours…",
+      "submitPending": "Connexion en cours…",
       "forgotPassword": "Mot de passe oublié ?",
-      "forgotPassword.disabled": "Disponible dans une prochaine mise à jour",
+      "forgotPasswordDisabled": "Disponible dans une prochaine mise à jour",
       "error": {
         "invalid": "Identifiants incorrects ou compte verrouillé.",
         "locked": "Compte temporairement verrouillé. Réessayez dans quelques minutes."
@@ -40,7 +40,7 @@
       "description": "Entrez le code à 6 chiffres de votre application d'authentification",
       "codeLabel": "Code à 6 chiffres",
       "submit": "Vérifier",
-      "submit.pending": "Vérification…",
+      "submitPending": "Vérification…",
       "useBackupCode": "Utiliser un code de récupération",
       "backToLogin": "Retour à la connexion",
       "error": {
@@ -55,7 +55,7 @@
       "placeholder": "XXXX-XXXX",
       "hint": "Code à 8 caractères, format XXXX-XXXX (lettres et chiffres)",
       "submit": "Vérifier",
-      "submit.pending": "Vérification…",
+      "submitPending": "Vérification…",
       "backToTotp": "Retour au code à 6 chiffres",
       "error": {
         "invalid": "Code invalide ou déjà utilisé.",
@@ -71,7 +71,7 @@
       "copied": "Copié",
       "codeLabel": "Code de vérification",
       "submit": "Confirmer et continuer",
-      "submit.pending": "Vérification…",
+      "submitPending": "Vérification…",
       "error": {
         "invalid": "Code invalide. Vérifiez l'heure de votre appareil.",
         "expired": "La session de configuration a expiré. Recommencez."
@@ -97,7 +97,7 @@
         "hours": "2FA obligatoire — il vous reste {count}h."
       },
       "cta": "Activer maintenant",
-      "cta.urgent": "Activer obligatoirement"
+      "ctaUrgent": "Activer obligatoirement"
     }
   },
   "admin": {

@@ -121,7 +121,7 @@ export function LoginForm() {
             {pending ? (
               <>
                 <Loader2 className="animate-spin" />
-                {t('submit.pending')}
+                {t('submitPending')}
               </>
             ) : (
               t('submit')
@@ -134,7 +134,7 @@ export function LoginForm() {
           variant="link"
           size="sm"
           disabled
-          title={t('forgotPassword.disabled')}
+          title={t('forgotPasswordDisabled')}
           className="text-muted-foreground"
         >
           {t('forgotPassword')}
