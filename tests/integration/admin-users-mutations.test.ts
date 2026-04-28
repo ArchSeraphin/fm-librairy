@@ -86,6 +86,11 @@ describe('admin.users — mutations', () => {
     await caller.admin.users.reactivate({ id: target.id });
     await caller.admin.users.reactivate({ id: target.id });
     expect((await prisma.user.findUnique({ where: { id: target.id } }))?.status).toBe('ACTIVE');
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'admin.user.reactivated', targetId: target.id },
+      }),
+    ).toBe(1);
   });
 
   it('delete: requires confirmEmail to match', async () => {
@@ -102,6 +107,16 @@ describe('admin.users — mutations', () => {
       .createCaller(ctx)
       .admin.users.delete({ id: target.id, confirmEmail: 't@e2e.test' });
     expect(await prisma.user.findUnique({ where: { id: target.id } })).toBeNull();
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'admin.user.deleted', targetId: target.id },
+      }),
+    ).toBe(1);
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'permission.denied', actorId: ctx.user.id },
+      }),
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it('changeRole: refuses self', async () => {
@@ -146,6 +161,11 @@ describe('admin.users — mutations', () => {
     );
     expect(await prisma.twoFactorSecret.findUnique({ where: { userId: target.id } })).toBeNull();
     expect(await prisma.session.count({ where: { userId: target.id } })).toBe(0);
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'admin.user.two_factor_reset', targetId: target.id },
+      }),
+    ).toBe(1);
 
     const adminTarget = await prisma.user.create({
       data: {

@@ -94,7 +94,8 @@ export const adminUsersRouter = t.router({
         action: 'admin.user.suspended',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: input.id },
-        metadata: { reason: input.reason, sessionsRevoked: revoked, ip: ctx.ip },
+        metadata: { reason: input.reason, sessionsRevoked: revoked },
+        req: { ip: ctx.ip },
       });
       return { ok: true };
     }),
@@ -113,7 +114,7 @@ export const adminUsersRouter = t.router({
         action: 'admin.user.reactivated',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: input.id },
-        metadata: { ip: ctx.ip },
+        req: { ip: ctx.ip },
       });
       return { ok: true };
     }),
@@ -130,6 +131,13 @@ export const adminUsersRouter = t.router({
       });
       if (!target) throw new TRPCError({ code: 'NOT_FOUND' });
       if (target.email.toLowerCase() !== input.confirmEmail.toLowerCase()) {
+        await recordAudit({
+          action: 'permission.denied',
+          actor: { id: ctx.user.id },
+          target: { type: 'USER', id: input.id },
+          metadata: { reason: 'delete_confirm_mismatch' },
+          req: { ip: ctx.ip },
+        });
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'confirmEmail mismatch' });
       }
       await assertNotLastGlobalAdmin(input.id, 'remove');
@@ -138,7 +146,8 @@ export const adminUsersRouter = t.router({
         action: 'admin.user.deleted',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: input.id },
-        metadata: { email: target.email, role: target.role, ip: ctx.ip },
+        metadata: { email: target.email, role: target.role },
+        req: { ip: ctx.ip },
       });
       return { ok: true };
     }),
@@ -163,7 +172,8 @@ export const adminUsersRouter = t.router({
         action: 'admin.user.role_changed',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: input.id },
-        metadata: { from: target.role, to: input.newRole, ip: ctx.ip },
+        metadata: { from: target.role, to: input.newRole },
+        req: { ip: ctx.ip },
       });
       return { ok: true };
     }),
@@ -171,6 +181,12 @@ export const adminUsersRouter = t.router({
   resetTwoFactor: globalAdminProcedure
     .input(z.object({ id: cuid, reason: reasonInput }))
     .mutation(async ({ ctx, input }) => {
+      if (input.id === ctx.user.id) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'use account.security.* to manage your own 2FA',
+        });
+      }
       const target = await db.user.findUnique({
         where: { id: input.id },
         select: { id: true, role: true, twoFactorEnabled: true },
@@ -191,7 +207,8 @@ export const adminUsersRouter = t.router({
         action: 'admin.user.two_factor_reset',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: input.id },
-        metadata: { reason: input.reason, sessionsRevoked, ip: ctx.ip },
+        metadata: { reason: input.reason, sessionsRevoked },
+        req: { ip: ctx.ip },
       });
       return { ok: true };
     }),
@@ -216,14 +233,18 @@ export const adminUsersRouter = t.router({
     revoke: globalAdminProcedure
       .input(z.object({ invitationId: cuid }))
       .mutation(async ({ ctx, input }) => {
-        const inv = await db.invitation.findUnique({ where: { id: input.invitationId } });
+        const inv = await db.invitation.findUnique({
+          where: { id: input.invitationId },
+          select: { id: true, email: true },
+        });
         if (!inv) throw new TRPCError({ code: 'NOT_FOUND' });
         await revokeInvitation(input.invitationId);
         await recordAudit({
           action: 'auth.invitation.revoked',
           actor: { id: ctx.user.id },
           target: { type: 'INVITATION', id: input.invitationId },
-          metadata: { revokedBy: ctx.user.id },
+          metadata: { invitedEmail: inv.email },
+          req: { ip: ctx.ip },
         });
         return { ok: true };
       }),
