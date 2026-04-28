@@ -143,7 +143,11 @@
       "displayName": "Nom affiché",
       "email": "Email",
       "password": "Mot de passe",
+      "passwordToggleShow": "Afficher le mot de passe",
+      "passwordToggleHide": "Masquer le mot de passe",
       "passwordConfirm": "Confirmer le mot de passe",
+      "passwordConfirmToggleShow": "Afficher la confirmation du mot de passe",
+      "passwordConfirmToggleHide": "Masquer la confirmation du mot de passe",
       "submit": "Créer mon compte"
     },
     "join": {
