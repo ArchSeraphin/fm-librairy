@@ -42,7 +42,7 @@ function SkeletonRow() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, label }: { status: string; label: string }) {
   return (
     <span
       className={cn(
@@ -52,12 +52,12 @@ function StatusBadge({ status }: { status: string }) {
           : 'bg-orange-50 text-orange-700 ring-1 ring-orange-600/20',
       )}
     >
-      {status === 'ACTIVE' ? 'Actif' : 'Suspendu'}
+      {label}
     </span>
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
+function RoleBadge({ role, label }: { role: string; label: string }) {
   return (
     <span
       className={cn(
@@ -67,7 +67,7 @@ function RoleBadge({ role }: { role: string }) {
           : 'bg-secondary text-secondary-foreground',
       )}
     >
-      {role === 'GLOBAL_ADMIN' ? 'Admin' : 'Utilisateur'}
+      {label}
     </span>
   );
 }
@@ -188,10 +188,16 @@ export function UsersTable() {
                       {u.displayName ?? <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <RoleBadge role={u.role} />
+                      <RoleBadge
+                        role={u.role}
+                        label={u.role === 'GLOBAL_ADMIN' ? t('roleAdmin') : t('roleUser')}
+                      />
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={u.status} />
+                      <StatusBadge
+                        status={u.status}
+                        label={u.status === 'ACTIVE' ? t('statusActive') : t('statusSuspended')}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       {u.twoFactorEnabled ? (
