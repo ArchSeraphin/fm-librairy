@@ -179,6 +179,10 @@
       "confirmPassword": "Confirmer le mot de passe",
       "submit": "Mettre à jour",
       "success": "Mot de passe modifié. Connectez-vous avec votre nouveau mot de passe.",
+      "passwordToggleShow": "Afficher le nouveau mot de passe",
+      "passwordToggleHide": "Masquer le nouveau mot de passe",
+      "confirmPasswordToggleShow": "Afficher la confirmation du mot de passe",
+      "confirmPasswordToggleHide": "Masquer la confirmation du mot de passe",
       "invalid": {
         "title": "Lien invalide",
         "body": "Ce lien a expiré ou a déjà été utilisé. Demandez un nouveau lien sur la page Mot de passe oublié."
