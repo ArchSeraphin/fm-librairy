@@ -25,6 +25,9 @@ export type AuditAction =
   | 'auth.invitation.consumed'
   | 'auth.invitation.expired'
   | 'auth.invitation.revoked'
+  | 'auth.invitation.invalid_attempt'
+  | 'auth.password.reset_invalid_attempt'
+  | 'auth.password.reset_expired'
   // 1C
   | 'admin.user.suspended'
   | 'admin.user.reactivated'

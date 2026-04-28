@@ -19,6 +19,7 @@
 ## Task 0 : Setup branche et dépendances
 
 **Files:**
+
 - Modify: `package.json` (deps + scripts)
 - Modify: `docker-compose.dev.yml` (service mailpit)
 - Modify: `docker-compose.ci.yml` (service mailpit pour E2E)
@@ -63,22 +64,22 @@ Modifier `package.json` section `"scripts"` pour ajouter :
 Modifier `docker-compose.dev.yml`, section `services`, ajouter :
 
 ```yaml
-  mailpit:
-    image: axllent/mailpit:v1.21
-    container_name: biblioshare-mailpit
-    restart: unless-stopped
-    ports:
-      - '1025:1025'  # SMTP
-      - '8025:8025'  # Web UI + API
-    environment:
-      MP_MAX_MESSAGES: '5000'
-      MP_SMTP_AUTH_ACCEPT_ANY: '1'
-      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
-    healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://localhost:8025/api/v1/info']
-      interval: 10s
-      timeout: 3s
-      retries: 5
+mailpit:
+  image: axllent/mailpit:v1.21
+  container_name: biblioshare-mailpit
+  restart: unless-stopped
+  ports:
+    - '1025:1025' # SMTP
+    - '8025:8025' # Web UI + API
+  environment:
+    MP_MAX_MESSAGES: '5000'
+    MP_SMTP_AUTH_ACCEPT_ANY: '1'
+    MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+  healthcheck:
+    test: ['CMD', 'wget', '-qO-', 'http://localhost:8025/api/v1/info']
+    interval: 10s
+    timeout: 3s
+    retries: 5
 ```
 
 - [ ] **Step 0.6: Ajouter Mailpit au compose CI**
@@ -109,6 +110,7 @@ git commit -m "chore(phase-1b): add resend + nodemailer + react-email + Mailpit"
 ## Task 1 : Env vars Phase 1B
 
 **Files:**
+
 - Modify: `src/lib/env.ts` (schéma Zod étendu)
 - Modify: `.env.example` (ajout de toutes les nouvelles variables)
 - Modify: `tests/integration/setup/containers.ts` (process.env pour CI)
@@ -165,11 +167,11 @@ EMAIL_LOG_SALT=replace-with-openssl-rand-hex-32
 Modifier `tests/integration/setup/containers.ts`, dans `beforeAll`, après les env existants, ajouter :
 
 ```ts
-  process.env.EMAIL_TRANSPORT = 'smtp';
-  process.env.EMAIL_FROM = 'BiblioShare <test@biblio.test>';
-  process.env.SMTP_HOST = '127.0.0.1';
-  process.env.SMTP_PORT = '1';      // port volontairement invalide ; tests unitaires mockent le transport
-  process.env.EMAIL_LOG_SALT = 'test-email-log-salt-32-chars-min!';
+process.env.EMAIL_TRANSPORT = 'smtp';
+process.env.EMAIL_FROM = 'BiblioShare <test@biblio.test>';
+process.env.SMTP_HOST = '127.0.0.1';
+process.env.SMTP_PORT = '1'; // port volontairement invalide ; tests unitaires mockent le transport
+process.env.EMAIL_LOG_SALT = 'test-email-log-salt-32-chars-min!';
 ```
 
 - [ ] **Step 1.4: Run typecheck + unit**
@@ -193,6 +195,7 @@ git commit -m "feat(phase-1b): add email transport env vars"
 ## Task 2 : src/lib/email.ts — transport abstrait
 
 **Files:**
+
 - Create: `src/lib/email.ts`
 - Test: `tests/unit/email.test.ts`
 
@@ -397,6 +400,7 @@ git commit -m "feat(phase-1b): add email transport abstraction (resend + smtp)"
 ## Task 3 : Templates react-email
 
 **Files:**
+
 - Create: `src/emails/_layout.tsx`
 - Create: `src/emails/invitation-new-user.tsx`
 - Create: `src/emails/invitation-join-library.tsx`
@@ -408,16 +412,7 @@ git commit -m "feat(phase-1b): add email transport abstraction (resend + smtp)"
 
 ```tsx
 import * as React from 'react';
-import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Hr,
-  Tailwind,
-} from '@react-email/components';
+import { Html, Head, Body, Container, Section, Text, Hr, Tailwind } from '@react-email/components';
 
 export interface LayoutProps {
   preview?: string;
@@ -432,16 +427,16 @@ export const EmailLayout: React.FC<LayoutProps> = ({ preview, children }) => (
     </Head>
     <Tailwind>
       <Body className="bg-white font-sans text-slate-900">
-        <Container className="mx-auto max-w-xl py-8 px-6">
+        <Container className="mx-auto max-w-xl px-6 py-8">
           <Section>
-            <Text className="text-2xl font-semibold tracking-tight m-0">BiblioShare</Text>
+            <Text className="m-0 text-2xl font-semibold tracking-tight">BiblioShare</Text>
           </Section>
           <Section className="mt-6">{children}</Section>
           <Hr className="my-8 border-slate-200" />
           <Section>
-            <Text className="text-xs text-slate-500 m-0">
-              Vous recevez cet email parce qu'une action sur BiblioShare le concerne. Si vous
-              pensez que c'est une erreur, ignorez ce message.
+            <Text className="m-0 text-xs text-slate-500">
+              Vous recevez cet email parce qu'une action sur BiblioShare le concerne. Si vous pensez
+              que c'est une erreur, ignorez ce message.
             </Text>
           </Section>
         </Container>
@@ -483,23 +478,24 @@ const InvitationNewUserEmail: React.FC<InvitationNewUserProps> = ({
   });
   return (
     <EmailLayout preview={`Vous êtes invité·e sur BiblioShare`}>
-      <Heading className="text-xl font-semibold m-0">Vous êtes invité·e</Heading>
+      <Heading className="m-0 text-xl font-semibold">Vous êtes invité·e</Heading>
       <Text className="mt-4">
         {inviterName} vous invite à rejoindre {target}.
       </Text>
       <Text className="mt-2">
-        Créez votre compte en cliquant sur le bouton ci-dessous. Ce lien est valable jusqu'au {expiresFr}.
+        Créez votre compte en cliquant sur le bouton ci-dessous. Ce lien est valable jusqu'au{' '}
+        {expiresFr}.
       </Text>
       <Button
         href={signupUrl}
-        className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"
+        className="mt-6 rounded-md bg-slate-900 px-5 py-3 font-medium text-white"
       >
         Créer mon compte
       </Button>
       <Text className="mt-6 text-sm text-slate-600">
         Si le bouton ne fonctionne pas, copiez cette URL dans votre navigateur :
       </Text>
-      <Text className="text-xs text-slate-500 break-all">{signupUrl}</Text>
+      <Text className="break-all text-xs text-slate-500">{signupUrl}</Text>
     </EmailLayout>
   );
 };
@@ -538,7 +534,7 @@ const InvitationJoinLibraryEmail: React.FC<InvitationJoinLibraryProps> = ({
   });
   return (
     <EmailLayout preview={`${inviterName} vous invite à rejoindre ${libraryName}`}>
-      <Heading className="text-xl font-semibold m-0">Bonjour {userDisplayName}</Heading>
+      <Heading className="m-0 text-xl font-semibold">Bonjour {userDisplayName}</Heading>
       <Text className="mt-4">
         {inviterName} vous invite à rejoindre la bibliothèque <strong>{libraryName}</strong> sur
         BiblioShare. Vous pourrez y accéder avec votre compte existant.
@@ -546,11 +542,11 @@ const InvitationJoinLibraryEmail: React.FC<InvitationJoinLibraryProps> = ({
       <Text className="mt-2">Lien valable jusqu'au {expiresFr}.</Text>
       <Button
         href={joinUrl}
-        className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"
+        className="mt-6 rounded-md bg-slate-900 px-5 py-3 font-medium text-white"
       >
         Rejoindre {libraryName}
       </Button>
-      <Text className="mt-6 text-xs text-slate-500 break-all">{joinUrl}</Text>
+      <Text className="mt-6 break-all text-xs text-slate-500">{joinUrl}</Text>
     </EmailLayout>
   );
 };
@@ -577,14 +573,14 @@ const PasswordResetEmail: React.FC<PasswordResetProps> = ({ resetUrl, expiresAt 
   });
   return (
     <EmailLayout preview="Réinitialisation de votre mot de passe">
-      <Heading className="text-xl font-semibold m-0">Réinitialisation de mot de passe</Heading>
+      <Heading className="m-0 text-xl font-semibold">Réinitialisation de mot de passe</Heading>
       <Text className="mt-4">
         Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton
         ci-dessous pour en choisir un nouveau. Le lien expire à {expiresFr} (1 heure).
       </Text>
       <Button
         href={resetUrl}
-        className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"
+        className="mt-6 rounded-md bg-slate-900 px-5 py-3 font-medium text-white"
       >
         Choisir un nouveau mot de passe
       </Button>
@@ -592,7 +588,7 @@ const PasswordResetEmail: React.FC<PasswordResetProps> = ({ resetUrl, expiresAt 
         Si vous n'avez pas demandé cette réinitialisation, ignorez cet email — votre mot de passe
         actuel reste valide.
       </Text>
-      <Text className="mt-4 text-xs text-slate-500 break-all">{resetUrl}</Text>
+      <Text className="mt-4 break-all text-xs text-slate-500">{resetUrl}</Text>
     </EmailLayout>
   );
 };
@@ -625,7 +621,7 @@ const PasswordResetConfirmationEmail: React.FC<PasswordResetConfirmationProps> =
   });
   return (
     <EmailLayout preview="Votre mot de passe a été modifié">
-      <Heading className="text-xl font-semibold m-0">Mot de passe modifié</Heading>
+      <Heading className="m-0 text-xl font-semibold">Mot de passe modifié</Heading>
       <Text className="mt-4">Bonjour {userDisplayName},</Text>
       <Text className="mt-2">
         Votre mot de passe BiblioShare a été modifié le {occurredFr}. Toutes vos sessions actives
@@ -737,6 +733,7 @@ git commit -m "feat(phase-1b): add 4 react-email templates + render tests"
 ## Task 4 : i18n strings additions
 
 **Files:**
+
 - Modify: `messages/fr.json` (ajout des clés Phase 1B)
 
 - [ ] **Step 4.1: Ajouter les clés au fichier i18n**
@@ -843,6 +840,7 @@ git commit -m "feat(phase-1b): add i18n strings for invitations + password reset
 ## Task 5 : Worker BullMQ — queue mail
 
 **Files:**
+
 - Modify: `worker/index.ts` (ajout queue + worker mail)
 - Create: `worker/jobs/send-invitation.ts`
 - Create: `worker/jobs/send-password-reset.ts`
@@ -1036,6 +1034,7 @@ export async function handleSendInvitationJoinLibrary(job: Job, logger: Logger):
 ```
 
 **ATTENTION résolution modules** : si l'import direct depuis `../../src/lib/email.js` ne fonctionne pas (module resolution worker → src), trois alternatives :
+
 1. Ajouter le path `@/*` au `worker/tsconfig.json` `paths` et un alias runtime.
 2. Bundler le worker avec esbuild qui inline les imports (option lourde).
 3. Dupliquer une copie minimaliste de `email.ts` + templates dans `worker/lib/`.
@@ -1070,10 +1069,7 @@ export async function handleSendPasswordReset(job: Job, logger: Logger): Promise
   logger.info({ jobId: job.id }, 'password reset sent');
 }
 
-export async function handleSendPasswordResetConfirmation(
-  job: Job,
-  logger: Logger,
-): Promise<void> {
+export async function handleSendPasswordResetConfirmation(job: Job, logger: Logger): Promise<void> {
   const { to, userDisplayName, occurredAtIso } = job.data as {
     to: string;
     userDisplayName: string;
@@ -1175,10 +1171,10 @@ mailWorker.on('failed', (job, err) => {
 Modifier le bloc `shutdown` pour inclure `mailWorker.close()` et `mailQueue.close()` :
 
 ```ts
-  await worker.close();
-  await mailWorker.close();
-  await queue.close();
-  await mailQueue.close();
+await worker.close();
+await mailWorker.close();
+await queue.close();
+await mailQueue.close();
 ```
 
 - [ ] **Step 5.7: Vérifier la résolution de modules worker → src**
@@ -1188,6 +1184,7 @@ cd worker && pnpm typecheck && cd ..
 ```
 
 Si erreur sur `'../../src/lib/email.js'` :
+
 - Vérifier que `worker/tsconfig.json` a bien `"module": "NodeNext"` ou `"esnext"` avec `"moduleResolution": "NodeNext"`.
 - Vérifier que `worker/package.json` a `"type": "module"`.
 - Vérifier que les fichiers source `src/lib/email.ts` sont compilés en .js dans le build worker. Si non, ajouter un build step `tsc -p src/tsconfig.json` pré-worker, ou utiliser `tsx` pour le worker en dev.
@@ -1226,6 +1223,7 @@ git commit -m "feat(phase-1b): add BullMQ mail queue + 3 senders with retry"
 ## Task 6 : src/lib/invitations.ts — service métier
 
 **Files:**
+
 - Create: `src/lib/invitations.ts`
 - Test: `tests/unit/invitations.test.ts`
 - Test: `tests/integration/invitations.test.ts`
@@ -1498,7 +1496,12 @@ async function seedAdmin() {
     data: {
       email: `admin-${Date.now()}@x.test`,
       displayName: 'Admin',
-      passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+      passwordHash: await argonHash('x', {
+        algorithm: 2 as const,
+        memoryCost: 19456,
+        timeCost: 2,
+        parallelism: 1,
+      }),
       role: 'GLOBAL_ADMIN',
     },
   });
@@ -1549,7 +1552,12 @@ describe('invitations integration', () => {
       data: {
         email: 'old@x.test',
         displayName: 'Old',
-        passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+        passwordHash: await argonHash('x', {
+          algorithm: 2 as const,
+          memoryCost: 19456,
+          timeCost: 2,
+          parallelism: 1,
+        }),
       },
     });
     const r = await createInvitation({
@@ -1601,14 +1609,24 @@ describe('invitations integration', () => {
       data: {
         email: 'a@x.test',
         displayName: 'A',
-        passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+        passwordHash: await argonHash('x', {
+          algorithm: 2 as const,
+          memoryCost: 19456,
+          timeCost: 2,
+          parallelism: 1,
+        }),
       },
     });
     const userB = await db.user.create({
       data: {
         email: 'b@x.test',
         displayName: 'B',
-        passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+        passwordHash: await argonHash('x', {
+          algorithm: 2 as const,
+          memoryCost: 19456,
+          timeCost: 2,
+          parallelism: 1,
+        }),
       },
     });
     const r = await createInvitation({
@@ -1657,6 +1675,7 @@ git commit -m "feat(phase-1b): add invitations service (create/find/consume sign
 ## Task 7 : src/lib/password-reset.ts — service métier
 
 **Files:**
+
 - Create: `src/lib/password-reset.ts`
 - Test: `tests/integration/password-reset.test.ts`
 
@@ -1871,6 +1890,7 @@ git commit -m "feat(phase-1b): add password-reset service (request/find/consume 
 ## Task 8 : Rate-limiter `resetIpOnlyLimiter`
 
 **Files:**
+
 - Modify: `src/lib/rate-limit.ts`
 - Test: `tests/integration/rate-limit-reset.test.ts`
 
@@ -1947,6 +1967,7 @@ git commit -m "feat(phase-1b): add resetIpOnlyLimiter (30/h per ipHash)"
 ## Task 9 : Routeur tRPC `invitation`
 
 **Files:**
+
 - Create: `src/server/trpc/routers/invitation.ts`
 - Modify: `src/server/trpc/routers/_app.ts` (mount)
 - Test: `tests/integration/invitation-router.test.ts`
@@ -2324,6 +2345,7 @@ git commit -m "feat(phase-1b): add tRPC invitation router (create/validate/consu
 ## Task 10 : Routeur tRPC `password` + timing pad
 
 **Files:**
+
 - Create: `src/server/trpc/routers/password.ts`
 - Modify: `src/server/trpc/routers/_app.ts`
 - Test: `tests/integration/password-router.test.ts`
@@ -2586,7 +2608,9 @@ describe('password reset — timing & enumeration', () => {
     const samplesA: number[] = [];
     const samplesB: number[] = [];
     for (let i = 0; i < 5; i++) {
-      samplesA.push(await timeIt(() => caller.password.requestReset({ email: `ghost${i}@x.test` })));
+      samplesA.push(
+        await timeIt(() => caller.password.requestReset({ email: `ghost${i}@x.test` })),
+      );
       samplesB.push(await timeIt(() => caller.password.requestReset({ email: 'real@x.test' })));
     }
     const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -2626,6 +2650,7 @@ git commit -m "feat(phase-1b): add tRPC password router with timing pad + attack
 ## Task 11 : Page `/admin/users/invite`
 
 **Files:**
+
 - Create: `src/app/admin/users/invite/page.tsx`
 - Create: `src/app/admin/users/invite/invite-form.tsx` (client component)
 - Create: `src/app/admin/users/invite/actions.ts` (server action wrapper)
@@ -2674,8 +2699,7 @@ export async function submitInvite(_prev: InviteState, formData: FormData): Prom
   } catch (err) {
     if (err instanceof TRPCError) {
       if (err.code === 'FORBIDDEN') return { status: 'error', code: 'FORBIDDEN' };
-      if (err.code === 'TOO_MANY_REQUESTS')
-        return { status: 'error', code: 'TOO_MANY_REQUESTS' };
+      if (err.code === 'TOO_MANY_REQUESTS') return { status: 'error', code: 'TOO_MANY_REQUESTS' };
     }
     return { status: 'error', code: 'UNKNOWN' };
   }
@@ -2706,7 +2730,7 @@ export function InviteForm({ libraries }: { libraries: Library[] }) {
   const [state, formAction] = useFormState(submitInvite, initial);
 
   return (
-    <form action={formAction} className="space-y-4 max-w-md">
+    <form action={formAction} className="max-w-md space-y-4">
       <div>
         <label htmlFor="email" className="block text-sm font-medium">
           {t('admin.invite.email.label')}
@@ -2816,7 +2840,10 @@ export default async function InviteUserPage() {
   // Listing biblios où l'user est admin
   let libraries: { id: string; name: string }[] = [];
   if (user.role === 'GLOBAL_ADMIN') {
-    libraries = await db.library.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } });
+    libraries = await db.library.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
   } else {
     const memberships = await db.libraryMember.findMany({
       where: { userId: user.id, role: 'LIBRARY_ADMIN' },
@@ -2830,7 +2857,7 @@ export default async function InviteUserPage() {
   return (
     <main className="container mx-auto py-10">
       <h1 className="text-2xl font-semibold">{t('admin.invite.title')}</h1>
-      <p className="mt-2 text-sm text-slate-600 max-w-prose">{t('admin.invite.lead')}</p>
+      <p className="mt-2 max-w-prose text-sm text-slate-600">{t('admin.invite.lead')}</p>
       <div className="mt-6">
         <InviteForm libraries={libraries} />
       </div>
@@ -2864,6 +2891,7 @@ git commit -m "feat(phase-1b): add /admin/users/invite mini-form (server compone
 ## Task 12 : Page publique `/invitations/[token]`
 
 **Files:**
+
 - Create: `src/app/invitations/[token]/page.tsx`
 - Create: `src/app/invitations/[token]/signup-form.tsx`
 - Create: `src/app/invitations/[token]/join-form.tsx`
@@ -2936,7 +2964,7 @@ export async function submitJoin(rawToken: string): Promise<JoinState> {
     await caller.invitation.consumeJoin({ rawToken });
   } catch (err) {
     if (err instanceof TRPCError && err.message === 'EMAIL_MISMATCH') {
-      return { status: 'error', message: "Cette invitation ne vous est pas adressée." };
+      return { status: 'error', message: 'Cette invitation ne vous est pas adressée.' };
     }
     return { status: 'error', message: 'Lien invalide ou expiré.' };
   }
@@ -2970,7 +2998,7 @@ export function SignupForm({
   const t = useTranslations();
   const [state, formAction] = useFormState(submitSignup, initial);
   return (
-    <form action={formAction} className="space-y-4 max-w-md">
+    <form action={formAction} className="max-w-md space-y-4">
       <input type="hidden" name="rawToken" value={rawToken} />
       <input type="hidden" name="email" value={email} />
       <p className="text-sm text-slate-600">
@@ -3028,7 +3056,9 @@ export function SignupForm({
       </div>
       <SubmitBtn label={t('invitation.signup.submit')} />
       {state.status === 'error' ? (
-        <p role="alert" className="text-sm text-red-700">{state.message}</p>
+        <p role="alert" className="text-sm text-red-700">
+          {state.message}
+        </p>
       ) : null}
     </form>
   );
@@ -3065,7 +3095,7 @@ export function JoinForm({ rawToken, libraryName }: { rawToken: string; libraryN
   const [state, setState] = React.useState<JoinState>({ status: 'idle' });
 
   return (
-    <div className="space-y-4 max-w-md">
+    <div className="max-w-md space-y-4">
       <p className="text-sm text-slate-600">{t('invitation.join.lead')}</p>
       <button
         type="button"
@@ -3081,7 +3111,9 @@ export function JoinForm({ rawToken, libraryName }: { rawToken: string; libraryN
         {t('invitation.join.submit')} {libraryName}
       </button>
       {state.status === 'error' ? (
-        <p role="alert" className="text-sm text-red-700">{state.message}</p>
+        <p role="alert" className="text-sm text-red-700">
+          {state.message}
+        </p>
       ) : null}
     </div>
   );
@@ -3113,7 +3145,7 @@ export default async function InvitationConsumePage({ params }: PageProps) {
 
   if (!validation.valid) {
     return (
-      <main className="container mx-auto py-10 max-w-md">
+      <main className="container mx-auto max-w-md py-10">
         <h1 className="text-2xl font-semibold">{t('invitation.invalid.title')}</h1>
         <p className="mt-2 text-slate-600">{t('invitation.invalid.body')}</p>
       </main>
@@ -3127,7 +3159,7 @@ export default async function InvitationConsumePage({ params }: PageProps) {
     }
     if (ctx.user.email.toLowerCase() !== validation.email.toLowerCase()) {
       return (
-        <main className="container mx-auto py-10 max-w-md">
+        <main className="container mx-auto max-w-md py-10">
           <h1 className="text-2xl font-semibold">{t('invitation.mismatch.title')}</h1>
           <p className="mt-2 text-slate-600">{t('invitation.mismatch.body')}</p>
         </main>
@@ -3182,6 +3214,7 @@ git commit -m "feat(phase-1b): add /invitations/[token] page (signup + join mode
 ## Task 13 : Pages publiques `/password/forgot` + `/password/reset/[token]`
 
 **Files:**
+
 - Create: `src/app/(auth)/password/forgot/page.tsx`
 - Create: `src/app/(auth)/password/forgot/forgot-form.tsx`
 - Create: `src/app/(auth)/password/forgot/actions.ts`
@@ -3242,7 +3275,7 @@ export function ForgotForm() {
     );
   }
   return (
-    <form action={action} className="space-y-4 max-w-md">
+    <form action={action} className="max-w-md space-y-4">
       <div>
         <label htmlFor="email" className="block text-sm font-medium">
           {t('password.forgot.email.label')}
@@ -3258,7 +3291,9 @@ export function ForgotForm() {
       </div>
       <Submit />
       {state.status === 'error' ? (
-        <p role="alert" className="text-sm text-red-700">{state.message}</p>
+        <p role="alert" className="text-sm text-red-700">
+          {state.message}
+        </p>
       ) : null}
     </form>
   );
@@ -3292,7 +3327,7 @@ export default async function ForgotPasswordPage() {
   return (
     <main className="container mx-auto py-10">
       <h1 className="text-2xl font-semibold">{t('password.forgot.title')}</h1>
-      <p className="mt-2 text-sm text-slate-600 max-w-prose">{t('password.forgot.lead')}</p>
+      <p className="mt-2 max-w-prose text-sm text-slate-600">{t('password.forgot.lead')}</p>
       <div className="mt-6">
         <ForgotForm />
       </div>
@@ -3365,7 +3400,7 @@ export function ResetForm({ rawToken }: { rawToken: string }) {
   const t = useTranslations();
   const [state, action] = useFormState(submitReset, initial);
   return (
-    <form action={action} className="space-y-4 max-w-md">
+    <form action={action} className="max-w-md space-y-4">
       <input type="hidden" name="rawToken" value={rawToken} />
       <p className="text-sm text-slate-600">{t('password.reset.lead')}</p>
       <div>
@@ -3397,7 +3432,9 @@ export function ResetForm({ rawToken }: { rawToken: string }) {
       </div>
       <Submit />
       {state.status === 'error' ? (
-        <p role="alert" className="text-sm text-red-700">{state.message}</p>
+        <p role="alert" className="text-sm text-red-700">
+          {state.message}
+        </p>
       ) : null}
     </form>
   );
@@ -3441,7 +3478,7 @@ export default async function ResetPasswordPage({ params }: PageProps) {
 
   if (!v.valid) {
     return (
-      <main className="container mx-auto py-10 max-w-md">
+      <main className="container mx-auto max-w-md py-10">
         <h1 className="text-2xl font-semibold">{t('password.reset.invalid.title')}</h1>
         <p className="mt-2 text-slate-600">{t('password.reset.invalid.body')}</p>
       </main>
@@ -3488,6 +3525,7 @@ git commit -m "feat(phase-1b): add /password/forgot + /password/reset/[token] pa
 ## Task 14 : Cleanup job — extension audit invitations expirées
 
 **Files:**
+
 - Modify: `worker/jobs/cleanup-expired-tokens.ts`
 - Test: `tests/integration/worker-cleanup-tokens.test.ts`
 
@@ -3658,6 +3696,7 @@ git commit -m "feat(phase-1b): cleanup-expired-tokens logs audit per expired ite
 ## Task 15 : E2E Playwright — 4 scénarios
 
 **Files:**
+
 - Create: `tests/e2e/helpers/mailpit.ts`
 - Create: `tests/e2e/invitation-new-user.spec.ts`
 - Create: `tests/e2e/invitation-existing-user.spec.ts`
@@ -3709,7 +3748,9 @@ export async function getMessageBody(id: string): Promise<{ HTML: string; Text: 
 }
 
 export function extractFirstUrl(body: string, prefix: string): string {
-  const re = new RegExp(`(${prefix.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}[A-Za-z0-9_\\-/.?=&%]+)`);
+  const re = new RegExp(
+    `(${prefix.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}[A-Za-z0-9_\\-/.?=&%]+)`,
+  );
   const m = body.match(re);
   if (!m) throw new Error(`url with prefix ${prefix} not found`);
   return m[1];
@@ -3810,9 +3851,7 @@ test('user resets password and logs in with new one', async ({ page }) => {
   await page.getByRole('button', { name: /Envoyer le lien/ }).click();
   await expect(page.getByRole('status')).toContainText('Si un compte existe');
 
-  const msg = await waitForEmail('existing@x.test', (m) =>
-    /Réinitialisation/.test(m.Subject),
-  );
+  const msg = await waitForEmail('existing@x.test', (m) => /Réinitialisation/.test(m.Subject));
   const body = await getMessageBody(msg.ID);
   const link = extractFirstUrl(body.HTML, `${process.env.APP_BASE_URL}/password/reset/`);
 
@@ -3876,6 +3915,7 @@ test('reset password kicks active sessions out', async ({ browser }) => {
 - [ ] **Step 15.6: Vérifier la config Playwright**
 
 Vérifier `playwright.config.ts` que :
+
 - `webServer` lance bien `pnpm dev` ou `pnpm start` avec les bons env vars (incluant `EMAIL_TRANSPORT=smtp` + `SMTP_HOST=localhost` + `EMAIL_FROM` + `MAILPIT_URL`).
 - Les env de test exposent `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`, `E2E_EXISTING_PASSWORD` pour les helpers.
 - Mailpit + Postgres + Redis sont up avant de lancer Playwright (cf. `docker-compose.ci.yml`).
@@ -3901,13 +3941,14 @@ git commit -m "test(phase-1b): add 4 E2E scenarios (invite/join/reset/session-in
 ## Task 16 : Documentation deployment + Resend DNS
 
 **Files:**
+
 - Modify: `docs/deployment.md`
 
 - [ ] **Step 16.1: Ajouter la section Resend**
 
 Modifier `docs/deployment.md`. Avant la section bootstrap admin (ou en fin de fichier), ajouter :
 
-```markdown
+````markdown
 ## Email transactionnel — Resend (production)
 
 BiblioShare envoie 4 emails transactionnels (invitation new user, invitation join library,
@@ -3928,11 +3969,13 @@ OVH → Web Cloud → Domains → `biblioshare.example.org` → DNS Zone. Ajoute
 enregistrement Resend tel quel. Délai de propagation : 5-60 min.
 
 Vérifier la propagation :
+
 ```bash
 dig +short TXT biblioshare.example.org
 dig +short TXT _dmarc.biblioshare.example.org
 dig +short TXT resend._domainkey.biblioshare.example.org
 ```
+````
 
 ### 3. Variables Coolify
 
@@ -3964,20 +4007,22 @@ arrive (boîte de spam comprise).
 - Audit log BiblioShare : table `AuditLog` action `auth.invitation.send_failed` pour
   les envois en DLQ après 5 retries.
 - Logs pino : `event=email.sent` avec `transportId` (l'ID Resend) pour corréler.
-```
+
+````
 
 - [ ] **Step 16.2: Commit**
 
 ```bash
 git add docs/deployment.md
 git commit -m "docs(phase-1b): add Resend setup + DNS instructions"
-```
+````
 
 ---
 
 ## Task 17 : Smoke test staging + tag `phase-1b-complete`
 
 **Files:**
+
 - (aucun fichier modifié — checklist manuelle + tag git)
 
 - [ ] **Step 17.1: Run full test suite**
@@ -4068,11 +4113,13 @@ name: Phase 1B — clôture
 description: Phase 1B (invitations + reset password) clôturée le YYYY-MM-DD, tag `phase-1b-complete`.
 type: project
 ---
+
 # Phase 1B — clôture
 
 Tag : `phase-1b-complete` sur `<commit-sha>`. PR `#NN` mergée.
 
 Livrables :
+
 - Services `lib/{email,invitations,password-reset,mail-queue}.ts`
 - 4 templates react-email
 - Routeurs tRPC `invitation` + `password`
@@ -4094,29 +4141,29 @@ Mettre à jour `MEMORY.md` (index) avec une ligne pointant vers ce nouveau memor
 
 **Spec coverage check** (sections du spec ↔ tasks) :
 
-| Spec section | Task(s) couvrante(s) |
-|---|---|
-| §1.4 Livrables techniques | Tasks 1-15 |
-| §2.1 Flow invitation signup | Tasks 6, 9, 12 |
-| §2.2 Flow invitation join | Tasks 6, 9, 12 |
-| §2.3 Flow reset password | Tasks 7, 10, 13 |
-| §3.1 Découpage fichiers | Tous |
-| §3.2 Modules services | Tasks 2, 6, 7 |
-| §3.3 Env vars | Task 1 |
-| §4.1 Tokens | Task 6, 7 (réutilise `lib/tokens.ts` existant) |
-| §4.2 Rate-limits | Task 8 (resetIpOnlyLimiter) + Tasks 9, 10 (consume) |
-| §4.3 Audit events | Task 10.3 (extension union) + Tasks 9, 10, 14 (recordAudit calls) |
-| §4.4 Cleanup job | Task 14 |
-| §4.5 safeCallbackUrl | Task 12 (server component handles l'invitation), Task 13 (idem reset) |
-| §4.6 Attack tests | Task 6 (replay/expired/tamper/crossuser), Task 7 (replay/expired/drain/sessions), Task 10 (timing/enumeration) |
-| §5.1 Pages UI | Tasks 11, 12, 13 |
-| §5.2 i18n | Task 4 |
-| §5.3 Emails templates | Task 3 |
-| §6.1 Tests | Tasks 6, 7, 8, 9, 10, 14, 15 |
-| §6.2 Observabilité | Tasks 2 (logs sendEmail), 5 (worker failed listener) |
-| §6.3 Risques | adressés implicitement par retry config (Task 5), `Serializable` tx (Tasks 6, 7), redact pino (existant Phase 1A) |
-| §6.4 Ordre exécution | Suit la séquence Tasks 0-17 |
-| §7 Décisions | Toutes implémentées |
+| Spec section                | Task(s) couvrante(s)                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| §1.4 Livrables techniques   | Tasks 1-15                                                                                                        |
+| §2.1 Flow invitation signup | Tasks 6, 9, 12                                                                                                    |
+| §2.2 Flow invitation join   | Tasks 6, 9, 12                                                                                                    |
+| §2.3 Flow reset password    | Tasks 7, 10, 13                                                                                                   |
+| §3.1 Découpage fichiers     | Tous                                                                                                              |
+| §3.2 Modules services       | Tasks 2, 6, 7                                                                                                     |
+| §3.3 Env vars               | Task 1                                                                                                            |
+| §4.1 Tokens                 | Task 6, 7 (réutilise `lib/tokens.ts` existant)                                                                    |
+| §4.2 Rate-limits            | Task 8 (resetIpOnlyLimiter) + Tasks 9, 10 (consume)                                                               |
+| §4.3 Audit events           | Task 10.3 (extension union) + Tasks 9, 10, 14 (recordAudit calls)                                                 |
+| §4.4 Cleanup job            | Task 14                                                                                                           |
+| §4.5 safeCallbackUrl        | Task 12 (server component handles l'invitation), Task 13 (idem reset)                                             |
+| §4.6 Attack tests           | Task 6 (replay/expired/tamper/crossuser), Task 7 (replay/expired/drain/sessions), Task 10 (timing/enumeration)    |
+| §5.1 Pages UI               | Tasks 11, 12, 13                                                                                                  |
+| §5.2 i18n                   | Task 4                                                                                                            |
+| §5.3 Emails templates       | Task 3                                                                                                            |
+| §6.1 Tests                  | Tasks 6, 7, 8, 9, 10, 14, 15                                                                                      |
+| §6.2 Observabilité          | Tasks 2 (logs sendEmail), 5 (worker failed listener)                                                              |
+| §6.3 Risques                | adressés implicitement par retry config (Task 5), `Serializable` tx (Tasks 6, 7), redact pino (existant Phase 1A) |
+| §6.4 Ordre exécution        | Suit la séquence Tasks 0-17                                                                                       |
+| §7 Décisions                | Toutes implémentées                                                                                               |
 
 **Placeholder scan** : aucun TBD/TODO dans les tâches. Les seuls « selon code existant » concernent des helpers Phase 1A à inspecter (helper E2E login admin, `flushRateLimit` test) — explicités dans les steps comme à vérifier.
 
@@ -4133,4 +4180,3 @@ Mettre à jour `MEMORY.md` (index) avec une ligne pointant vers ce nouveau memor
 - Page `/account/security` (sessions, regen recovery codes, désactiver 2FA, change MdP)
 - Geo-lookup IP pour `ipApprox` dans les emails
 - Fallback SMTP en prod si Resend down (YAGNI 1B)
-

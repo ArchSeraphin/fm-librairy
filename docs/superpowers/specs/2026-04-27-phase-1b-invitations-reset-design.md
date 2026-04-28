@@ -3,6 +3,7 @@
 **Date** : 2026-04-27
 **Statut** : Validé (pending user review)
 **Réfère à** :
+
 - `docs/superpowers/specs/2026-04-25-biblioshare-design.md` §5.3 Phase 1
 - `docs/superpowers/specs/2026-04-26-phase-1-auth-design.md` §1B, §7.2
 - ADR `docs/adr/0003-roles.md`
@@ -38,16 +39,16 @@ Tag git : `phase-1b-complete`. Tous les critères suivants doivent être verts :
 
 ### 1.4 Livrables techniques
 
-| Catégorie | Livrable |
-|---|---|
-| **DB** | Aucune migration (modèles `Invitation` et `PasswordResetToken` déjà en place depuis Phase 0/1A). |
-| **Lib** | `src/lib/email.ts` (transport abstrait), `src/lib/invitations.ts`, `src/lib/password-reset.ts` |
-| **Templates** | `src/emails/_layout.tsx` + 4 templates react-email |
-| **Worker** | Queue BullMQ `mail` dans `worker/index.ts` avec retry exp backoff |
-| **tRPC** | Routeurs `invitation` (`create`, `revoke`, `consume`, `validate`) et `password` (`requestReset`, `consumeReset`, `validateToken`) |
-| **UI** | `/admin/users/invite`, `/invitations/[token]`, `/password/forgot`, `/password/reset/[token]` |
-| **Tests** | Unit ≥ 90 %, integration sur procedures, 9 attack tests, 4 scénarios E2E |
-| **Doc** | Section `docs/deployment.md` Resend (DNS, SPF, DKIM, DMARC) |
+| Catégorie     | Livrable                                                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **DB**        | Aucune migration (modèles `Invitation` et `PasswordResetToken` déjà en place depuis Phase 0/1A).                                  |
+| **Lib**       | `src/lib/email.ts` (transport abstrait), `src/lib/invitations.ts`, `src/lib/password-reset.ts`                                    |
+| **Templates** | `src/emails/_layout.tsx` + 4 templates react-email                                                                                |
+| **Worker**    | Queue BullMQ `mail` dans `worker/index.ts` avec retry exp backoff                                                                 |
+| **tRPC**      | Routeurs `invitation` (`create`, `revoke`, `consume`, `validate`) et `password` (`requestReset`, `consumeReset`, `validateToken`) |
+| **UI**        | `/admin/users/invite`, `/invitations/[token]`, `/password/forgot`, `/password/reset/[token]`                                      |
+| **Tests**     | Unit ≥ 90 %, integration sur procedures, 9 attack tests, 4 scénarios E2E                                                          |
+| **Doc**       | Section `docs/deployment.md` Resend (DNS, SPF, DKIM, DMARC)                                                                       |
 
 ---
 
@@ -231,7 +232,7 @@ export function getTransport(): EmailTransport; // resend | smtp selon env
 
 export async function renderEmail<P>(
   Component: React.FC<P>,
-  props: P
+  props: P,
 ): Promise<{ html: string; text: string }>;
 ```
 
@@ -282,17 +283,17 @@ consumePasswordReset(rawToken: string, newPassword: string): Promise<{ userId: s
 
 Nouvelles variables (à ajouter dans `src/lib/env.ts` schéma Zod) :
 
-| Variable | Type | Required | Notes |
-|---|---|---|---|
-| `EMAIL_TRANSPORT` | enum `'resend' \| 'smtp'` | non, default `'smtp'` (dev) | en prod Coolify : `'resend'` |
-| `EMAIL_FROM` | string | oui | ex: `"BiblioShare <noreply@biblio.test>"` |
-| `RESEND_API_KEY` | string | si `transport=resend` | secret Coolify |
-| `SMTP_HOST` | string | si `transport=smtp` | en dev : `mailpit` |
-| `SMTP_PORT` | number | non, default `1025` | |
-| `SMTP_USER` | string? | non | optional auth |
-| `SMTP_PASS` | string? | non | optional auth |
-| `APP_BASE_URL` | string (URL) | oui | pour links absolus dans emails |
-| `EMAIL_LOG_SALT` | string ≥ 32 chars | oui | hash des `to` dans les logs pino |
+| Variable          | Type                      | Required                    | Notes                                     |
+| ----------------- | ------------------------- | --------------------------- | ----------------------------------------- |
+| `EMAIL_TRANSPORT` | enum `'resend' \| 'smtp'` | non, default `'smtp'` (dev) | en prod Coolify : `'resend'`              |
+| `EMAIL_FROM`      | string                    | oui                         | ex: `"BiblioShare <noreply@biblio.test>"` |
+| `RESEND_API_KEY`  | string                    | si `transport=resend`       | secret Coolify                            |
+| `SMTP_HOST`       | string                    | si `transport=smtp`         | en dev : `mailpit`                        |
+| `SMTP_PORT`       | number                    | non, default `1025`         |                                           |
+| `SMTP_USER`       | string?                   | non                         | optional auth                             |
+| `SMTP_PASS`       | string?                   | non                         | optional auth                             |
+| `APP_BASE_URL`    | string (URL)              | oui                         | pour links absolus dans emails            |
+| `EMAIL_LOG_SALT`  | string ≥ 32 chars         | oui                         | hash des `to` dans les logs pino          |
 
 `docker-compose.dev.yml` : ajout service `mailpit` (image `axllent/mailpit:latest`, ports 1025+8025, healthcheck).
 `docker-compose.ci.yml` : idem pour les E2E Playwright.
@@ -303,10 +304,10 @@ Nouvelles variables (à ajouter dans `src/lib/env.ts` schéma Zod) :
 
 ### 4.1 Tokens
 
-| Token | Format | Hash | Expiration | Single-use | Index |
-|---|---|---|---|---|---|
-| Invitation | `randomBytes(32).toString('base64url')` (43 chars) | argon2id (réutilise `tokens.ts`) | **72h** | oui (`consumedAt` non-null) | `tokenHash @unique` |
-| Password reset | idem | idem | **1h** | oui | `tokenHash @unique` + drain pending |
+| Token          | Format                                             | Hash                             | Expiration | Single-use                  | Index                               |
+| -------------- | -------------------------------------------------- | -------------------------------- | ---------- | --------------------------- | ----------------------------------- |
+| Invitation     | `randomBytes(32).toString('base64url')` (43 chars) | argon2id (réutilise `tokens.ts`) | **72h**    | oui (`consumedAt` non-null) | `tokenHash @unique`                 |
+| Password reset | idem                                               | idem                             | **1h**     | oui                         | `tokenHash @unique` + drain pending |
 
 **Pourquoi argon2id pour des tokens random** : cohérence avec 1A. Coût par lookup acceptable (≤ qq centaines de tokens actifs simultanément, lookup à la consume seulement). Empêche un timing attack côté DB si le hash leak.
 
@@ -327,12 +328,12 @@ export const resetIpOnlyLimiter = new RateLimiterRedis({
 
 Composition des limiteurs :
 
-| Procédure | Clé(s) | Comportement quota |
-|---|---|---|
-| `invitation.create` | `invitationLimiter` keyé `${userId}` (10/h) | **429** explicite à l'admin (auth requis, message OK) |
+| Procédure               | Clé(s)                                                                                                        | Comportement quota                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `invitation.create`     | `invitationLimiter` keyé `${userId}` (10/h)                                                                   | **429** explicite à l'admin (auth requis, message OK)               |
 | `password.requestReset` | `resetRequestLimiter` keyé `${hashEmail(email)}` (3/h) **+** `resetIpOnlyLimiter` keyé `${hashIp(ip)}` (30/h) | **200 toujours**, audit `rateLimited: true`, **pas d'email envoyé** |
-| `password.consumeReset` | (pas de limiteur dédié — single-use + 1h expiry) | — |
-| `invitation.consume` | (pas de limiteur — token argon2id + single-use + 72h expiry) | — |
+| `password.consumeReset` | (pas de limiteur dédié — single-use + 1h expiry)                                                              | —                                                                   |
+| `invitation.consume`    | (pas de limiteur — token argon2id + single-use + 72h expiry)                                                  | —                                                                   |
 
 **Mitigation A2 (énumération emails sur `/password/forgot`)** :
 
@@ -377,22 +378,23 @@ Marge de 7 jours après expiration avant suppression : conserve une trace pour i
 ### 4.5 Open redirect & callback URL
 
 Réutilise le helper `safeCallbackUrl` (introduit en Phase 1A hardening) sur :
+
 - `/invitations/[token]?callbackUrl=…` post-consume.
 - `/password/reset/[token]?callbackUrl=…` post-reset (en pratique on force `/login?reset=ok`, mais le helper est appelé par défense en profondeur).
 
 ### 4.6 Attack tests dédiés (Vitest integration)
 
-| Test | Scénario |
-|---|---|
-| `invitation.replay` | Consume valide → 2ᵉ consume avec même rawToken → `INVALID_TOKEN` |
-| `invitation.expired` | Stub `Date.now()` à T+72h → consume → `INVALID_TOKEN` |
-| `invitation.tamper` | Consume avec rawToken altéré (1 char swap) → `INVALID_TOKEN` (verify argon2id échoue) |
-| `invitation.crossuser_join` | User A reçoit invite, User B logué tente le consume → erreur `EMAIL_MISMATCH` |
-| `reset.replay` | Consume valide → 2ᵉ consume → `INVALID_TOKEN` |
-| `reset.expired` | T+1h → `INVALID_TOKEN` |
-| `reset.timing` | Mesurer `requestReset` pour email existant vs inexistant, asserter `\|Δ\| < 50ms` |
-| `reset.session_invalidation` | Reset → vérifier `Session.findMany({userId})` est vide |
-| `reset.drain_other_pending` | Reset consumed → autres `PasswordResetToken` pending du même userId sont deleted |
+| Test                         | Scénario                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| `invitation.replay`          | Consume valide → 2ᵉ consume avec même rawToken → `INVALID_TOKEN`                      |
+| `invitation.expired`         | Stub `Date.now()` à T+72h → consume → `INVALID_TOKEN`                                 |
+| `invitation.tamper`          | Consume avec rawToken altéré (1 char swap) → `INVALID_TOKEN` (verify argon2id échoue) |
+| `invitation.crossuser_join`  | User A reçoit invite, User B logué tente le consume → erreur `EMAIL_MISMATCH`         |
+| `reset.replay`               | Consume valide → 2ᵉ consume → `INVALID_TOKEN`                                         |
+| `reset.expired`              | T+1h → `INVALID_TOKEN`                                                                |
+| `reset.timing`               | Mesurer `requestReset` pour email existant vs inexistant, asserter `\|Δ\| < 50ms`     |
+| `reset.session_invalidation` | Reset → vérifier `Session.findMany({userId})` est vide                                |
+| `reset.drain_other_pending`  | Reset consumed → autres `PasswordResetToken` pending du même userId sont deleted      |
 
 ---
 
@@ -446,6 +448,7 @@ Ajouts à `messages/fr.json` (déjà présent depuis 1A) — voir bloc complet e
 ### 5.3 Emails (react-email)
 
 Tous les emails partagent un layout `_layout.tsx` qui :
+
 - Utilise les tokens HSL de Phase 0 (palette claire uniquement — pas de dark mode email, support faible).
 - Header : logo SVG (text mark `BiblioShare` en Lucide-style, sans emoji).
 - Footer : « Vous recevez cet email parce que… » + lien « Centre d'aide » placeholder + mention légale courte.
@@ -482,12 +485,12 @@ Tous les emails partagent un layout `_layout.tsx` qui :
 
 ### 6.1 Stratégie de tests
 
-| Type | Couverture cible | Outils |
-|---|---|---|
-| **Unit** | `lib/email.ts`, `lib/invitations.ts`, `lib/password-reset.ts` ≥ **90 %** lignes | Vitest + mocks Prisma (`vitest-mock-extended`) + transport mock |
-| **Integration** | Routeurs tRPC `invitation.*` + `password.*` contre Postgres + Redis Testcontainers (déjà branchés Phase 1A) | Vitest + `createCallerFactory` |
-| **Attack tests** | 9 scénarios listés §4.6 | Vitest integration |
-| **E2E** | 4 scénarios Playwright | Playwright + Mailpit API |
+| Type             | Couverture cible                                                                                            | Outils                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **Unit**         | `lib/email.ts`, `lib/invitations.ts`, `lib/password-reset.ts` ≥ **90 %** lignes                             | Vitest + mocks Prisma (`vitest-mock-extended`) + transport mock |
+| **Integration**  | Routeurs tRPC `invitation.*` + `password.*` contre Postgres + Redis Testcontainers (déjà branchés Phase 1A) | Vitest + `createCallerFactory`                                  |
+| **Attack tests** | 9 scénarios listés §4.6                                                                                     | Vitest integration                                              |
+| **E2E**          | 4 scénarios Playwright                                                                                      | Playwright + Mailpit API                                        |
 
 #### Scénarios E2E (Playwright)
 
@@ -506,44 +509,44 @@ Tous les emails partagent un layout `_layout.tsx` qui :
 
 ### 6.3 Risques & mitigations
 
-| Risque | Mitigation 1B |
-|---|---|
-| Email Resend down → invitations bloquées | BullMQ retry 5x exp backoff (~30s, 1min, 2min, 4min, 8min). Au-delà, DLQ + alert Pino. Manuel : admin doit recréer l'invitation. Pas de fallback SMTP en 1B (YAGNI). |
-| Phishing imitant le template | `EMAIL_FROM` configurable, SPF/DKIM/DMARC à configurer côté Resend (instructions dans `docs/deployment.md`). Pas une mitigation produit pure. |
-| Token leaké dans logs serveur | `redact: ['*.rawToken', '*.token']` dans config pino. Logs HTTP body capturés ne contiennent jamais le rawToken. |
-| Race sur consume (deux clics rapides) | Transaction `Serializable` + WHERE `consumedAt: null` dans l'UPDATE. Le 2ᵉ clic perd la course → erreur cohérente. |
-| Admin biblio invite à une biblio qui n'est pas la sienne | Procedure `invitation.create` vérifie via `permissions` helper que `actor` a `manage_members` sur `libraryId`. Refus 403 + audit `permission.denied`. |
+| Risque                                                   | Mitigation 1B                                                                                                                                                        |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email Resend down → invitations bloquées                 | BullMQ retry 5x exp backoff (~30s, 1min, 2min, 4min, 8min). Au-delà, DLQ + alert Pino. Manuel : admin doit recréer l'invitation. Pas de fallback SMTP en 1B (YAGNI). |
+| Phishing imitant le template                             | `EMAIL_FROM` configurable, SPF/DKIM/DMARC à configurer côté Resend (instructions dans `docs/deployment.md`). Pas une mitigation produit pure.                        |
+| Token leaké dans logs serveur                            | `redact: ['*.rawToken', '*.token']` dans config pino. Logs HTTP body capturés ne contiennent jamais le rawToken.                                                     |
+| Race sur consume (deux clics rapides)                    | Transaction `Serializable` + WHERE `consumedAt: null` dans l'UPDATE. Le 2ᵉ clic perd la course → erreur cohérente.                                                   |
+| Admin biblio invite à une biblio qui n'est pas la sienne | Procedure `invitation.create` vérifie via `permissions` helper que `actor` a `manage_members` sur `libraryId`. Refus 403 + audit `permission.denied`.                |
 
 ### 6.4 Ordre d'exécution proposé (high-level)
 
-| # | Bloc | Output attendu |
-|---|---|---|
-| 1 | Env vars + Mailpit dans `docker-compose.dev.yml` + script `email:dev` | `pnpm email:dev` ouvre la preview |
-| 2 | `src/lib/email.ts` + transports Resend + SMTP + `renderEmail` helper | unit tests verts |
-| 3 | Templates react-email (4 fichiers) + i18n strings | preview navigable |
-| 4 | Worker BullMQ : queue `mail` + 3 jobs senders + retry config | jobs visibles dans Mailpit lors d'un dispatch manuel |
-| 5 | `src/lib/invitations.ts` (service) + tests unit | unit verts |
-| 6 | `src/lib/password-reset.ts` (service) + tests unit | unit verts |
-| 7 | Routeur tRPC `invitation.*` + audit log + rate-limit | integration verts |
-| 8 | Routeur tRPC `password.*` + audit log + rate-limit + timing pad | integration + attack tests verts |
-| 9 | Page `/admin/users/invite` (server component + form action) | manuel dev OK |
-| 10 | Pages `/invitations/[token]`, `/password/forgot`, `/password/reset/[token]` | manuel dev OK |
-| 11 | Cleanup job `cleanup-expired-tokens` (extension) | unit + integration verts |
-| 12 | E2E Playwright 4 scénarios | E2E verts |
-| 13 | `docs/deployment.md` : section Resend (DNS, SPF/DKIM/DMARC) | doc à jour |
-| 14 | Smoke staging Coolify + tag `phase-1b-complete` | Phase 1B clôturée |
+| #   | Bloc                                                                        | Output attendu                                       |
+| --- | --------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | Env vars + Mailpit dans `docker-compose.dev.yml` + script `email:dev`       | `pnpm email:dev` ouvre la preview                    |
+| 2   | `src/lib/email.ts` + transports Resend + SMTP + `renderEmail` helper        | unit tests verts                                     |
+| 3   | Templates react-email (4 fichiers) + i18n strings                           | preview navigable                                    |
+| 4   | Worker BullMQ : queue `mail` + 3 jobs senders + retry config                | jobs visibles dans Mailpit lors d'un dispatch manuel |
+| 5   | `src/lib/invitations.ts` (service) + tests unit                             | unit verts                                           |
+| 6   | `src/lib/password-reset.ts` (service) + tests unit                          | unit verts                                           |
+| 7   | Routeur tRPC `invitation.*` + audit log + rate-limit                        | integration verts                                    |
+| 8   | Routeur tRPC `password.*` + audit log + rate-limit + timing pad             | integration + attack tests verts                     |
+| 9   | Page `/admin/users/invite` (server component + form action)                 | manuel dev OK                                        |
+| 10  | Pages `/invitations/[token]`, `/password/forgot`, `/password/reset/[token]` | manuel dev OK                                        |
+| 11  | Cleanup job `cleanup-expired-tokens` (extension)                            | unit + integration verts                             |
+| 12  | E2E Playwright 4 scénarios                                                  | E2E verts                                            |
+| 13  | `docs/deployment.md` : section Resend (DNS, SPF/DKIM/DMARC)                 | doc à jour                                           |
+| 14  | Smoke staging Coolify + tag `phase-1b-complete`                             | Phase 1B clôturée                                    |
 
 ---
 
 ## 7. Décisions prises pendant le brainstorming
 
-| # | Question | Choix |
-|---|---|---|
-| Q1 | Scope création invitations 1B | (b) endpoint tRPC + mini-form `/admin/users/invite`. Panel `/admin/invitations` repoussé en 1C. |
-| Q2 | Infrastructure email | Resend prod uniquement (pas de fallback SMTP en 1B), Mailpit dev/CI, react-email pour templates. |
-| Q3 | Email d'invitation déjà existant | (c) consent flow avec branche `join` distincte de `signup`. |
-| — | Reset & sessions | Reset invalide toutes les sessions actives + drain les autres reset tokens pending. |
-| — | Email confirmation post-reset | Envoyé. |
-| — | Rate-limit reset | Double : per-email (3/h) + per-IP (30/h). |
-| — | Timing pad `/password/forgot` | ~250ms via `constantTimeBudget`. |
-| — | 2FA invité | Optionnel pour rôle ≠ `GLOBAL_ADMIN`. Forcée pour `GLOBAL_ADMIN` (cohérence Phase 1A). |
+| #   | Question                         | Choix                                                                                            |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Q1  | Scope création invitations 1B    | (b) endpoint tRPC + mini-form `/admin/users/invite`. Panel `/admin/invitations` repoussé en 1C.  |
+| Q2  | Infrastructure email             | Resend prod uniquement (pas de fallback SMTP en 1B), Mailpit dev/CI, react-email pour templates. |
+| Q3  | Email d'invitation déjà existant | (c) consent flow avec branche `join` distincte de `signup`.                                      |
+| —   | Reset & sessions                 | Reset invalide toutes les sessions actives + drain les autres reset tokens pending.              |
+| —   | Email confirmation post-reset    | Envoyé.                                                                                          |
+| —   | Rate-limit reset                 | Double : per-email (3/h) + per-IP (30/h).                                                        |
+| —   | Timing pad `/password/forgot`    | ~250ms via `constantTimeBudget`.                                                                 |
+| —   | 2FA invité                       | Optionnel pour rôle ≠ `GLOBAL_ADMIN`. Forcée pour `GLOBAL_ADMIN` (cohérence Phase 1A).           |

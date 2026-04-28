@@ -7,7 +7,16 @@ import { SEVEN_DAYS_MS } from '@/lib/permissions';
 // not act as a catch-all because `path.startsWith('//')` is false for any
 // normal path. Keeps the landing page public (Phase 0 placeholder, future
 // marketing surface) while still guarding everything else.
-const PUBLIC_PATHS = ['/', '/login', '/api/auth', '/_next', '/favicon.ico', '/fonts'];
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/api/auth',
+  '/_next',
+  '/favicon.ico',
+  '/fonts',
+  '/invitations',
+  '/password',
+];
 
 const PENDING_ALLOWED = [
   '/login/2fa',

@@ -86,6 +86,21 @@ jobs:
           --health-timeout 3s
           --health-retries 5
 
+      mailpit:
+        image: axllent/mailpit:v1.21
+        env:
+          MP_MAX_MESSAGES: '5000'
+          MP_SMTP_AUTH_ACCEPT_ANY: '1'
+          MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+        ports:
+          - '1025:1025'
+          - '8025:8025'
+        options: >-
+          --health-cmd "wget -qO- http://localhost:8025/api/v1/info"
+          --health-interval 10s
+          --health-timeout 3s
+          --health-retries 5
+
     env:
       DATABASE_URL: postgresql://biblioshare:testpassword@localhost:5432/biblioshare
       REDIS_URL: redis://localhost:6379
@@ -98,7 +113,10 @@ jobs:
       CRYPTO_MASTER_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
       IP_HASH_SALT: 'citestiphashsalt1234'
       UA_HASH_SALT: 'citestuahashsalt1234'
+      EMAIL_LOG_SALT: 'citestemaillogsaltcitestemaillogsalt12'
       EMAIL_FROM: noreply@biblioshare.local
+      EMAIL_TRANSPORT: smtp
+      SMTP_HOST: localhost
       LOG_LEVEL: warn
 
     steps:

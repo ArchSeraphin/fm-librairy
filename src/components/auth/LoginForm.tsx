@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
@@ -130,14 +131,8 @@ export function LoginForm() {
         </form>
       </CardContent>
       <CardFooter className="justify-center">
-        <Button
-          variant="link"
-          size="sm"
-          disabled
-          title={t('forgotPasswordDisabled')}
-          className="text-muted-foreground"
-        >
-          {t('forgotPassword')}
+        <Button asChild variant="link" size="sm" className="text-muted-foreground">
+          <Link href="/password/forgot">{t('forgotPassword')}</Link>
         </Button>
       </CardFooter>
     </Card>
