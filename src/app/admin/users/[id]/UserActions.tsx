@@ -77,6 +77,7 @@ export function UserActions({
   // Shared success handler
   function handleSuccess() {
     toast({ title: td('successToast') });
+    // Both: invalidate() refreshes tRPC-driven UIs (list page); router.refresh() re-runs the server component (this page) so the header card reflects the mutation.
     utils.admin.users.invalidate().catch(() => null);
     router.refresh();
     closeDialog();

@@ -169,6 +169,7 @@
         "tabSessions": "Sessions",
         "tabInvitations": "Invitations",
         "tabAudit": "Journal d'audit",
+        "loading": "Chargement…",
         "noSessions": "Aucune session active.",
         "noInvitations": "Aucune invitation envoyée.",
         "noAudit": "Aucune entrée d'audit.",

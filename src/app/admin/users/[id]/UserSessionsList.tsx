@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Monitor } from 'lucide-react';
 
 import { trpc } from '@/lib/trpc/client';
+import { useDateFormat } from '@/lib/format-client';
 
 interface Props {
   userId: string;
@@ -11,11 +12,16 @@ interface Props {
 
 export function UserSessionsList({ userId }: Props) {
   const t = useTranslations('admin.users.detail');
+  const format = useDateFormat();
 
   const query = trpc.admin.users.sessions.list.useQuery({ userId });
 
   if (query.isLoading) {
-    return <p className="text-sm text-muted-foreground">…</p>;
+    return (
+      <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+        {t('loading')}
+      </p>
+    );
   }
 
   const items = query.data?.items ?? [];
@@ -40,17 +46,9 @@ export function UserSessionsList({ userId }: Props) {
           </p>
           <p className="text-xs text-muted-foreground">
             {t('sessionCreatedAt')}{' '}
-            {new Date(session.createdAt).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}{' '}
+            {format.date(session.createdAt)}{' '}
             &middot; {t('sessionLastActiveAt')}{' '}
-            {new Date(session.lastSeenAt).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
+            {format.date(session.lastSeenAt)}
           </p>
         </li>
       ))}

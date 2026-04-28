@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { ChevronLeft, Check, ShieldOff, Calendar, Clock } from 'lucide-react';
 
+import { formatDate } from '@/lib/format';
+
 import { db } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { StatusBadge, RoleBadge } from '@/components/admin/UserBadges';
@@ -55,6 +57,9 @@ export default async function AdminUserDetailPage({ params }: Props) {
   });
 
   if (!user) notFound();
+
+  const createdAtFormatted = await formatDate(user.createdAt);
+  const lastLoginAtFormatted = user.lastLoginAt ? await formatDate(user.lastLoginAt) : null;
 
   const displayName = user.displayName ?? user.email;
   const roleLabel = user.role === 'GLOBAL_ADMIN' ? t('roleAdmin') : t('roleUser');
@@ -125,16 +130,12 @@ export default async function AdminUserDetailPage({ params }: Props) {
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             {t('detail.memberSince')}{' '}
-            {new Date(user.createdAt).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
+            {createdAtFormatted}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-            {user.lastLoginAt
-              ? `${t('detail.lastLogin')} ${new Date(user.lastLoginAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+            {lastLoginAtFormatted
+              ? `${t('detail.lastLogin')} ${lastLoginAtFormatted}`
               : t('detail.neverLoggedIn')}
           </span>
         </div>
@@ -159,7 +160,9 @@ export default async function AdminUserDetailPage({ params }: Props) {
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           {t('detail.tabSessions')}
         </h2>
-        <UserSessionsList userId={user.id} />
+        <div className="min-h-[140px]">
+          <UserSessionsList userId={user.id} />
+        </div>
       </div>
 
       {/* Audit */}
@@ -167,7 +170,9 @@ export default async function AdminUserDetailPage({ params }: Props) {
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           {t('detail.tabAudit')}
         </h2>
-        <UserAuditExcerpt userId={user.id} />
+        <div className="min-h-[140px]">
+          <UserAuditExcerpt userId={user.id} />
+        </div>
       </div>
     </section>
   );

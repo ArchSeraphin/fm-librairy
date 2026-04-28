@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { ClipboardList } from 'lucide-react';
 
 import { trpc } from '@/lib/trpc/client';
+import { useDateFormat } from '@/lib/format-client';
 
 interface Props {
   userId: string;
@@ -12,11 +13,16 @@ interface Props {
 
 export function UserAuditExcerpt({ userId, limit = 10 }: Props) {
   const t = useTranslations('admin.users.detail');
+  const format = useDateFormat();
 
   const query = trpc.admin.users.audit.list.useQuery({ userId, limit });
 
   if (query.isLoading) {
-    return <p className="text-sm text-muted-foreground">…</p>;
+    return (
+      <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+        {t('loading')}
+      </p>
+    );
   }
 
   const items = query.data?.items ?? [];
@@ -41,21 +47,19 @@ export function UserAuditExcerpt({ userId, limit = 10 }: Props) {
         >
           <div className="min-w-0 flex-1">
             <p className="truncate font-mono text-xs font-medium text-foreground">{entry.action}</p>
-            {entry.metadata != null && (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {JSON.stringify(entry.metadata)}
-              </p>
-            )}
+            {entry.metadata != null &&
+              typeof entry.metadata === 'object' &&
+              Object.keys(entry.metadata as object).length > 0 ? (
+                <span className="block text-xs font-mono text-muted-foreground truncate">
+                  {JSON.stringify(entry.metadata)}
+                </span>
+              ) : null}
           </div>
           <time
             dateTime={new Date(entry.createdAt).toISOString()}
             className="shrink-0 text-xs text-muted-foreground"
           >
-            {new Date(entry.createdAt).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
+            {format.date(entry.createdAt)}
           </time>
         </li>
       ))}
