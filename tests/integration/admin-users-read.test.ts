@@ -81,6 +81,25 @@ describe('admin.users — read', () => {
     expect(result.items.some((u) => u.email === 'alice@e2e.test')).toBe(true);
   });
 
+  it('list: filters by role', async () => {
+    const ctx = await makeAdminCtx();
+    await prisma.user.create({
+      data: {
+        email: 'admin2@e2e.test',
+        passwordHash: 'x',
+        displayName: 'A2',
+        role: 'GLOBAL_ADMIN',
+      },
+    });
+    await prisma.user.create({
+      data: { email: 'plain@e2e.test', passwordHash: 'x', displayName: 'P', role: 'USER' },
+    });
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.admin.users.list({ limit: 20, role: 'GLOBAL_ADMIN' });
+    expect(result.items.every((u) => u.role === 'GLOBAL_ADMIN')).toBe(true);
+    expect(result.items.some((u) => u.email === 'admin2@e2e.test')).toBe(true);
+  });
+
   it('list: rejects non-admin with FORBIDDEN', async () => {
     const ctx = await makeUserCtx();
     const caller = appRouter.createCaller(ctx);

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { Prisma } from '@prisma/client';
 import { t } from '../../trpc';
 import { globalAdminProcedure } from '../../procedures';
 import { db } from '@/lib/db';
@@ -16,21 +17,17 @@ const listInput = z.object({
 
 export const adminUsersRouter = t.router({
   list: globalAdminProcedure.input(listInput).query(async ({ input }) => {
-    const where: Parameters<typeof db.user.findMany>[0] extends infer X
-      ? X extends { where?: infer W }
-        ? W
-        : never
-      : never = {};
-    if (input.status !== 'all') (where as any).status = input.status;
-    if (input.role !== 'all') (where as any).role = input.role;
+    const where: Prisma.UserWhereInput = {};
+    if (input.status !== 'all') where.status = input.status;
+    if (input.role !== 'all') where.role = input.role;
     if (input.q) {
-      (where as any).OR = [
+      where.OR = [
         { email: { contains: input.q, mode: 'insensitive' } },
         { displayName: { contains: input.q, mode: 'insensitive' } },
       ];
     }
     const items = await db.user.findMany({
-      where: where as any,
+      where,
       take: input.limit + 1,
       cursor: input.cursor ? { id: input.cursor } : undefined,
       skip: input.cursor ? 1 : 0,
