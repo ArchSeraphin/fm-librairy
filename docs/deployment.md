@@ -136,7 +136,65 @@ docker exec -it biblioshare-app sh -c \
 
 L'opération est tracée dans `AuditLog` (`admin.user.role_changed`, `metadata.source = bootstrap_force`).
 
-## 12. Mises à jour
+## 12. Email transactionnel — Resend (production)
+
+BiblioShare envoie 4 emails transactionnels (invitation new user, invitation join library, password reset, password reset confirmation). En production on utilise [Resend](https://resend.com/). En dev/CI on utilise Mailpit (`SMTP_HOST=localhost:1025`).
+
+### 12.1 Créer le compte Resend + le domaine
+
+1. Créer un compte sur https://resend.com/.
+2. Section **Domains** → **Add Domain**, saisir `biblioshare.<votre-domaine>`.
+3. Resend affiche les enregistrements DNS à publier chez votre registrar :
+   - `TXT` SPF (souvent `v=spf1 include:_spf.resend.com ~all`)
+   - `TXT` DKIM (clé publique fournie sur l'hôte `resend._domainkey`)
+   - `TXT` DMARC sur `_dmarc` (recommandation minimale : `v=DMARC1; p=quarantine; rua=mailto:postmaster@biblioshare.<votre-domaine>;`)
+
+### 12.2 Configurer le DNS chez OVH
+
+OVH → **Web Cloud** → **Domains** → `<votre-domaine>` → **DNS Zone**. Ajouter chaque enregistrement Resend tel quel (host + valeur). Délai de propagation : 5-60 min.
+
+Vérifier la propagation :
+
+```bash
+dig +short TXT biblioshare.<votre-domaine>
+dig +short TXT _dmarc.biblioshare.<votre-domaine>
+dig +short TXT resend._domainkey.biblioshare.<votre-domaine>
+```
+
+Une fois les 3 enregistrements visibles, cliquer **Verify DNS records** dans le dashboard Resend.
+
+### 12.3 Variables Coolify (production)
+
+Dans **Configuration → Environment Variables** de la ressource `app` (et également `worker`) :
+
+| Clé                | Valeur                                         |
+| ------------------ | ---------------------------------------------- |
+| `EMAIL_TRANSPORT`  | `resend`                                       |
+| `EMAIL_FROM`       | `BiblioShare <noreply@biblioshare.<domaine>>`  |
+| `RESEND_API_KEY`   | `re_xxxxxxxxxxxxxxxxxxxxxxx` (dashboard Resend) |
+| `EMAIL_LOG_SALT`   | `openssl rand -hex 32` (64 chars hex)          |
+
+Marquer `RESEND_API_KEY` et `EMAIL_LOG_SALT` comme **secret** (cadenas). Redémarrer les containers `app` + `worker` après modification.
+
+> En dev/CI, `EMAIL_TRANSPORT=smtp` + `SMTP_HOST=localhost` + `SMTP_PORT=1025` ciblent Mailpit. `EMAIL_FROM` reste requis dans tous les cas.
+
+### 12.4 Vérifier l'envoi
+
+Méthode la plus simple : déclencher un reset password sur un compte de test depuis `/password/forgot`, vérifier que l'email arrive (boîte de spam comprise). Tracer ensuite côté logs :
+
+```bash
+docker compose logs worker | grep email.sent
+```
+
+Le champ `transportId` correspond à l'ID Resend visible dans le dashboard.
+
+### 12.5 Surveiller en production
+
+- **Resend dashboard** : delivered / bounced / complained / opened / clicked.
+- **Audit log BiblioShare** : table `AuditLog` action `auth.invitation.send_failed` pour les envois en DLQ après 5 retries (Phase 1B). De même `auth.password.reset_expired` pour les tokens nettoyés par le job cleanup.
+- **Logs pino** : `event=email.sent` (worker) avec `transportId` pour corréler. `event=email.failed` côté DLQ.
+
+## 13. Mises à jour
 
 Coolify peut auto-déployer sur push `main` (configurer le webhook GitHub dans Coolify). Sinon, **Redeploy** manuel.
 
