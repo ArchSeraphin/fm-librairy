@@ -33,7 +33,7 @@ const InvitationJoinLibraryEmail: React.FC<InvitationJoinLibraryProps> = ({
         {inviterName} vous invite à rejoindre la bibliothèque <strong>{libraryName}</strong> sur
         BiblioShare. Vous pourrez y accéder avec votre compte existant.
       </Text>
-      <Text className="mt-2">Lien valable jusqu'au {expiresFr}.</Text>
+      <Text className="mt-2">Lien valable jusqu&apos;au {expiresFr}.</Text>
       <Button
         href={joinUrl}
         className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"

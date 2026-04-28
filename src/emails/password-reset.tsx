@@ -28,7 +28,7 @@ const PasswordResetEmail: React.FC<PasswordResetProps> = ({ resetUrl, expiresAt 
         Choisir un nouveau mot de passe
       </Button>
       <Text className="mt-6 text-sm text-slate-600">
-        Si vous n'avez pas demandé cette réinitialisation, ignorez cet email — votre mot de passe
+        Si vous n&apos;avez pas demandé cette réinitialisation, ignorez cet email — votre mot de passe
         actuel reste valide.
       </Text>
       <Text className="mt-4 text-xs text-slate-500 break-all">{resetUrl}</Text>

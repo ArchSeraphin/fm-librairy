@@ -6,6 +6,7 @@ import {
   consumePasswordReset,
 } from '@/lib/password-reset';
 import { hashPassword } from '@/lib/password';
+import { truncateAll } from './setup/prisma';
 
 async function seedUser(email: string) {
   return db.user.create({
@@ -18,9 +19,7 @@ async function seedUser(email: string) {
 }
 
 beforeEach(async () => {
-  await db.session.deleteMany();
-  await db.passwordResetToken.deleteMany();
-  await db.user.deleteMany();
+  await truncateAll();
 });
 
 describe('password-reset integration', () => {

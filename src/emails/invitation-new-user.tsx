@@ -32,7 +32,7 @@ const InvitationNewUserEmail: React.FC<InvitationNewUserProps> = ({
         {inviterName} vous invite à rejoindre {target}.
       </Text>
       <Text className="mt-2">
-        Créez votre compte en cliquant sur le bouton ci-dessous. Ce lien est valable jusqu'au {expiresFr}.
+        Créez votre compte en cliquant sur le bouton ci-dessous. Ce lien est valable jusqu&apos;au {expiresFr}.
       </Text>
       <Button
         href={signupUrl}

@@ -33,8 +33,8 @@ export const EmailLayout: React.FC<LayoutProps> = ({ preview, children }) => (
           <Hr className="my-8 border-slate-200" />
           <Section>
             <Text className="text-xs text-slate-500 m-0">
-              Vous recevez cet email parce qu'une action sur BiblioShare le concerne. Si vous
-              pensez que c'est une erreur, ignorez ce message.
+              Vous recevez cet email parce qu&apos;une action sur BiblioShare le concerne. Si vous
+              pensez que c&apos;est une erreur, ignorez ce message.
             </Text>
           </Section>
         </Container>

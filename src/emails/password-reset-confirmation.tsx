@@ -29,7 +29,7 @@ const PasswordResetConfirmationEmail: React.FC<PasswordResetConfirmationProps> =
         ont été déconnectées par sécurité.
       </Text>
       <Text className="mt-4 font-semibold">
-        Si ce n'était pas vous, contactez immédiatement l'administrateur de votre bibliothèque.
+        Si ce n&apos;était pas vous, contactez immédiatement l&apos;administrateur de votre bibliothèque.
       </Text>
     </EmailLayout>
   );
