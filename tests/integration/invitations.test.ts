@@ -7,14 +7,14 @@ import {
   consumeInvitationJoinLibrary,
   revokeInvitation,
 } from '@/lib/invitations';
-import { hash as argonHash } from '@node-rs/argon2';
+import { hashPassword } from '@/lib/password';
 
 async function seedAdmin() {
   return db.user.create({
     data: {
       email: `admin-${Date.now()}@x.test`,
       displayName: 'Admin',
-      passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+      passwordHash: await hashPassword('x'),
       role: 'GLOBAL_ADMIN',
     },
   });
@@ -65,7 +65,7 @@ describe('invitations integration', () => {
       data: {
         email: 'old@x.test',
         displayName: 'Old',
-        passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+        passwordHash: await hashPassword('x'),
       },
     });
     const r = await createInvitation({
@@ -117,14 +117,14 @@ describe('invitations integration', () => {
       data: {
         email: 'a@x.test',
         displayName: 'A',
-        passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+        passwordHash: await hashPassword('x'),
       },
     });
     const userB = await db.user.create({
       data: {
         email: 'b@x.test',
         displayName: 'B',
-        passwordHash: await argonHash('x', { algorithm: 2 as const, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+        passwordHash: await hashPassword('x'),
       },
     });
     const r = await createInvitation({

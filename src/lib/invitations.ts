@@ -1,7 +1,7 @@
 import { Prisma, type Invitation, type LibraryRole } from '@prisma/client';
 import { db } from './db';
 import { generateRawToken, hashToken, verifyToken } from './tokens';
-import { hash as argonHash } from '@node-rs/argon2';
+import { hashPassword } from './password';
 
 const INVITATION_TTL_MS = 72 * 3600 * 1000;
 
@@ -62,19 +62,12 @@ export interface ConsumeSignupInput {
   password: string;
 }
 
-const ARGON_PASSWORD_OPTS = {
-  algorithm: 2 as const,
-  memoryCost: 19_456,
-  timeCost: 2,
-  parallelism: 1,
-};
-
 export async function consumeInvitationNewUser(
   input: ConsumeSignupInput,
 ): Promise<{ userId: string; libraryId?: string }> {
   const inv = await findInvitationByRawToken(input.rawToken);
   if (!inv) throw new Error('INVALID_TOKEN');
-  const passwordHash = await argonHash(input.password, ARGON_PASSWORD_OPTS);
+  const passwordHash = await hashPassword(input.password);
   return db.$transaction(
     async (tx) => {
       const updated = await tx.invitation.updateMany({
