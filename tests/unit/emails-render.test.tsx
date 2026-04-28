@@ -26,6 +26,20 @@ describe('email templates render', () => {
     expect(out.text).toContain('Médiathèque test');
   });
 
+  it('invitation-new-user without libraryName', async () => {
+    const out = await renderEmail(InvitationNewUserEmail, {
+      inviterName: 'Alice',
+      libraryName: null,
+      signupUrl: 'https://app.test/x',
+      expiresAt: future,
+    });
+    // React Email injects HTML comments between adjacent text nodes,
+    // so we assert each token plus the absence of the libraryName branch.
+    expect(out.html).toContain('rejoindre');
+    expect(out.html).toContain('BiblioShare');
+    expect(out.html).not.toContain('la bibliothèque');
+  });
+
   it('invitation-join-library', async () => {
     const out = await renderEmail(InvitationJoinLibraryEmail, {
       inviterName: 'Alice',
