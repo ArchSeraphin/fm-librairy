@@ -133,6 +133,34 @@
         "validation": "Adresse e-mail invalide.",
         "unknown": "Erreur inconnue. Réessayez plus tard."
       }
+    },
+    "nav": {
+      "users": "Utilisateurs",
+      "libraries": "Bibliothèques"
+    },
+    "users": {
+      "pageTitle": "Utilisateurs",
+      "subtitle": "Gérez les comptes et les accès de tous les membres de la plateforme.",
+      "search": "Rechercher par nom ou email…",
+      "filterStatus": "Statut",
+      "filterRole": "Rôle",
+      "statusAll": "Tous les statuts",
+      "statusActive": "Actif",
+      "statusSuspended": "Suspendu",
+      "roleAll": "Tous les rôles",
+      "roleAdmin": "Administrateur",
+      "roleUser": "Utilisateur",
+      "tableEmail": "Email",
+      "tableName": "Nom",
+      "tableRole": "Rôle",
+      "tableStatus": "Statut",
+      "table2fa": "2FA",
+      "tableLastLogin": "Dernière connexion",
+      "tableActions": "Actions",
+      "viewDetails": "Voir",
+      "inviteCta": "Inviter un utilisateur",
+      "empty": "Aucun utilisateur ne correspond à votre recherche.",
+      "loadMore": "Charger plus"
     }
   },
   "invitation": {
