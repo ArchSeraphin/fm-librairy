@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
 import { AlertCircle } from 'lucide-react';
 
@@ -20,7 +21,7 @@ interface PageProps {
 
 export default async function ResetPasswordPage({ params }: PageProps) {
   const { token } = await params;
-  const ctx = await createContext();
+  const ctx = await createContext({ headers: await headers() });
   const caller = appRouter.createCaller(ctx);
   const validation = await caller.password.validateToken({ rawToken: token });
   const t = await getTranslations('password.reset');

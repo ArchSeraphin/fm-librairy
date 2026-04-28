@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { TRPCError } from '@trpc/server';
 import { appRouter } from '@/server/trpc/routers/_app';
 import { createContext } from '@/server/trpc/context';
@@ -27,7 +28,7 @@ export async function submitReset(_prev: ResetState, fd: FormData): Promise<Rese
   if (parsed.data.newPassword !== parsed.data.confirmPassword) {
     return { status: 'error', message: 'Les mots de passe ne correspondent pas.' };
   }
-  const ctx = await createContext();
+  const ctx = await createContext({ headers: await headers() });
   const caller = appRouter.createCaller(ctx);
   try {
     await caller.password.consumeReset({
