@@ -129,7 +129,9 @@
       "errors": {
         "rateLimited": "Trop d'invitations envoyées récemment. Réessayez dans une heure.",
         "permissionDenied": "Vous n'avez pas le droit d'inviter sur cette bibliothèque.",
-        "alreadyMember": "Cette personne est déjà membre de la bibliothèque."
+        "alreadyMember": "Cette personne est déjà membre de la bibliothèque.",
+        "validation": "Adresse e-mail invalide.",
+        "unknown": "Erreur inconnue. Réessayez plus tard."
       }
     }
   },
