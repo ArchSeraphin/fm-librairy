@@ -42,6 +42,7 @@
     "@trpc/next": "^11.13.0",
     "@trpc/react-query": "^11.13.0",
     "@trpc/server": "^11.13.0",
+    "bullmq": "^5.76.2",
     "clamscan": "^2.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
