@@ -9,9 +9,7 @@ import { assertNotLastGlobalAdmin, revokeAllSessionsForUser } from '@/lib/user-a
 import { revokeInvitation } from '@/lib/invitations';
 
 const cuid = z.string().min(20).max(40);
-// min(1) (rather than the plan's min(3)) so the 'no' reason in the resetTwoFactor
-// test reaches the FORBIDDEN check; spec reviewer to confirm minimum length policy.
-const reasonInput = z.string().trim().min(1).max(500);
+const reasonInput = z.string().trim().min(3).max(500);
 
 const listInput = z.object({
   q: z.string().trim().max(120).optional(),

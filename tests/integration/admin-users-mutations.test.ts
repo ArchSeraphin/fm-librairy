@@ -62,15 +62,19 @@ describe('admin.users — mutations', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
-  it('suspend: refuses last GLOBAL_ADMIN', async () => {
+  it('suspend: succeeds on another admin when another admin remains', async () => {
     const ctx = await makeAdminCtx();
     const other = await prisma.user.create({
-      data: { email: 'sus@e2e.test', passwordHash: 'x', displayName: 'S' },
+      data: {
+        email: 'a2@e2e.test',
+        passwordHash: 'x',
+        displayName: 'A2',
+        role: 'GLOBAL_ADMIN',
+        twoFactorEnabled: true,
+      },
     });
-    await prisma.user.update({ where: { id: ctx.user.id }, data: { role: 'USER' } });
-    await prisma.user.update({ where: { id: other.id }, data: { role: 'GLOBAL_ADMIN' } });
-    await prisma.user.update({ where: { id: ctx.user.id }, data: { role: 'GLOBAL_ADMIN' } });
-    await appRouter.createCaller(ctx).admin.users.suspend({ id: other.id, reason: 'test' });
+    await appRouter.createCaller(ctx).admin.users.suspend({ id: other.id, reason: 'demoted' });
+    expect((await prisma.user.findUnique({ where: { id: other.id } }))?.status).toBe('SUSPENDED');
   });
 
   it('reactivate: idempotent', async () => {
@@ -153,7 +157,9 @@ describe('admin.users — mutations', () => {
       },
     });
     await expect(
-      appRouter.createCaller(ctx).admin.users.resetTwoFactor({ id: adminTarget.id, reason: 'no' }),
+      appRouter
+        .createCaller(ctx)
+        .admin.users.resetTwoFactor({ id: adminTarget.id, reason: 'nope' }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 });
