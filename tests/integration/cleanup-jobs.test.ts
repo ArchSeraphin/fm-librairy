@@ -51,7 +51,9 @@ describe('cleanupExpiredSessions', () => {
 });
 
 describe('cleanupExpiredTokens', () => {
-  it('supprime invitations + reset tokens expirés et log les invitations expirées', async () => {
+  const eightDaysAgo = () => new Date(Date.now() - 8 * 24 * 3600 * 1000);
+
+  it('supprime invitations + reset tokens expirés depuis >7j et log un audit par item', async () => {
     const u = await prisma.user.create({
       data: { email: 'c2@x.test', displayName: 'X', passwordHash: await hashPassword('x') },
     });
@@ -60,7 +62,7 @@ describe('cleanupExpiredTokens', () => {
         email: 'inv@x.test',
         invitedById: u.id,
         tokenHash: 'h-expired',
-        expiresAt: new Date(Date.now() - 1000),
+        expiresAt: eightDaysAgo(),
       },
     });
     await prisma.invitation.create({
@@ -71,22 +73,27 @@ describe('cleanupExpiredTokens', () => {
         expiresAt: new Date(Date.now() + 1e9),
       },
     });
-    await prisma.passwordResetToken.create({
-      data: { userId: u.id, tokenHash: 'rh-expired', expiresAt: new Date(Date.now() - 1000) },
+    const tok = await prisma.passwordResetToken.create({
+      data: { userId: u.id, tokenHash: 'rh-expired', expiresAt: eightDaysAgo() },
     });
     await prisma.passwordResetToken.create({
       data: { userId: u.id, tokenHash: 'rh-fresh', expiresAt: new Date(Date.now() + 1e9) },
     });
 
     const r = await cleanupExpiredTokens(prisma);
-    expect(r.invitations).toBe(1);
-    expect(r.resets).toBe(1);
+    expect(r.invitationsDeleted).toBe(1);
+    expect(r.resetsDeleted).toBe(1);
+    expect(r.auditsLogged).toBe(2);
 
-    const audit = await prisma.auditLog.findFirst({
+    const invAudit = await prisma.auditLog.findFirst({
       where: { action: 'auth.invitation.expired', targetId: inv.id },
     });
-    expect(audit).not.toBeNull();
-    expect(audit?.targetType).toBe('INVITATION');
+    expect(invAudit?.targetType).toBe('INVITATION');
+
+    const resetAudit = await prisma.auditLog.findFirst({
+      where: { action: 'auth.password.reset_expired', targetId: tok.id },
+    });
+    expect(resetAudit?.targetType).toBe('AUTH');
 
     const remainingInv = await prisma.invitation.findMany();
     expect(remainingInv).toHaveLength(1);
@@ -97,7 +104,7 @@ describe('cleanupExpiredTokens', () => {
     expect(remainingReset[0]!.tokenHash).toBe('rh-fresh');
   });
 
-  it('ne log pas les invitations déjà consommées même si expirées', async () => {
+  it('garde invitations consommées même expirées (audit trail)', async () => {
     const u = await prisma.user.create({
       data: { email: 'c3@x.test', displayName: 'X', passwordHash: await hashPassword('x') },
     });
@@ -106,14 +113,31 @@ describe('cleanupExpiredTokens', () => {
         email: 'consumed@x.test',
         invitedById: u.id,
         tokenHash: 'h-consumed',
-        expiresAt: new Date(Date.now() - 1000),
-        consumedAt: new Date(Date.now() - 500),
+        expiresAt: eightDaysAgo(),
+        consumedAt: new Date(Date.now() - 7.5 * 24 * 3600 * 1000),
         consumedById: u.id,
       },
     });
     const r = await cleanupExpiredTokens(prisma);
-    expect(r.invitations).toBe(1);
-    const audit = await prisma.auditLog.findFirst({ where: { action: 'auth.invitation.expired' } });
-    expect(audit).toBeNull();
+    expect(r.invitationsDeleted).toBe(0);
+    expect(r.auditsLogged).toBe(0);
+    const remaining = await prisma.invitation.findMany();
+    expect(remaining).toHaveLength(1);
+  });
+
+  it('garde tokens dans la fenêtre de rétention (expirés depuis <7j)', async () => {
+    const u = await prisma.user.create({
+      data: { email: 'c4@x.test', displayName: 'X', passwordHash: await hashPassword('x') },
+    });
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: u.id,
+        tokenHash: 'rh-recent',
+        expiresAt: new Date(Date.now() - 3600 * 1000),
+      },
+    });
+    const r = await cleanupExpiredTokens(prisma);
+    expect(r.resetsDeleted).toBe(0);
+    expect(r.auditsLogged).toBe(0);
   });
 });
