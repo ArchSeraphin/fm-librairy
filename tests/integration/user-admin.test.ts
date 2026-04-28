@@ -47,6 +47,21 @@ describe('assertNotLastGlobalAdmin', () => {
     const u = await createUser({ role: 'USER', email: 'u1@e2e.test' });
     await expect(assertNotLastGlobalAdmin(u.id, 'remove')).resolves.toBeUndefined();
   });
+
+  it('throws when suspending the last active GLOBAL_ADMIN', async () => {
+    const admin = await createUser({ role: 'GLOBAL_ADMIN', email: 'a1@e2e.test' });
+    await expect(assertNotLastGlobalAdmin(admin.id, 'suspend')).rejects.toBeInstanceOf(TRPCError);
+  });
+
+  it('passes when demoting an already SUSPENDED admin (no-op branch)', async () => {
+    await createUser({ role: 'GLOBAL_ADMIN', email: 'a1@e2e.test' });
+    const suspended = await createUser({
+      role: 'GLOBAL_ADMIN',
+      status: 'SUSPENDED',
+      email: 'a2@e2e.test',
+    });
+    await expect(assertNotLastGlobalAdmin(suspended.id, 'demote')).resolves.toBeUndefined();
+  });
 });
 
 describe('revokeAllSessionsForUser', () => {

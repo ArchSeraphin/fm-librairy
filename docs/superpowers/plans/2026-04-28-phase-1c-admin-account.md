@@ -680,8 +680,7 @@ git commit -m "feat(phase-1c): audit union 1C, worker DLQ listener, password-res
 
 **Files:**
 - Create: `src/lib/user-admin.ts`
-- Create: `tests/unit/user-admin.test.ts`
-- Create: `tests/integration/user-admin.test.ts`
+- Create: `tests/integration/user-admin.test.ts` (integration coverage suffices; no unit test file)
 
 - [ ] **Step 4.1: Test integration `assertNotLastGlobalAdmin`**
 

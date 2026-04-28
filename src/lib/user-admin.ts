@@ -25,6 +25,7 @@ export async function assertNotLastGlobalAdmin(
   }
 }
 
+// exceptSessionId is Session.id (cuid), not sessionToken
 export async function revokeAllSessionsForUser(
   userId: string,
   exceptSessionId?: string,
