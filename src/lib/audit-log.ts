@@ -32,9 +32,38 @@ export type AuditAction =
   | 'admin.user.suspended'
   | 'admin.user.reactivated'
   | 'admin.user.deleted'
-  | 'admin.user.role_changed';
+  | 'admin.user.role_changed'
+  // 1C — admin users (extension)
+  | 'admin.user.two_factor_reset'
+  // 1C — admin libraries & members
+  | 'admin.library.created'
+  | 'admin.library.renamed'
+  | 'admin.library.archived'
+  | 'admin.library.unarchived'
+  | 'admin.member.added'
+  | 'admin.member.removed'
+  | 'admin.member.role_changed'
+  | 'admin.member.flags_changed'
+  // 1C — account self-service
+  | 'auth.password.changed_self'
+  | 'auth.session.revoked_self'
+  | 'auth.session.revoked_all_others'
+  | 'auth.2fa.recovery_codes_regenerated_self'
+  | 'auth.2fa.reset_via_backup'
+  | 'account.profile.updated'
+  // 1C — dette 1B (worker DLQ)
+  | 'auth.invitation.send_failed'
+  | 'auth.password.reset_send_failed'
+  | 'auth.password.reset_confirmation_send_failed';
 
-export type AuditTargetType = 'USER' | 'LIBRARY' | 'INVITATION' | 'SESSION' | 'EMAIL' | 'AUTH';
+export type AuditTargetType =
+  | 'USER'
+  | 'LIBRARY'
+  | 'INVITATION'
+  | 'SESSION'
+  | 'EMAIL'
+  | 'AUTH'
+  | 'MEMBER';
 
 const SENSITIVE_KEYS = new Set([
   'password',

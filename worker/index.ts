@@ -19,6 +19,9 @@ import {
   handleSendPasswordReset,
   handleSendPasswordResetConfirmation,
 } from './jobs/send-password-reset.js';
+import { recordAuditFromFailedJob as _recordAuditFromFailedJob } from './jobs/dlq.js';
+
+export { recordAuditFromFailedJob } from './jobs/dlq.js';
 
 const parsed = z
   .object({
@@ -132,13 +135,27 @@ const mailWorker = new Worker(
 );
 
 mailWorker.on('failed', (job, err) => {
-  if (job?.attemptsMade && job.opts.attempts && job.attemptsMade >= job.opts.attempts) {
+  if (!job) return;
+  const maxAttempts = job.opts.attempts ?? 1;
+  if (job.attemptsMade >= maxAttempts) {
     logger.error(
       { err, jobName: job.name, jobId: job.id, attempts: job.attemptsMade },
       'email.failed_permanent',
     );
+    _recordAuditFromFailedJob(
+      prisma,
+      {
+        jobName: job.name,
+        jobId: job.id,
+        attemptsMade: job.attemptsMade,
+        maxAttempts,
+        error: err,
+        data: (job.data as Record<string, unknown>) ?? {},
+      },
+      logger,
+    ).catch((auditErr) => logger.error({ err: auditErr }, 'DLQ audit failed'));
   } else {
-    logger.warn({ err, jobName: job?.name, jobId: job?.id }, 'mail job retrying');
+    logger.warn({ err, jobName: job.name, jobId: job.id }, 'mail job retrying');
   }
 });
 
