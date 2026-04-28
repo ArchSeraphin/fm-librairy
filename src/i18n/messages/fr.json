@@ -155,6 +155,8 @@
       "tableRole": "Rôle",
       "tableStatus": "Statut",
       "table2fa": "2FA",
+      "table2faActive": "2FA actif",
+      "table2faInactive": "2FA inactif",
       "tableLastLogin": "Dernière connexion",
       "tableActions": "Actions",
       "viewDetails": "Voir",

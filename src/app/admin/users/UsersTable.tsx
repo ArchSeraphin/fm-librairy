@@ -89,7 +89,7 @@ export function UsersTable() {
   // Debounce effect — avoids a tRPC request per keystroke
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      setQ(inputValue.trim() || '');
+      setQ(inputValue.trim());
     }, 300);
     return () => clearTimeout(timer);
   }, [inputValue]);
@@ -203,12 +203,12 @@ export function UsersTable() {
                       {u.twoFactorEnabled ? (
                         <Check
                           className="h-4 w-4 text-emerald-600"
-                          aria-label={t('table2fa') + ' actif'}
+                          aria-label={t('table2faActive')}
                         />
                       ) : (
                         <span
                           className="text-muted-foreground"
-                          aria-label={t('table2fa') + ' inactif'}
+                          aria-label={t('table2faInactive')}
                         >
                           —
                         </span>
@@ -221,7 +221,6 @@ export function UsersTable() {
                       <Button variant="ghost" size="sm" asChild>
                         <Link
                           href={`/admin/users/${u.id}`}
-                          className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                         >
                           {t('viewDetails')}
                         </Link>
@@ -255,7 +254,7 @@ export function UsersTable() {
           >
             {query.isFetchingNextPage ? (
               <>
-                <Loader2 className="animate-spin" aria-hidden="true" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                 {t('loadMore')}
               </>
             ) : (
