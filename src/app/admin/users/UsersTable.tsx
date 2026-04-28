@@ -8,6 +8,7 @@ import { Check, Loader2, Search, Users } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { StatusBadge, RoleBadge } from '@/components/admin/UserBadges';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -39,36 +40,6 @@ function SkeletonRow() {
         </td>
       ))}
     </tr>
-  );
-}
-
-function StatusBadge({ status, label }: { status: string; label: string }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-        status === 'ACTIVE'
-          ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
-          : 'bg-orange-50 text-orange-700 ring-1 ring-orange-600/20',
-      )}
-    >
-      {label}
-    </span>
-  );
-}
-
-function RoleBadge({ role, label }: { role: string; label: string }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-        role === 'GLOBAL_ADMIN'
-          ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
-          : 'bg-secondary text-secondary-foreground',
-      )}
-    >
-      {label}
-    </span>
   );
 }
 
@@ -206,10 +177,7 @@ export function UsersTable() {
                           aria-label={t('table2faActive')}
                         />
                       ) : (
-                        <span
-                          className="text-muted-foreground"
-                          aria-label={t('table2faInactive')}
-                        >
+                        <span className="text-muted-foreground" aria-label={t('table2faInactive')}>
                           —
                         </span>
                       )}
@@ -219,11 +187,7 @@ export function UsersTable() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link
-                          href={`/admin/users/${u.id}`}
-                        >
-                          {t('viewDetails')}
-                        </Link>
+                        <Link href={`/admin/users/${u.id}`}>{t('viewDetails')}</Link>
                       </Button>
                     </td>
                   </tr>

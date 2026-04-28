@@ -249,4 +249,43 @@ export const adminUsersRouter = t.router({
         return { ok: true };
       }),
   }),
+
+  sessions: t.router({
+    list: globalAdminProcedure.input(z.object({ userId: cuid })).query(async ({ input }) => {
+      const items = await db.session.findMany({
+        where: { userId: input.userId },
+        orderBy: { lastActivityAt: 'desc' },
+        select: {
+          id: true,
+          createdAt: true,
+          lastActivityAt: true,
+          userAgentLabel: true,
+        },
+      });
+      return {
+        items: items.map((s) => ({
+          id: s.id,
+          createdAt: s.createdAt,
+          lastSeenAt: s.lastActivityAt,
+          userAgentLabel: s.userAgentLabel,
+        })),
+      };
+    }),
+  }),
+
+  audit: t.router({
+    list: globalAdminProcedure
+      .input(z.object({ userId: cuid, limit: z.number().int().min(1).max(50).default(10) }))
+      .query(async ({ input }) => {
+        const items = await db.auditLog.findMany({
+          where: {
+            OR: [{ actorId: input.userId }, { targetType: 'USER', targetId: input.userId }],
+          },
+          orderBy: { createdAt: 'desc' },
+          take: input.limit,
+          select: { id: true, action: true, createdAt: true, metadata: true },
+        });
+        return { items };
+      }),
+  }),
 });
