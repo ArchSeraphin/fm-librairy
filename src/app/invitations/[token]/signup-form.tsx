@@ -9,13 +9,7 @@ import { AlertCircle, BookOpen, Eye, EyeOff, Loader2, UserPlus } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { submitSignup, type SignupState } from './actions';
@@ -91,7 +85,7 @@ export function SignupForm({
               type="email"
               readOnly
               value={email}
-              className={cn('bg-muted text-muted-foreground cursor-not-allowed')}
+              className={cn('cursor-not-allowed bg-muted text-muted-foreground')}
             />
           </div>
 
@@ -167,7 +161,9 @@ export function SignupForm({
                 )}
                 tabIndex={-1}
                 aria-label={
-                  showPasswordConfirm ? t('passwordConfirmToggleHide') : t('passwordConfirmToggleShow')
+                  showPasswordConfirm
+                    ? t('passwordConfirmToggleHide')
+                    : t('passwordConfirmToggleShow')
                 }
               >
                 {showPasswordConfirm ? (

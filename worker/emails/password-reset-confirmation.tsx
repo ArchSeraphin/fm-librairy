@@ -24,7 +24,7 @@ const PasswordResetConfirmationEmail: React.FC<PasswordResetConfirmationProps> =
   });
   return (
     <EmailLayout preview="Votre mot de passe a été modifié">
-      <Heading className="text-xl font-semibold m-0">Mot de passe modifié</Heading>
+      <Heading className="m-0 text-xl font-semibold">Mot de passe modifié</Heading>
       <Text className="mt-4">Bonjour {userDisplayName},</Text>
       <Text className="mt-2">
         Votre mot de passe BiblioShare a été modifié le {occurredFr}. Toutes vos sessions actives

@@ -26,10 +26,7 @@ export async function handleSendPasswordReset(job: Job, logger: Logger): Promise
   logger.info({ jobId: job.id }, 'password reset sent');
 }
 
-export async function handleSendPasswordResetConfirmation(
-  job: Job,
-  logger: Logger,
-): Promise<void> {
+export async function handleSendPasswordResetConfirmation(job: Job, logger: Logger): Promise<void> {
   const { to, userDisplayName, occurredAtIso } = job.data as {
     to: string;
     userDisplayName: string;

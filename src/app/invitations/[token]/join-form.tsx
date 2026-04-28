@@ -5,23 +5,11 @@ import { useTranslations } from 'next-intl';
 import { AlertCircle, BookOpen, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { submitJoin, type JoinState } from './actions';
 
-export function JoinForm({
-  rawToken,
-  libraryName,
-}: {
-  rawToken: string;
-  libraryName: string;
-}) {
+export function JoinForm({ rawToken, libraryName }: { rawToken: string; libraryName: string }) {
   const t = useTranslations('invitation');
   const [pending, startTransition] = React.useTransition();
   const [state, setState] = React.useState<JoinState>({ status: 'idle' });
@@ -53,12 +41,7 @@ export function JoinForm({
           </Alert>
         )}
 
-        <Button
-          type="button"
-          disabled={pending}
-          className="w-full"
-          onClick={handleJoin}
-        >
+        <Button type="button" disabled={pending} className="w-full" onClick={handleJoin}>
           {pending ? (
             <>
               <Loader2 className="animate-spin" aria-hidden="true" />

@@ -1,7 +1,13 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 
 import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import {
+  clearMailpit,
+  extractFirstUrl,
+  getAppUrl,
+  getMessageBody,
+  waitForEmail,
+} from './helpers/mailpit';
 import { hashPassword } from '../../src/lib/password';
 
 // Backed by `consumePasswordReset` in src/lib/password-reset.ts which deletes
@@ -31,7 +37,9 @@ async function submitLogin(page: Page, email: string, password: string): Promise
   await page.waitForURL((url) => url.pathname !== '/login', { timeout: 15_000 });
 }
 
-test('Password reset invalidates all active sessions across browser contexts', async ({ browser }) => {
+test('Password reset invalidates all active sessions across browser contexts', async ({
+  browser,
+}) => {
   await prisma.user.create({
     data: {
       email: 'multisession@e2e.test',

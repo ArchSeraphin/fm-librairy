@@ -30,7 +30,7 @@ const InvitationJoinLibraryEmail: React.FC<InvitationJoinLibraryProps> = ({
   });
   return (
     <EmailLayout preview={`${inviterName} vous invite à rejoindre ${libraryName}`}>
-      <Heading className="text-xl font-semibold m-0">Bonjour {userDisplayName}</Heading>
+      <Heading className="m-0 text-xl font-semibold">Bonjour {userDisplayName}</Heading>
       <Text className="mt-4">
         {inviterName} vous invite à rejoindre la bibliothèque <strong>{libraryName}</strong> sur
         BiblioShare. Vous pourrez y accéder avec votre compte existant.
@@ -38,11 +38,11 @@ const InvitationJoinLibraryEmail: React.FC<InvitationJoinLibraryProps> = ({
       <Text className="mt-2">Lien valable jusqu'au {expiresFr}.</Text>
       <Button
         href={joinUrl}
-        className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"
+        className="mt-6 rounded-md bg-slate-900 px-5 py-3 font-medium text-white"
       >
         Rejoindre {libraryName}
       </Button>
-      <Text className="mt-6 text-xs text-slate-500 break-all">{joinUrl}</Text>
+      <Text className="mt-6 break-all text-xs text-slate-500">{joinUrl}</Text>
     </EmailLayout>
   );
 };

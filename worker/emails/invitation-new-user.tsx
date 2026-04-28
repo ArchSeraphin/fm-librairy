@@ -29,23 +29,24 @@ const InvitationNewUserEmail: React.FC<InvitationNewUserProps> = ({
   });
   return (
     <EmailLayout preview={`Vous êtes invité·e sur BiblioShare`}>
-      <Heading className="text-xl font-semibold m-0">Vous êtes invité·e</Heading>
+      <Heading className="m-0 text-xl font-semibold">Vous êtes invité·e</Heading>
       <Text className="mt-4">
         {inviterName} vous invite à rejoindre {target}.
       </Text>
       <Text className="mt-2">
-        Créez votre compte en cliquant sur le bouton ci-dessous. Ce lien est valable jusqu'au {expiresFr}.
+        Créez votre compte en cliquant sur le bouton ci-dessous. Ce lien est valable jusqu'au{' '}
+        {expiresFr}.
       </Text>
       <Button
         href={signupUrl}
-        className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"
+        className="mt-6 rounded-md bg-slate-900 px-5 py-3 font-medium text-white"
       >
         Créer mon compte
       </Button>
       <Text className="mt-6 text-sm text-slate-600">
         Si le bouton ne fonctionne pas, copiez cette URL dans votre navigateur :
       </Text>
-      <Text className="text-xs text-slate-500 break-all">{signupUrl}</Text>
+      <Text className="break-all text-xs text-slate-500">{signupUrl}</Text>
     </EmailLayout>
   );
 };

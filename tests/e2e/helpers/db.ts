@@ -67,7 +67,14 @@ export async function hashTestEmail(email: string): Promise<string> {
 // Scoped to those prefixes — no impact on the rest of Redis.
 export async function flushRateLimit(): Promise<void> {
   const r = getRedis();
-  for (const prefix of ['rl:login:*', 'rl:login_ip:*', 'rl:2fa:*', 'rl:reset:*', 'rl:reset_ip:*', 'rl:invite:*']) {
+  for (const prefix of [
+    'rl:login:*',
+    'rl:login_ip:*',
+    'rl:2fa:*',
+    'rl:reset:*',
+    'rl:reset_ip:*',
+    'rl:invite:*',
+  ]) {
     const keys = await r.keys(prefix);
     if (keys.length) await r.del(...keys);
   }

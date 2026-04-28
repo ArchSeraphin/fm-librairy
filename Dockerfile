@@ -31,7 +31,8 @@ ENV APP_URL=http://localhost:3000 \
     SESSION_SECRET=00000000000000000000000000000000000000000000000000000000000000000 \
     CRYPTO_MASTER_KEY=11111111111111111111111111111111111111111111111111111111111111111 \
     IP_HASH_SALT=buildplaceholder1234 \
-    UA_HASH_SALT=buildplaceholder1234
+    UA_HASH_SALT=buildplaceholder1234 \
+    EMAIL_LOG_SALT=buildplaceholderbuildplaceholder12
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable && corepack prepare pnpm@9 --activate \

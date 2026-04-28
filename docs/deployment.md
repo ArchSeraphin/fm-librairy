@@ -167,12 +167,12 @@ Une fois les 3 enregistrements visibles, cliquer **Verify DNS records** dans le 
 
 Dans **Configuration → Environment Variables** de la ressource `app` (et également `worker`) :
 
-| Clé                | Valeur                                         |
-| ------------------ | ---------------------------------------------- |
-| `EMAIL_TRANSPORT`  | `resend`                                       |
-| `EMAIL_FROM`       | `BiblioShare <noreply@biblioshare.<domaine>>`  |
-| `RESEND_API_KEY`   | `re_xxxxxxxxxxxxxxxxxxxxxxx` (dashboard Resend) |
-| `EMAIL_LOG_SALT`   | `openssl rand -hex 32` (64 chars hex)          |
+| Clé               | Valeur                                          |
+| ----------------- | ----------------------------------------------- |
+| `EMAIL_TRANSPORT` | `resend`                                        |
+| `EMAIL_FROM`      | `BiblioShare <noreply@biblioshare.<domaine>>`   |
+| `RESEND_API_KEY`  | `re_xxxxxxxxxxxxxxxxxxxxxxx` (dashboard Resend) |
+| `EMAIL_LOG_SALT`  | `openssl rand -hex 32` (64 chars hex)           |
 
 Marquer `RESEND_API_KEY` et `EMAIL_LOG_SALT` comme **secret** (cadenas). Redémarrer les containers `app` + `worker` après modification.
 

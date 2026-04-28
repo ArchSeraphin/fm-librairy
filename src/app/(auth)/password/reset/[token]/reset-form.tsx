@@ -9,13 +9,7 @@ import { AlertCircle, Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { submitReset, type ResetState } from './actions';
@@ -125,7 +119,9 @@ export function ResetForm({ rawToken }: { rawToken: string }) {
                   'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
                 )}
                 tabIndex={-1}
-                aria-label={showConfirm ? t('confirmPasswordToggleHide') : t('confirmPasswordToggleShow')}
+                aria-label={
+                  showConfirm ? t('confirmPasswordToggleHide') : t('confirmPasswordToggleShow')
+                }
               >
                 {showConfirm ? (
                   <EyeOff className="h-4 w-4" aria-hidden="true" />

@@ -38,7 +38,9 @@ describe('password reset — timing & enumeration', () => {
     const samplesA: number[] = [];
     const samplesB: number[] = [];
     for (let i = 0; i < 5; i++) {
-      samplesA.push(await timeIt(() => caller.password.requestReset({ email: `ghost${i}@x.test` })));
+      samplesA.push(
+        await timeIt(() => caller.password.requestReset({ email: `ghost${i}@x.test` })),
+      );
       samplesB.push(await timeIt(() => caller.password.requestReset({ email: 'real@x.test' })));
     }
     const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;

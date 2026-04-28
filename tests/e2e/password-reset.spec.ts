@@ -1,7 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import {
+  clearMailpit,
+  extractFirstUrl,
+  getAppUrl,
+  getMessageBody,
+  waitForEmail,
+} from './helpers/mailpit';
 import { hashPassword, verifyPassword } from '../../src/lib/password';
 
 const PASSWORD = 'TestPass-123!';

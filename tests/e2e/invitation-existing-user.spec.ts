@@ -1,7 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
 
-import { getPrisma, cleanupTestData, cleanupE2ELibrary, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import {
+  getPrisma,
+  cleanupTestData,
+  cleanupE2ELibrary,
+  flushRateLimit,
+  disconnect,
+} from './helpers/db';
+import {
+  clearMailpit,
+  extractFirstUrl,
+  getAppUrl,
+  getMessageBody,
+  waitForEmail,
+} from './helpers/mailpit';
 import { submitOtpAndWait } from './helpers/2fa';
 import { totpFor } from './helpers/totp';
 import { hashPassword } from '../../src/lib/password';
@@ -94,8 +106,9 @@ test('Invitation flow — existing user joins library via emailed link', async (
   await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 5_000 });
 
   // Mailpit — subject FR mode "join" (`X vous invite à rejoindre <libname>`)
-  const msg = await waitForEmail('existing@e2e.test', (m) =>
-    m.Subject.includes('invite') && m.Subject.includes(lib.name),
+  const msg = await waitForEmail(
+    'existing@e2e.test',
+    (m) => m.Subject.includes('invite') && m.Subject.includes(lib.name),
   );
   const body = await getMessageBody(msg.ID);
   const link = extractFirstUrl(body.HTML || body.Text, `${getAppUrl()}/invitations/`);
@@ -111,10 +124,7 @@ test('Invitation flow — existing user joins library via emailed link', async (
   const joinBtn = page.getByRole('button', { name: /Rejoindre la bibliothèque/i });
   await expect(joinBtn).toBeVisible({ timeout: 5_000 });
 
-  await Promise.all([
-    page.waitForURL(/\/$/, { timeout: 15_000 }),
-    joinBtn.click(),
-  ]);
+  await Promise.all([page.waitForURL(/\/$/, { timeout: 15_000 }), joinBtn.click()]);
 
   // Membership créée
   const membership = await prisma.libraryMember.findUnique({

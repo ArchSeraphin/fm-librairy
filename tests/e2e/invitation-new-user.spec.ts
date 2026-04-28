@@ -1,7 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import {
+  clearMailpit,
+  extractFirstUrl,
+  getAppUrl,
+  getMessageBody,
+  waitForEmail,
+} from './helpers/mailpit';
 import { submitOtpAndWait } from './helpers/2fa';
 import { totpFor } from './helpers/totp';
 import { hashPassword } from '../../src/lib/password';
@@ -72,8 +78,9 @@ test('Invitation flow — new user signs up via emailed link', async ({ page }) 
   await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 5_000 });
 
   // Mailpit reçoit le mail (subject FR sans library = "Vous êtes invité·e sur BiblioShare")
-  const msg = await waitForEmail('newbie@e2e.test', (m) =>
-    m.Subject.includes('invité') && m.Subject.includes('BiblioShare'),
+  const msg = await waitForEmail(
+    'newbie@e2e.test',
+    (m) => m.Subject.includes('invité') && m.Subject.includes('BiblioShare'),
   );
   const body = await getMessageBody(msg.ID);
   const link = extractFirstUrl(body.HTML || body.Text, `${getAppUrl()}/invitations/`);

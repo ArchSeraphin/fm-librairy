@@ -59,7 +59,9 @@ describe('password-reset integration', () => {
     expect(out.userId).toBe(u.id);
 
     expect(await db.session.count({ where: { userId: u.id } })).toBe(0);
-    expect(await db.passwordResetToken.count({ where: { userId: u.id, consumedAt: null } })).toBe(0);
+    expect(await db.passwordResetToken.count({ where: { userId: u.id, consumedAt: null } })).toBe(
+      0,
+    );
     expect(await findResetTokenByRawToken(t1.rawToken!)).toBeNull();
   });
 

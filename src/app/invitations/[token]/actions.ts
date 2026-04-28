@@ -60,7 +60,7 @@ export async function submitJoin(rawToken: string): Promise<JoinState> {
     await caller.invitation.consumeJoin({ rawToken });
   } catch (err) {
     if (err instanceof TRPCError && err.message === 'EMAIL_MISMATCH') {
-      return { status: 'error', message: "Cette invitation ne vous est pas adressée." };
+      return { status: 'error', message: 'Cette invitation ne vous est pas adressée.' };
     }
     return { status: 'error', message: 'Lien invalide ou expiré.' };
   }

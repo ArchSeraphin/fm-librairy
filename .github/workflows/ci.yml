@@ -113,6 +113,7 @@ jobs:
       CRYPTO_MASTER_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
       IP_HASH_SALT: 'citestiphashsalt1234'
       UA_HASH_SALT: 'citestuahashsalt1234'
+      EMAIL_LOG_SALT: 'citestemaillogsaltcitestemaillogsalt12'
       EMAIL_FROM: noreply@biblioshare.local
       LOG_LEVEL: warn
 

@@ -16,22 +16,22 @@ const PasswordResetEmail: React.FC<PasswordResetProps> = ({ resetUrl, expiresAt 
   });
   return (
     <EmailLayout preview="Réinitialisation de votre mot de passe">
-      <Heading className="text-xl font-semibold m-0">Réinitialisation de mot de passe</Heading>
+      <Heading className="m-0 text-xl font-semibold">Réinitialisation de mot de passe</Heading>
       <Text className="mt-4">
         Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton
         ci-dessous pour en choisir un nouveau. Le lien expire à {expiresFr} (1 heure).
       </Text>
       <Button
         href={resetUrl}
-        className="mt-6 bg-slate-900 text-white px-5 py-3 rounded-md font-medium"
+        className="mt-6 rounded-md bg-slate-900 px-5 py-3 font-medium text-white"
       >
         Choisir un nouveau mot de passe
       </Button>
       <Text className="mt-6 text-sm text-slate-600">
-        Si vous n&apos;avez pas demandé cette réinitialisation, ignorez cet email — votre mot de passe
-        actuel reste valide.
+        Si vous n&apos;avez pas demandé cette réinitialisation, ignorez cet email — votre mot de
+        passe actuel reste valide.
       </Text>
-      <Text className="mt-4 text-xs text-slate-500 break-all">{resetUrl}</Text>
+      <Text className="mt-4 break-all text-xs text-slate-500">{resetUrl}</Text>
     </EmailLayout>
   );
 };

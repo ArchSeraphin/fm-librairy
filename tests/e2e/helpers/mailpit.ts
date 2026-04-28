@@ -107,8 +107,19 @@ export function extractFirstUrl(body: string, prefix: string): string {
   let end = idx;
   while (end < body.length) {
     const c = body[end];
-    if (c === undefined || c === ' ' || c === '\n' || c === '\r' || c === '\t' || c === '"' ||
-        c === "'" || c === '<' || c === '>' || c === ']' || c === ')') {
+    if (
+      c === undefined ||
+      c === ' ' ||
+      c === '\n' ||
+      c === '\r' ||
+      c === '\t' ||
+      c === '"' ||
+      c === "'" ||
+      c === '<' ||
+      c === '>' ||
+      c === ']' ||
+      c === ')'
+    ) {
       break;
     }
     end++;
