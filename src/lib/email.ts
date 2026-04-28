@@ -99,6 +99,14 @@ export async function renderEmail<P extends Record<string, unknown>>(
   return { html, text };
 }
 
+/**
+ * Produces a stable, salted hash of an email address for log correlation only.
+ * NOT an authentication primitive — never use this to identify or authorize users.
+ * The output is truncated to 32 hex chars (128 bits), which is ample for
+ * collision-resistant correlation across logs while keeping entries compact.
+ * `EMAIL_LOG_SALT` MUST remain stable across deployments: rotating it breaks
+ * correlation with historical log entries.
+ */
 export function hashRecipient(email: string): string {
   const salt = getEnv().EMAIL_LOG_SALT;
   return createHash('sha256').update(`${salt}:${email.toLowerCase()}`).digest('hex').slice(0, 32);

@@ -11,7 +11,7 @@ vi.mock('@/lib/env', () => ({
   }),
 }));
 
-import { renderEmail, getTransport } from '@/lib/email';
+import { renderEmail, getTransport, hashRecipient } from '@/lib/email';
 
 const Hello: React.FC<{ name: string }> = ({ name }) =>
   React.createElement('div', null, `Hello ${name}`);
@@ -31,5 +31,15 @@ describe('getTransport', () => {
   it('returns an object with a send function', () => {
     const t = getTransport();
     expect(typeof t.send).toBe('function');
+  });
+});
+
+describe('hashRecipient', () => {
+  it('is deterministic and returns 32 hex chars', () => {
+    const a = hashRecipient('user@example.com');
+    const b = hashRecipient('user@example.com');
+    expect(a).toBe(b);
+    expect(a).toHaveLength(32);
+    expect(a).toMatch(/^[0-9a-f]{32}$/);
   });
 });
