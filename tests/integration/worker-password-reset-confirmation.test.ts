@@ -27,7 +27,7 @@ describe('worker handler: send-password-reset-confirmation', () => {
     const user = await prisma.user.create({
       data: { email: 'conf@e2e.test', passwordHash: 'x', displayName: 'Conf User' },
     });
-    await sendPasswordResetConfirmation({ userId: user.id });
+    await sendPasswordResetConfirmation(prisma, { userId: user.id });
     expect(sendEmailMock).toHaveBeenCalledOnce();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const emailArg = (sendEmailMock.mock.calls as any)[0][0] as {
@@ -42,6 +42,8 @@ describe('worker handler: send-password-reset-confirmation', () => {
   });
 
   it('throws when user no longer exists', async () => {
-    await expect(sendPasswordResetConfirmation({ userId: 'nope' })).rejects.toThrow(/not found/i);
+    await expect(sendPasswordResetConfirmation(prisma, { userId: 'nope' })).rejects.toThrow(
+      /not found/i,
+    );
   });
 });

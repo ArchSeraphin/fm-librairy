@@ -1,11 +1,19 @@
-import { db } from '../../src/lib/db.js';
+/**
+ * `{ userId }`-based handler. Used by Phase 1C account self-service
+ * (Task 14/15) when the user has just changed their own password — the producer
+ * has the userId in scope and does not need to pre-resolve display data.
+ *
+ * The Phase 1B reset flow still uses `handleSendPasswordResetConfirmation` in
+ * `send-password-reset.ts` (different payload shape `{ to, userDisplayName, occurredAtIso }`).
+ */
+import type { PrismaClient } from '@prisma/client';
+import type { Logger } from 'pino';
+import pino from 'pino';
 import { renderEmail, sendEmail } from '../lib/email.js';
 import PasswordResetConfirmation from '../emails/password-reset-confirmation.js';
-import pino from 'pino';
 
 export interface SendPasswordResetConfirmationJob {
   userId: string;
-  triggerSource?: 'reset' | 'self_change';
 }
 
 function getWorkerLogger() {
@@ -13,9 +21,13 @@ function getWorkerLogger() {
 }
 
 export async function sendPasswordResetConfirmation(
+  prisma: PrismaClient,
   data: SendPasswordResetConfirmationJob,
+  logger?: Logger,
 ): Promise<void> {
-  const user = await db.user.findUnique({
+  const log = logger ?? getWorkerLogger();
+
+  const user = await prisma.user.findUnique({
     where: { id: data.userId },
     select: { id: true, email: true, displayName: true },
   });
@@ -27,7 +39,6 @@ export async function sendPasswordResetConfirmation(
     occurredAt,
   });
 
-  const logger = getWorkerLogger();
   await sendEmail(
     {
       to: user.email,
@@ -35,6 +46,6 @@ export async function sendPasswordResetConfirmation(
       html,
       text,
     },
-    logger,
+    log,
   );
 }

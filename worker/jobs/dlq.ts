@@ -9,7 +9,6 @@ import type { Logger } from 'pino';
 const DLQ_ACTION_BY_JOB: Record<string, string> = {
   'send-invitation-new-user': 'auth.invitation.send_failed',
   'send-invitation-join-library': 'auth.invitation.send_failed',
-  'send-invitation': 'auth.invitation.send_failed',
   'send-password-reset': 'auth.password.reset_send_failed',
   'send-password-reset-confirmation': 'auth.password.reset_confirmation_send_failed',
 };
