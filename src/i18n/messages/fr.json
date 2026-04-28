@@ -112,6 +112,71 @@
       "todoTitle": "Pour l'instant, vous pouvez :",
       "todoEnableTfa": "Activer la 2FA si ce n'est pas fait",
       "todoSignOut": "Vous déconnecter"
+    },
+    "invite": {
+      "title": "Inviter un membre",
+      "lead": "Envoyez un lien d'invitation par email. La personne pourra créer son compte ou rejoindre la bibliothèque si elle est déjà inscrite.",
+      "email": { "label": "Email" },
+      "library": { "label": "Bibliothèque" },
+      "role": {
+        "label": "Rôle",
+        "member": "Membre",
+        "admin": "Admin de bibliothèque"
+      },
+      "submit": "Envoyer l'invitation",
+      "cancel": "Annuler",
+      "success": "Invitation envoyée à {email}.",
+      "errors": {
+        "rateLimited": "Trop d'invitations envoyées récemment. Réessayez dans une heure.",
+        "permissionDenied": "Vous n'avez pas le droit d'inviter sur cette bibliothèque.",
+        "alreadyMember": "Cette personne est déjà membre de la bibliothèque."
+      }
+    }
+  },
+  "invitation": {
+    "signup": {
+      "title": "Bienvenue sur BiblioShare",
+      "lead": "Vous êtes invité·e à rejoindre {libraryName}.",
+      "leadGlobal": "Vous êtes invité·e à rejoindre BiblioShare.",
+      "displayName": "Nom affiché",
+      "email": "Email",
+      "password": "Mot de passe",
+      "passwordConfirm": "Confirmer le mot de passe",
+      "submit": "Créer mon compte"
+    },
+    "join": {
+      "title": "Rejoindre {libraryName}",
+      "lead": "Vous êtes déjà inscrit·e sur BiblioShare. Confirmez pour rejoindre la bibliothèque.",
+      "submit": "Rejoindre la bibliothèque"
+    },
+    "invalid": {
+      "title": "Lien invalide",
+      "body": "Ce lien d'invitation a expiré ou a déjà été utilisé. Demandez à la personne qui vous a invité·e de vous renvoyer une invitation."
+    },
+    "mismatch": {
+      "title": "Invitation indisponible",
+      "body": "Cette invitation ne vous est pas adressée. Connectez-vous avec le compte concerné ou demandez une nouvelle invitation."
+    }
+  },
+  "password": {
+    "forgot": {
+      "title": "Mot de passe oublié",
+      "lead": "Saisissez votre email. Si un compte existe, vous recevrez un lien de réinitialisation.",
+      "email": { "label": "Email" },
+      "submit": "Envoyer le lien",
+      "confirmation": "Si un compte existe pour cet email, un lien de réinitialisation lui a été envoyé."
+    },
+    "reset": {
+      "title": "Choisir un nouveau mot de passe",
+      "lead": "Choisissez un nouveau mot de passe d'au moins 12 caractères, mélangeant lettres, chiffres et symboles, ou une phrase de passe d'au moins 16 caractères.",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Mettre à jour",
+      "success": "Mot de passe modifié. Connectez-vous avec votre nouveau mot de passe.",
+      "invalid": {
+        "title": "Lien invalide",
+        "body": "Ce lien a expiré ou a déjà été utilisé. Demandez un nouveau lien sur la page Mot de passe oublié."
+      }
     }
   }
 }
