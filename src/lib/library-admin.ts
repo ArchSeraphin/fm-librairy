@@ -7,7 +7,7 @@ export function slugify(input: string): string {
     input
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 80) || 'library'
@@ -27,7 +27,10 @@ export async function slugifyUnique(
     });
     if (!exists) return candidate;
   }
-  throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'unable to generate unique slug' });
+  throw new TRPCError({
+    code: 'INTERNAL_SERVER_ERROR',
+    message: `unable to generate unique slug from "${name}" (base: "${base}")`,
+  });
 }
 
 export async function assertLibraryNotArchived(libraryId: string): Promise<void> {
@@ -41,10 +44,10 @@ export async function assertLibraryNotArchived(libraryId: string): Promise<void>
   }
 }
 
-export async function assertNotLastLibraryAdmin(
-  libraryId: string,
-  membership: { libraryId: string; userId: string },
-): Promise<void> {
+export async function assertNotLastLibraryAdmin(membership: {
+  libraryId: string;
+  userId: string;
+}): Promise<void> {
   const target = await db.libraryMember.findUnique({
     where: { userId_libraryId: { userId: membership.userId, libraryId: membership.libraryId } },
     select: { role: true },
@@ -52,7 +55,7 @@ export async function assertNotLastLibraryAdmin(
   if (!target || target.role !== 'LIBRARY_ADMIN') return;
   const otherAdmins = await db.libraryMember.count({
     where: {
-      libraryId,
+      libraryId: membership.libraryId,
       role: 'LIBRARY_ADMIN',
       NOT: { userId: membership.userId },
     },

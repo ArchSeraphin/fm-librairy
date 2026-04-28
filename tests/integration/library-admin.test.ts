@@ -60,7 +60,7 @@ describe('assertNotLastLibraryAdmin', () => {
       data: { userId: u.id, libraryId: lib.id, role: 'LIBRARY_ADMIN' },
     });
     await expect(
-      assertNotLastLibraryAdmin(lib.id, { libraryId: lib.id, userId: u.id }),
+      assertNotLastLibraryAdmin({ libraryId: lib.id, userId: u.id }),
     ).rejects.toBeInstanceOf(TRPCError);
   });
 
@@ -75,7 +75,7 @@ describe('assertNotLastLibraryAdmin', () => {
       ],
     });
     await expect(
-      assertNotLastLibraryAdmin(lib.id, { libraryId: lib.id, userId: u1.id }),
+      assertNotLastLibraryAdmin({ libraryId: lib.id, userId: u1.id }),
     ).resolves.toBeUndefined();
   });
 
@@ -90,7 +90,7 @@ describe('assertNotLastLibraryAdmin', () => {
       ],
     });
     await expect(
-      assertNotLastLibraryAdmin(lib.id, { libraryId: lib.id, userId: member.id }),
+      assertNotLastLibraryAdmin({ libraryId: lib.id, userId: member.id }),
     ).resolves.toBeUndefined();
   });
 });
