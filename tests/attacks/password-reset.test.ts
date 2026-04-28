@@ -16,7 +16,7 @@ beforeEach(async () => {
 });
 
 async function buildCtx() {
-  return { user: null, session: null };
+  return { user: null, session: null, ip: '0.0.0.0' };
 }
 
 async function timeIt(fn: () => Promise<unknown>): Promise<number> {

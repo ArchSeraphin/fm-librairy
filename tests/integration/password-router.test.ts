@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { appRouter } from '@/server/trpc/routers/_app';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 import { hashPassword } from '@/lib/password';
+import { hashIp } from '@/lib/crypto';
 import { getRedis } from '@/lib/redis';
 
 const prisma = getTestPrisma();
@@ -15,8 +16,8 @@ beforeEach(async () => {
   }
 });
 
-async function buildCtx(opts: { user?: any; session?: any } = {}) {
-  return { user: opts.user ?? null, session: opts.session ?? null };
+async function buildCtx(opts: { user?: any; session?: any; ip?: string } = {}) {
+  return { user: opts.user ?? null, session: opts.session ?? null, ip: opts.ip ?? '0.0.0.0' };
 }
 
 describe('password router', () => {
@@ -34,6 +35,23 @@ describe('password router', () => {
     await caller.password.requestReset({ email: 'a@x.test' });
     const tokens = await prisma.passwordResetToken.findMany();
     expect(tokens).toHaveLength(1);
+  });
+
+  it('records audit with caller IP from x-forwarded-for', async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: 'ip-audit@e2e.test',
+        passwordHash: await hashPassword('OldPassword123!'),
+        displayName: 'Audit',
+      },
+    });
+    const caller = appRouter.createCaller(await buildCtx({ ip: '203.0.113.99' }));
+    await caller.password.requestReset({ email: user.email });
+    const log = await prisma.auditLog.findFirst({
+      where: { action: 'auth.password.reset_requested' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(log?.ipHash).toBe(hashIp('203.0.113.99'));
   });
 
   it('consumeReset rejects bad token with INVALID_TOKEN', async () => {

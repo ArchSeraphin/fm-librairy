@@ -83,7 +83,7 @@ describe('A1b — Bruteforce 2FA', () => {
       },
     });
     await twoFactorLimiter.delete(session.id);
-    const caller = appRouter.createCaller({ user: u, session });
+    const caller = appRouter.createCaller({ user: u, session, ip: '0.0.0.0' });
     for (let i = 0; i < 5; i++) {
       await expect(caller.auth.verify2FA({ code: '000000' })).rejects.toThrow();
     }
@@ -164,7 +164,7 @@ describe('A7 — Session fixation', () => {
       },
     });
     await twoFactorLimiter.delete(session.id);
-    const caller = appRouter.createCaller({ user: u, session });
+    const caller = appRouter.createCaller({ user: u, session, ip: '0.0.0.0' });
     const out = await caller.auth.verify2FA({ code: genCode(raw) });
     expect(out.sessionToken).not.toBe('old-tok-fixation');
     const old = await prisma.session.findUnique({ where: { sessionToken: 'old-tok-fixation' } });
@@ -202,7 +202,7 @@ describe('A5 — 2FA downgrade impossible sans re-auth', () => {
         pending2fa: false,
       },
     });
-    const caller = appRouter.createCaller({ user: u, session });
+    const caller = appRouter.createCaller({ user: u, session, ip: '0.0.0.0' });
     await expect(
       caller.auth.disable2FA({ password: 'wrong', code: genCode(raw) }),
     ).rejects.toThrow();
@@ -240,7 +240,7 @@ describe('A5 — 2FA downgrade impossible sans re-auth', () => {
         pending2fa: false,
       },
     });
-    const caller = appRouter.createCaller({ user: u, session });
+    const caller = appRouter.createCaller({ user: u, session, ip: '0.0.0.0' });
     await expect(caller.auth.disable2FA({ password: 'p', code: genCode(raw) })).rejects.toThrow(
       /global admin/i,
     );

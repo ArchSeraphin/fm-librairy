@@ -42,7 +42,7 @@ describe('verifyBackupCode — gap #9', () => {
     await twoFactorLimiter.delete(session.id);
     const before = (await prisma.user.findUnique({ where: { id: u.id } }))!.lastLoginAt;
     expect(before).toBeNull();
-    const caller = appRouter.createCaller({ user: u, session });
+    const caller = appRouter.createCaller({ user: u, session, ip: '0.0.0.0' });
     await caller.auth.verifyBackupCode({ code: plain[0]! });
     const after = (await prisma.user.findUnique({ where: { id: u.id } }))!.lastLoginAt;
     expect(after).not.toBeNull();
