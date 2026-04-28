@@ -1,7 +1,7 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 
 import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
 import { hashPassword } from '../../src/lib/password';
 
 // Backed by `consumePasswordReset` in src/lib/password-reset.ts which deletes
@@ -71,10 +71,7 @@ test('Password reset invalidates all active sessions across browser contexts', a
     m.Subject.toLowerCase().includes('réinitialisation'),
   );
   const body = await getMessageBody(msg.ID);
-  const link = extractFirstUrl(
-    body.HTML || body.Text,
-    `${process.env.APP_URL ?? 'http://localhost:3000'}/password/reset/`,
-  );
+  const link = extractFirstUrl(body.HTML || body.Text, `${getAppUrl()}/password/reset/`);
 
   await pageB.goto(link);
   await pageB.fill('input[name="newPassword"]', NEW_PASSWORD);

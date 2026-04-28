@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
 import { hashPassword, verifyPassword } from '../../src/lib/password';
 
 const PASSWORD = 'TestPass-123!';
@@ -54,10 +54,7 @@ test('Password reset flow — request, consume, login with new password', async 
     m.Subject.toLowerCase().includes('réinitialisation'),
   );
   const body = await getMessageBody(msg.ID);
-  const link = extractFirstUrl(
-    body.HTML || body.Text,
-    `${process.env.APP_URL ?? 'http://localhost:3000'}/password/reset/`,
-  );
+  const link = extractFirstUrl(body.HTML || body.Text, `${getAppUrl()}/password/reset/`);
 
   // Reset page
   await page.goto(link);

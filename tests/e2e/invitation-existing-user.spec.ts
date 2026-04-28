@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
-import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import { getPrisma, cleanupTestData, cleanupE2ELibrary, flushRateLimit, disconnect } from './helpers/db';
+import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import { submitOtpAndWait } from './helpers/2fa';
 import { totpFor } from './helpers/totp';
 import { hashPassword } from '../../src/lib/password';
 import { encryptSecret } from '../../src/lib/crypto';
@@ -13,49 +14,20 @@ const prisma = getPrisma();
 
 // E2E-scoped library slug + name so we can cleanup deterministically without
 // risk of nuking dev libraries the developer might have seeded manually.
+// If another library-using spec is added later, namespace this slug.
 const LIB_SLUG = 'e2e-test-library';
-
-async function cleanupE2ELibraries(): Promise<void> {
-  await prisma.libraryMember.deleteMany({ where: { library: { slug: LIB_SLUG } } });
-  await prisma.invitation.deleteMany({ where: { library: { slug: LIB_SLUG } } });
-  await prisma.library.deleteMany({ where: { slug: LIB_SLUG } });
-}
 
 test.beforeEach(async () => {
   await cleanupTestData();
-  await cleanupE2ELibraries();
+  await cleanupE2ELibrary(LIB_SLUG);
   await flushRateLimit();
   await clearMailpit();
 });
 
 test.afterAll(async () => {
-  await cleanupE2ELibraries();
+  await cleanupE2ELibrary(LIB_SLUG);
   await disconnect();
 });
-
-async function fillOtp(page: Page, code: string): Promise<void> {
-  const first = page.locator('input[inputmode="numeric"]').first();
-  await first.click();
-  await page.keyboard.type(code, { delay: 20 });
-}
-
-async function submitOtpAndWait(page: Page, code: string): Promise<void> {
-  const verifyResponse = page.waitForResponse(
-    (r) =>
-      (r.url().includes('/api/trpc/auth.verify2FA') ||
-        r.url().includes('/api/trpc/auth.confirm2FA')) &&
-      r.request().method() === 'POST',
-    { timeout: 10_000 },
-  );
-  await fillOtp(page, code);
-  await verifyResponse;
-  await page
-    .waitForResponse(
-      (r) => r.url().includes('/api/auth/session') && r.request().method() === 'POST',
-      { timeout: 5_000 },
-    )
-    .catch(() => undefined);
-}
 
 async function submitLogin(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/login');
@@ -126,10 +98,7 @@ test('Invitation flow — existing user joins library via emailed link', async (
     m.Subject.includes('invite') && m.Subject.includes(lib.name),
   );
   const body = await getMessageBody(msg.ID);
-  const link = extractFirstUrl(
-    body.HTML || body.Text,
-    `${process.env.APP_URL ?? 'http://localhost:3000'}/invitations/`,
-  );
+  const link = extractFirstUrl(body.HTML || body.Text, `${getAppUrl()}/invitations/`);
 
   // Switch to existing user identity
   await page.context().clearCookies();

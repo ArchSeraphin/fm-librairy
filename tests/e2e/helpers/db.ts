@@ -47,6 +47,15 @@ export async function cleanupTestData(): Promise<void> {
   await p.user.deleteMany({ where: { email: { endsWith: TEST_EMAIL_SUFFIX } } });
 }
 
+// Targeted cleanup for E2E libraries scoped by slug. Order respects FKs:
+// libraryMember → invitation → library.
+export async function cleanupE2ELibrary(slug: string): Promise<void> {
+  const p = getPrisma();
+  await p.libraryMember.deleteMany({ where: { library: { slug } } });
+  await p.invitation.deleteMany({ where: { library: { slug } } });
+  await p.library.deleteMany({ where: { slug } });
+}
+
 // Hash a raw test email for audit-row lookups (e.g. Scenario 5).
 export async function hashTestEmail(email: string): Promise<string> {
   const { hashEmail } = await import('../../../src/lib/crypto');

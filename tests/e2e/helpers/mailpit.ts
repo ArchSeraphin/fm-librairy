@@ -10,6 +10,15 @@
 
 const MAILPIT_BASE = (process.env.MAILPIT_URL ?? 'http://localhost:8025').replace(/\/$/, '');
 
+/**
+ * Resolve the app's base URL for spec assertions / link extraction.
+ * Falls back to `http://localhost:3000` when APP_URL is not set
+ * (matches the Playwright dev-server convention used in CI + locally).
+ */
+export function getAppUrl(): string {
+  return process.env.APP_URL ?? 'http://localhost:3000';
+}
+
 export interface MailpitMessage {
   ID: string;
   To: { Address: string; Name?: string }[];
@@ -70,7 +79,8 @@ export async function waitForEmail(
     await new Promise((r) => setTimeout(r, 250));
   }
   throw new Error(
-    `waitForEmail timed out after ${timeoutMs}ms for ${to}. lastError=${String(lastError)}`,
+    `email to ${to} not received in ${timeoutMs}ms` +
+      (lastError ? ` (last error: ${String((lastError as Error).message ?? lastError)})` : ''),
   );
 }
 

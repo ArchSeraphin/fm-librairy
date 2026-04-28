@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 import { getPrisma, cleanupTestData, flushRateLimit, disconnect } from './helpers/db';
-import { clearMailpit, extractFirstUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import { clearMailpit, extractFirstUrl, getAppUrl, getMessageBody, waitForEmail } from './helpers/mailpit';
+import { submitOtpAndWait } from './helpers/2fa';
 import { totpFor } from './helpers/totp';
 import { hashPassword } from '../../src/lib/password';
 import { encryptSecret } from '../../src/lib/crypto';
@@ -21,30 +22,6 @@ test.beforeEach(async () => {
 test.afterAll(async () => {
   await disconnect();
 });
-
-async function fillOtp(page: Page, code: string): Promise<void> {
-  const first = page.locator('input[inputmode="numeric"]').first();
-  await first.click();
-  await page.keyboard.type(code, { delay: 20 });
-}
-
-async function submitOtpAndWait(page: Page, code: string): Promise<void> {
-  const verifyResponse = page.waitForResponse(
-    (r) =>
-      (r.url().includes('/api/trpc/auth.verify2FA') ||
-        r.url().includes('/api/trpc/auth.confirm2FA')) &&
-      r.request().method() === 'POST',
-    { timeout: 10_000 },
-  );
-  await fillOtp(page, code);
-  await verifyResponse;
-  await page
-    .waitForResponse(
-      (r) => r.url().includes('/api/auth/session') && r.request().method() === 'POST',
-      { timeout: 5_000 },
-    )
-    .catch(() => undefined);
-}
 
 async function submitLogin(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/login');
@@ -99,10 +76,7 @@ test('Invitation flow — new user signs up via emailed link', async ({ page }) 
     m.Subject.includes('invité') && m.Subject.includes('BiblioShare'),
   );
   const body = await getMessageBody(msg.ID);
-  const link = extractFirstUrl(
-    body.HTML || body.Text,
-    `${process.env.APP_URL ?? 'http://localhost:3000'}/invitations/`,
-  );
+  const link = extractFirstUrl(body.HTML || body.Text, `${getAppUrl()}/invitations/`);
 
   // Newbie ouvre le lien (pas de session).
   await page.context().clearCookies();
@@ -115,7 +89,7 @@ test('Invitation flow — new user signs up via emailed link', async ({ page }) 
   await page.fill('input[name="confirmPassword"]', NEW_PASSWORD);
 
   await Promise.all([
-    page.waitForURL(/\/$/, { timeout: 15_000 }),
+    page.waitForURL(/^\/(\?.*)?$/, { timeout: 15_000 }),
     page.click('button[type="submit"]'),
   ]);
 
