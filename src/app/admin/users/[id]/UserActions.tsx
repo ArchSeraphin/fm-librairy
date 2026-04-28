@@ -23,7 +23,7 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-type DialogKind = null | 'suspend' | 'reactivate' | 'delete' | 'role' | 'reset2fa';
+type DialogKind = null | 'suspend' | 'delete' | 'role' | 'reset2fa';
 
 interface Props {
   userId: string;
