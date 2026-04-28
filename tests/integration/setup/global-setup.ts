@@ -25,6 +25,11 @@ export async function setup(): Promise<void> {
   process.env.MEILI_MASTER_KEY = 'test-meili-master-key-16chars';
   process.env.IP_HASH_SALT = 'test-ip-hash-salt-16c';
   process.env.UA_HASH_SALT = 'test-ua-hash-salt-16c';
+  process.env.EMAIL_TRANSPORT = 'smtp';
+  process.env.EMAIL_FROM = 'BiblioShare <test@biblio.test>';
+  process.env.SMTP_HOST = '127.0.0.1';
+  process.env.SMTP_PORT = '1';
+  process.env.EMAIL_LOG_SALT = 'test-email-log-salt-32-chars-min!';
   (process.env as Record<string, string>)['NODE_ENV'] = 'test';
 
   execSync('pnpm prisma migrate deploy', {

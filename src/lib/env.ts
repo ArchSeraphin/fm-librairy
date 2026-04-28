@@ -32,13 +32,26 @@ const EnvSchema = z.object({
   IP_HASH_SALT: z.string().min(16),
   UA_HASH_SALT: z.string().min(16),
 
-  // Email (Phase 1+)
+  // Email transport (Phase 1B)
+  EMAIL_TRANSPORT: z.enum(['resend', 'smtp']).default('smtp'),
+  EMAIL_FROM: z.string().min(3),
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().email().default('noreply@biblioshare.local'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(1025),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_LOG_SALT: z.string().min(32),
 
   // APIs métadonnées (Phase 2+)
   GOOGLE_BOOKS_API_KEY: z.string().optional(),
   ISBNDB_API_KEY: z.string().optional(),
+}).superRefine((v, ctx) => {
+  if (v.EMAIL_TRANSPORT === 'resend' && !v.RESEND_API_KEY) {
+    ctx.addIssue({ code: 'custom', path: ['RESEND_API_KEY'], message: 'required when EMAIL_TRANSPORT=resend' });
+  }
+  if (v.EMAIL_TRANSPORT === 'smtp' && !v.SMTP_HOST) {
+    ctx.addIssue({ code: 'custom', path: ['SMTP_HOST'], message: 'required when EMAIL_TRANSPORT=smtp' });
+  }
 });
 
 export type Env = z.infer<typeof EnvSchema>;
