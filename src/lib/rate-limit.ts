@@ -48,3 +48,12 @@ export const invitationLimiter = new RateLimiterRedis({
   duration: 60 * 60,
   insuranceLimiter: memInsurance(10, 60 * 60),
 });
+
+export const resetIpOnlyLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:reset_ip',
+  points: 30,
+  duration: 60 * 60,
+  blockDuration: 60 * 60,
+  insuranceLimiter: memInsurance(30, 60 * 60),
+});

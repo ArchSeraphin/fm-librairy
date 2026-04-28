@@ -54,11 +54,11 @@ export async function hashTestEmail(email: string): Promise<string> {
 }
 
 // Flush rate-limit state so each scenario starts with a fresh budget.
-// rate-limit.ts uses keyPrefix `rl:login`, `rl:login_ip`, `rl:2fa`, `rl:reset`, `rl:invite`.
+// rate-limit.ts uses keyPrefix `rl:login`, `rl:login_ip`, `rl:2fa`, `rl:reset`, `rl:reset_ip`, `rl:invite`.
 // Scoped to those prefixes — no impact on the rest of Redis.
 export async function flushRateLimit(): Promise<void> {
   const r = getRedis();
-  for (const prefix of ['rl:login:*', 'rl:login_ip:*', 'rl:2fa:*', 'rl:reset:*', 'rl:invite:*']) {
+  for (const prefix of ['rl:login:*', 'rl:login_ip:*', 'rl:2fa:*', 'rl:reset:*', 'rl:reset_ip:*', 'rl:invite:*']) {
     const keys = await r.keys(prefix);
     if (keys.length) await r.del(...keys);
   }
