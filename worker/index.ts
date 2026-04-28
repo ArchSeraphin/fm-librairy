@@ -38,6 +38,22 @@ const parsed = z
     UA_HASH_SALT: z.string().min(16),
     CRYPTO_MASTER_KEY: z.string().min(32),
   })
+  .superRefine((v, ctx) => {
+    if (v.EMAIL_TRANSPORT === 'resend' && !v.RESEND_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RESEND_API_KEY'],
+        message: 'required when EMAIL_TRANSPORT=resend',
+      });
+    }
+    if (v.EMAIL_TRANSPORT === 'smtp' && !v.SMTP_HOST) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SMTP_HOST'],
+        message: 'required when EMAIL_TRANSPORT=smtp',
+      });
+    }
+  })
   .safeParse(process.env);
 
 if (!parsed.success) {

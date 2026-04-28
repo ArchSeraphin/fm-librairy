@@ -14,12 +14,15 @@ export async function handleSendPasswordReset(job: Job, logger: Logger): Promise
     resetUrl,
     expiresAt: new Date(expiresAtIso),
   });
-  await sendEmail({
-    to,
-    subject: 'Réinitialisation de votre mot de passe',
-    html,
-    text,
-  });
+  await sendEmail(
+    {
+      to,
+      subject: 'Réinitialisation de votre mot de passe',
+      html,
+      text,
+    },
+    logger,
+  );
   logger.info({ jobId: job.id }, 'password reset sent');
 }
 
@@ -36,11 +39,14 @@ export async function handleSendPasswordResetConfirmation(
     userDisplayName,
     occurredAt: new Date(occurredAtIso),
   });
-  await sendEmail({
-    to,
-    subject: 'Votre mot de passe a été modifié',
-    html,
-    text,
-  });
+  await sendEmail(
+    {
+      to,
+      subject: 'Votre mot de passe a été modifié',
+      html,
+      text,
+    },
+    logger,
+  );
   logger.info({ jobId: job.id }, 'password reset confirmation sent');
 }

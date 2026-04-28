@@ -19,14 +19,17 @@ export async function handleSendInvitationNewUser(job: Job, logger: Logger): Pro
     signupUrl,
     expiresAt,
   });
-  await sendEmail({
-    to,
-    subject: libraryName
-      ? `Vous êtes invité·e à rejoindre ${libraryName}`
-      : 'Vous êtes invité·e sur BiblioShare',
-    html,
-    text,
-  });
+  await sendEmail(
+    {
+      to,
+      subject: libraryName
+        ? `Vous êtes invité·e à rejoindre ${libraryName}`
+        : 'Vous êtes invité·e sur BiblioShare',
+      html,
+      text,
+    },
+    logger,
+  );
   logger.info({ jobId: job.id }, 'invitation new user sent');
 }
 
@@ -46,11 +49,14 @@ export async function handleSendInvitationJoinLibrary(job: Job, logger: Logger):
     joinUrl,
     expiresAt: new Date(expiresAtIso),
   });
-  await sendEmail({
-    to,
-    subject: `${inviterName} vous invite à rejoindre ${libraryName}`,
-    html,
-    text,
-  });
+  await sendEmail(
+    {
+      to,
+      subject: `${inviterName} vous invite à rejoindre ${libraryName}`,
+      html,
+      text,
+    },
+    logger,
+  );
   logger.info({ jobId: job.id }, 'invitation join sent');
 }

@@ -1,3 +1,5 @@
+// DUPLICATED from src/emails/password-reset-confirmation.tsx — keep in sync. Phase 1B
+// chose duplication over a shared workspace package; revisit in Phase 2+.
 // FR-only for Phase 1B. Email i18n via next-intl is deferred to Phase 2;
 // to localize, thread `getTranslations` outputs as props from the caller.
 import * as React from 'react';

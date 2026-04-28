@@ -9,6 +9,7 @@ import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import * as React from 'react';
 import { createHash } from 'node:crypto';
+import type { Logger } from 'pino';
 
 export interface EmailMessage {
   to: string;
@@ -116,7 +117,18 @@ export function hashRecipient(email: string): string {
   return createHash('sha256').update(`${salt}:${email.toLowerCase()}`).digest('hex').slice(0, 32);
 }
 
-export async function sendEmail(msg: EmailMessage): Promise<{ id: string }> {
+export async function sendEmail(msg: EmailMessage, logger: Logger): Promise<{ id: string }> {
   const tx = getTransport();
-  return tx.send(msg);
+  const start = Date.now();
+  const result = await tx.send(msg);
+  logger.info(
+    {
+      event: 'email.sent',
+      toHash: hashRecipient(msg.to),
+      transportId: result.id,
+      durationMs: Date.now() - start,
+    },
+    'email sent',
+  );
+  return result;
 }
