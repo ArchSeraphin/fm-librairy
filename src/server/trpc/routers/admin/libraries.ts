@@ -5,7 +5,11 @@ import { t } from '../../trpc';
 import { globalAdminProcedure } from '../../procedures';
 import { db } from '@/lib/db';
 import { recordAudit } from '@/lib/audit-log';
-import { slugifyUnique } from '@/lib/library-admin';
+import {
+  assertLibraryNotArchived,
+  assertNotLastLibraryAdmin,
+  slugifyUnique,
+} from '@/lib/library-admin';
 
 const cuid = z.string().min(20).max(40);
 const reasonInput = z.string().trim().min(3).max(500);
@@ -210,5 +214,191 @@ export const adminLibrariesRouter = t.router({
       req: { ip: ctx.ip },
     });
     return { ok: true };
+  }),
+
+  members: t.router({
+    list: globalAdminProcedure
+      .input(
+        z.object({
+          libraryId: cuid,
+          q: z.string().trim().max(120).optional(),
+          cursor: z.string().optional(),
+          limit: z.number().int().min(1).max(50).default(20),
+        }),
+      )
+      .query(async ({ input }) => {
+        const items = await db.libraryMember.findMany({
+          where: {
+            libraryId: input.libraryId,
+            ...(input.q
+              ? {
+                  user: {
+                    OR: [
+                      { email: { contains: input.q, mode: 'insensitive' } },
+                      { displayName: { contains: input.q, mode: 'insensitive' } },
+                    ],
+                  },
+                }
+              : {}),
+          },
+          take: input.limit + 1,
+          orderBy: { joinedAt: 'asc' },
+          select: {
+            libraryId: true,
+            userId: true,
+            role: true,
+            canRead: true,
+            canUpload: true,
+            canDownload: true,
+            joinedAt: true,
+            user: { select: { email: true, displayName: true, status: true } },
+          },
+        });
+        const nextCursor = items.length > input.limit ? items.pop()!.userId : null;
+        return { items, nextCursor };
+      }),
+
+    add: globalAdminProcedure
+      .input(
+        z.object({
+          libraryId: cuid,
+          userId: cuid,
+          role: z.enum(['LIBRARY_ADMIN', 'MEMBER']),
+          flags: z.object({
+            canRead: z.boolean(),
+            canUpload: z.boolean(),
+            canDownload: z.boolean(),
+          }),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await assertLibraryNotArchived(input.libraryId);
+        const exists = await db.libraryMember.findUnique({
+          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+          select: { libraryId: true },
+        });
+        if (exists) throw new TRPCError({ code: 'CONFLICT', message: 'already a member' });
+        await db.libraryMember.create({
+          data: {
+            libraryId: input.libraryId,
+            userId: input.userId,
+            role: input.role,
+            canRead: input.flags.canRead,
+            canUpload: input.flags.canUpload,
+            canDownload: input.flags.canDownload,
+          },
+        });
+        await recordAudit({
+          action: 'admin.member.added',
+          actor: { id: ctx.user.id },
+          target: { type: 'MEMBER', id: `${input.libraryId}:${input.userId}` },
+          metadata: {
+            libraryId: input.libraryId,
+            userId: input.userId,
+            role: input.role,
+            flags: input.flags,
+          },
+          req: { ip: ctx.ip },
+        });
+        return { ok: true };
+      }),
+
+    remove: globalAdminProcedure
+      .input(z.object({ libraryId: cuid, userId: cuid }))
+      .mutation(async ({ ctx, input }) => {
+        await assertLibraryNotArchived(input.libraryId);
+        await assertNotLastLibraryAdmin({ libraryId: input.libraryId, userId: input.userId });
+        await db.libraryMember.delete({
+          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+        });
+        await recordAudit({
+          action: 'admin.member.removed',
+          actor: { id: ctx.user.id },
+          target: { type: 'MEMBER', id: `${input.libraryId}:${input.userId}` },
+          metadata: { libraryId: input.libraryId, userId: input.userId },
+          req: { ip: ctx.ip },
+        });
+        return { ok: true };
+      }),
+
+    changeRole: globalAdminProcedure
+      .input(
+        z.object({
+          libraryId: cuid,
+          userId: cuid,
+          newRole: z.enum(['LIBRARY_ADMIN', 'MEMBER']),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await assertLibraryNotArchived(input.libraryId);
+        const current = await db.libraryMember.findUnique({
+          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+          select: { role: true },
+        });
+        if (!current) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (current.role === input.newRole) return { ok: true };
+        if (current.role === 'LIBRARY_ADMIN') {
+          await assertNotLastLibraryAdmin({ libraryId: input.libraryId, userId: input.userId });
+        }
+        await db.libraryMember.update({
+          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+          data: { role: input.newRole },
+        });
+        await recordAudit({
+          action: 'admin.member.role_changed',
+          actor: { id: ctx.user.id },
+          target: { type: 'MEMBER', id: `${input.libraryId}:${input.userId}` },
+          metadata: {
+            libraryId: input.libraryId,
+            userId: input.userId,
+            from: current.role,
+            to: input.newRole,
+          },
+          req: { ip: ctx.ip },
+        });
+        return { ok: true };
+      }),
+
+    updateFlags: globalAdminProcedure
+      .input(
+        z.object({
+          libraryId: cuid,
+          userId: cuid,
+          flags: z.object({
+            canRead: z.boolean(),
+            canUpload: z.boolean(),
+            canDownload: z.boolean(),
+          }),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        await assertLibraryNotArchived(input.libraryId);
+        const anyTrue = input.flags.canRead || input.flags.canUpload || input.flags.canDownload;
+        if (!anyTrue) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'at least one flag must be true' });
+        }
+        const before = await db.libraryMember.findUnique({
+          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+          select: { canRead: true, canUpload: true, canDownload: true },
+        });
+        if (!before) throw new TRPCError({ code: 'NOT_FOUND' });
+        await db.libraryMember.update({
+          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+          data: input.flags,
+        });
+        await recordAudit({
+          action: 'admin.member.flags_changed',
+          actor: { id: ctx.user.id },
+          target: { type: 'MEMBER', id: `${input.libraryId}:${input.userId}` },
+          metadata: {
+            libraryId: input.libraryId,
+            userId: input.userId,
+            before,
+            after: input.flags,
+          },
+          req: { ip: ctx.ip },
+        });
+        return { ok: true };
+      }),
   }),
 });
