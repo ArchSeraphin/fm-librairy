@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TRPCError } from '@trpc/server';
-import { assertLibraryNotArchived, assertNotLastLibraryAdmin, slugifyUnique } from '@/lib/library-admin';
+import {
+  assertLibraryNotArchived,
+  assertNotLastLibraryAdmin,
+  slugifyUnique,
+} from '@/lib/library-admin';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 
 const prisma = getTestPrisma();

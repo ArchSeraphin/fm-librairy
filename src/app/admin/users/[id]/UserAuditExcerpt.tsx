@@ -48,12 +48,12 @@ export function UserAuditExcerpt({ userId, limit = 10 }: Props) {
           <div className="min-w-0 flex-1">
             <p className="truncate font-mono text-xs font-medium text-foreground">{entry.action}</p>
             {entry.metadata != null &&
-              typeof entry.metadata === 'object' &&
-              Object.keys(entry.metadata as object).length > 0 ? (
-                <span className="block text-xs font-mono text-muted-foreground truncate">
-                  {JSON.stringify(entry.metadata)}
-                </span>
-              ) : null}
+            typeof entry.metadata === 'object' &&
+            Object.keys(entry.metadata as object).length > 0 ? (
+              <span className="block truncate font-mono text-xs text-muted-foreground">
+                {JSON.stringify(entry.metadata)}
+              </span>
+            ) : null}
           </div>
           <time
             dateTime={new Date(entry.createdAt).toISOString()}

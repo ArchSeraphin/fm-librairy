@@ -45,10 +45,8 @@ export function UserSessionsList({ userId }: Props) {
             {session.userAgentLabel ?? t('sessionUnknownDevice')}
           </p>
           <p className="text-xs text-muted-foreground">
-            {t('sessionCreatedAt')}{' '}
-            {format.date(session.createdAt)}{' '}
-            &middot; {t('sessionLastActiveAt')}{' '}
-            {format.date(session.lastSeenAt)}
+            {t('sessionCreatedAt')} {format.date(session.createdAt)} &middot;{' '}
+            {t('sessionLastActiveAt')} {format.date(session.lastSeenAt)}
           </p>
         </li>
       ))}

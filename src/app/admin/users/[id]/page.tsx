@@ -129,8 +129,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
         <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-            {t('detail.memberSince')}{' '}
-            {createdAtFormatted}
+            {t('detail.memberSince')} {createdAtFormatted}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" aria-hidden="true" />
