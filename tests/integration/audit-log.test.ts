@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { recordAudit } from '@/lib/audit-log';
+import { describe, it, expect, beforeEach, vi, test } from 'vitest';
+import { recordAudit, AuditAction } from '@/lib/audit-log';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 
 const prisma = getTestPrisma();
@@ -61,5 +61,45 @@ describe('recordAudit', () => {
     const ctx = meta.context!;
     expect(ctx.password).toBe('[REDACTED]');
     expect(ctx.email).toBe('x@y.z');
+  });
+});
+
+describe('Phase 1D audit actions', () => {
+  const bookActions: AuditAction[] = [
+    'library.book.created',
+    'library.book.updated',
+    'library.book.archived',
+    'library.book.unarchived',
+    'library.book.deleted',
+  ];
+
+  test.each(bookActions)('enregistre l\'action %s avec target BOOK', async (action) => {
+    const user = await prisma.user.create({
+      data: {
+        email: `audit-book-${action.replace(/\./g, '-')}@test.local`,
+        passwordHash: 'x',
+        displayName: 'Audit Test User',
+        role: 'USER',
+      },
+    });
+
+    try {
+      await expect(
+        recordAudit({
+          action,
+          actor: { id: user.id },
+          target: { type: 'BOOK', id: 'book-test-id-001' },
+        }),
+      ).resolves.toBeUndefined();
+
+      const row = await prisma.auditLog.findFirst({ where: { action } });
+      expect(row).not.toBeNull();
+      expect(row!.actorId).toBe(user.id);
+      expect(row!.action).toBe(action);
+      expect(row!.targetType).toBe('BOOK');
+      expect(row!.targetId).toBe('book-test-id-001');
+    } finally {
+      await prisma.user.delete({ where: { id: user.id } });
+    }
   });
 });
