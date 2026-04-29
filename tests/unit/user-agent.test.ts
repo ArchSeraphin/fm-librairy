@@ -26,8 +26,4 @@ describe('parseUserAgentLabel', () => {
   it('returns null on empty', () => {
     expect(parseUserAgentLabel('')).toBeNull();
   });
-  it('truncates to 64 chars max', () => {
-    const result = parseUserAgentLabel('Mozilla/5.0 random unknown');
-    expect((result ?? '').length).toBeLessThanOrEqual(64);
-  });
 });

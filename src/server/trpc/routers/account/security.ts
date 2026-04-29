@@ -207,12 +207,12 @@ export const accountSecurityRouter = t.router({
       if (ctx.user.role === 'GLOBAL_ADMIN') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'global admin must use DBA runbook' });
       }
-      if (!ctx.user.twoFactorEnabled) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
       try {
         await twoFactorReEnrollLimiter.consume(ctx.user.id);
       } catch {
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
       }
+      if (!ctx.user.twoFactorEnabled) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
       const sec = await db.twoFactorSecret.findUnique({ where: { userId: ctx.user.id } });
       if (!sec) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
       const result = await consumeBackupCode(input.backupCode, sec.backupCodes);

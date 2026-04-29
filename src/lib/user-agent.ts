@@ -30,5 +30,7 @@ export function parseUserAgentLabel(ua: string): string | null {
       break;
     }
   }
+  // Defensive cap (column max). Currently labels max at ~18 chars from the
+  // tables above, but new BROWSERS/OSES additions could grow them.
   return `${browser} on ${os}`.slice(0, 64);
 }

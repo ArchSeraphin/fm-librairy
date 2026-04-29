@@ -18,6 +18,7 @@ import { twoFactorLimiter } from '@/lib/rate-limit';
 import { getRedis } from '@/lib/redis';
 import { createSessionAdapter } from '@/server/auth/adapter';
 import { parseUserAgentLabel } from '@/lib/user-agent';
+import { getLogger } from '@/lib/logger';
 
 const codeInput = z.object({ code: z.string().min(6).max(20) });
 
@@ -92,8 +93,8 @@ export const authRouter = t.router({
     try {
       const h = await headers();
       ua = h.get('user-agent') ?? '';
-    } catch {
-      // Outside Next.js request scope (e.g. tests) — label stays null
+    } catch (err) {
+      getLogger().debug({ err }, 'headers() unavailable, UA label skipped');
     }
     const fresh = await adapter.upgradePendingSession({
       oldSessionId: ctx.session.id,
@@ -145,8 +146,8 @@ export const authRouter = t.router({
       try {
         const h2 = await headers();
         ua2 = h2.get('user-agent') ?? '';
-      } catch {
-        // Outside Next.js request scope (e.g. tests) — label stays null
+      } catch (err) {
+        getLogger().debug({ err }, 'headers() unavailable, UA label skipped');
       }
       const fresh = await adapter.upgradePendingSession({
         oldSessionId: ctx.session.id,
