@@ -63,8 +63,9 @@ export async function hashTestEmail(email: string): Promise<string> {
 }
 
 // Flush rate-limit state so each scenario starts with a fresh budget.
-// rate-limit.ts uses keyPrefix `rl:login`, `rl:login_ip`, `rl:2fa`, `rl:reset`, `rl:reset_ip`, `rl:invite`.
-// Scoped to those prefixes — no impact on the rest of Redis.
+// rate-limit.ts uses keyPrefix `rl:login`, `rl:login_ip`, `rl:2fa`, `rl:reset`, `rl:reset_ip`,
+// `rl:invite`, plus Phase 1C limiters `rl:pwd_change`, `rl:2fa_reenroll`, `rl:backup_regen`,
+// `rl:profile_update`. Scoped to those prefixes — no impact on the rest of Redis.
 export async function flushRateLimit(): Promise<void> {
   const r = getRedis();
   for (const prefix of [
@@ -74,6 +75,10 @@ export async function flushRateLimit(): Promise<void> {
     'rl:reset:*',
     'rl:reset_ip:*',
     'rl:invite:*',
+    'rl:pwd_change:*',
+    'rl:2fa_reenroll:*',
+    'rl:backup_regen:*',
+    'rl:profile_update:*',
   ]) {
     const keys = await r.keys(prefix);
     if (keys.length) await r.del(...keys);
@@ -84,7 +89,21 @@ export async function flushRateLimit(): Promise<void> {
   if (replayKeys.length) await r.del(...replayKeys);
 }
 
+// Disconnect Prisma + Redis at the end of each spec file's afterAll. We also
+// reset the module-level singletons so the NEXT spec file in the same Playwright
+// worker process gets a fresh connection — previously the second file would
+// try to use the already-quit Redis client and crash with "Connection is closed".
 export async function disconnect(): Promise<void> {
-  await prisma?.$disconnect();
-  await redis?.quit();
+  try {
+    await prisma?.$disconnect();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await redis?.quit();
+  } catch {
+    /* ignore */
+  }
+  prisma = undefined;
+  redis = undefined;
 }
