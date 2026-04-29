@@ -32,7 +32,12 @@ export function ProfileForm() {
     }
   }, [profile.data]);
 
-  if (!profile.data) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!profile.data)
+    return (
+      <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+        {t('loading')}
+      </p>
+    );
 
   const dirty = displayName !== profile.data.displayName || locale !== profile.data.locale;
 

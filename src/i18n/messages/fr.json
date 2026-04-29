@@ -270,6 +270,7 @@
   },
   "account": {
     "nav": {
+      "navAriaLabel": "Navigation compte",
       "profile": "Profil",
       "security": "Sécurité"
     },
@@ -282,6 +283,7 @@
       "localeLabel": "Langue",
       "localeFr": "Français",
       "localeEn": "English",
+      "loading": "Chargement…",
       "save": "Enregistrer",
       "savedToast": "Profil mis à jour",
       "errorToast": "Erreur"

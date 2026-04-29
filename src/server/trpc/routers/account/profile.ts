@@ -38,20 +38,23 @@ export const accountProfileRouter = t.router({
       } catch {
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
       }
-      const before = await db.user.findUniqueOrThrow({
-        where: { id: ctx.user.id },
-        select: { displayName: true, locale: true },
-      });
-      await db.user.update({
-        where: { id: ctx.user.id },
-        data: { displayName: input.displayName, locale: input.locale },
+      const result = await db.$transaction(async (tx) => {
+        const before = await tx.user.findUniqueOrThrow({
+          where: { id: ctx.user.id },
+          select: { displayName: true, locale: true },
+        });
+        await tx.user.update({
+          where: { id: ctx.user.id },
+          data: { displayName: input.displayName, locale: input.locale },
+        });
+        return { before };
       });
       await recordAudit({
         action: 'account.profile.updated',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: ctx.user.id },
         metadata: {
-          before,
+          before: result.before,
           after: { displayName: input.displayName, locale: input.locale },
         },
         req: { ip: ctx.ip },

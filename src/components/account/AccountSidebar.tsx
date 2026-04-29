@@ -15,7 +15,7 @@ export function AccountSidebar() {
   const t = useTranslations('account.nav');
   const pathname = usePathname();
   return (
-    <nav aria-label="Account sections" className="flex flex-col gap-1 p-4">
+    <nav aria-label={t('navAriaLabel')} className="flex flex-col gap-1 p-4">
       {items.map(({ href, icon: Icon, key }) => {
         const active =
           pathname === href || (href === '/account/security' && pathname.startsWith(href));
