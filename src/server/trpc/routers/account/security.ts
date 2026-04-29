@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword } from '@/lib/password';
 import { revokeAllSessionsForUser } from '@/lib/user-admin';
 import { passwordChangeLimiter } from '@/lib/rate-limit';
 import { enqueuePasswordResetConfirmation } from '@/lib/mail-queue';
+import { getLogger } from '@/lib/logger';
 
 const passwordSchema = z
   .string()
@@ -17,7 +18,7 @@ const passwordSchema = z
   .refine((v) => /[a-z]/.test(v), { message: 'must contain a lowercase letter' })
   .refine((v) => /\d/.test(v), { message: 'must contain a digit' });
 
-const cuid = z.string().min(1);
+const cuid = z.string().min(20).max(40);
 
 export const accountSecurityRouter = t.router({
   changePassword: authedProcedure
@@ -54,6 +55,7 @@ export const accountSecurityRouter = t.router({
       }
       const ok = await verifyPassword(fresh.passwordHash, input.currentPassword);
       if (!ok) {
+        getLogger().warn({ userId: ctx.user.id }, 'changePassword: wrong current');
         throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
 
@@ -63,13 +65,13 @@ export const accountSecurityRouter = t.router({
         data: { passwordHash: newHash },
       });
 
-      await revokeAllSessionsForUser(ctx.user.id, ctx.session.id);
+      const sessionsRevoked = await revokeAllSessionsForUser(ctx.user.id, ctx.session.id);
 
       await recordAudit({
         action: 'auth.password.changed_self',
         actor: { id: ctx.user.id },
         target: { type: 'USER', id: ctx.user.id },
-        metadata: {},
+        metadata: { sessionsRevoked },
         req: { ip: ctx.ip },
       });
 
@@ -78,7 +80,7 @@ export const accountSecurityRouter = t.router({
         triggerSource: 'self_change',
       });
 
-      return { ok: true };
+      return { ok: true, sessionsRevoked };
     }),
 
   listSessions: authedProcedure.query(async ({ ctx }) => {
@@ -114,7 +116,7 @@ export const accountSecurityRouter = t.router({
       }
       const target = await db.session.findFirst({
         where: { id: input.sessionId, userId: ctx.user.id },
-        select: { id: true },
+        select: { id: true, userAgentLabel: true },
       });
       if (!target) {
         throw new TRPCError({ code: 'NOT_FOUND' });
@@ -125,7 +127,7 @@ export const accountSecurityRouter = t.router({
         action: 'auth.session.revoked_self',
         actor: { id: ctx.user.id },
         target: { type: 'SESSION', id: target.id },
-        metadata: {},
+        metadata: { userAgentLabel: target.userAgentLabel },
         req: { ip: ctx.ip },
       });
 
