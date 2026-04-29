@@ -227,22 +227,23 @@ export const adminLibrariesRouter = t.router({
         }),
       )
       .query(async ({ input }) => {
+        const where: Prisma.LibraryMemberWhereInput = { libraryId: input.libraryId };
+        if (input.q) {
+          where.user = {
+            OR: [
+              { email: { contains: input.q, mode: 'insensitive' } },
+              { displayName: { contains: input.q, mode: 'insensitive' } },
+            ],
+          };
+        }
         const items = await db.libraryMember.findMany({
-          where: {
-            libraryId: input.libraryId,
-            ...(input.q
-              ? {
-                  user: {
-                    OR: [
-                      { email: { contains: input.q, mode: 'insensitive' } },
-                      { displayName: { contains: input.q, mode: 'insensitive' } },
-                    ],
-                  },
-                }
-              : {}),
-          },
+          where,
           take: input.limit + 1,
-          orderBy: { joinedAt: 'asc' },
+          cursor: input.cursor
+            ? { userId_libraryId: { userId: input.cursor, libraryId: input.libraryId } }
+            : undefined,
+          skip: input.cursor ? 1 : 0,
+          orderBy: [{ joinedAt: 'asc' }, { userId: 'asc' }],
           select: {
             libraryId: true,
             userId: true,
@@ -254,7 +255,9 @@ export const adminLibrariesRouter = t.router({
             user: { select: { email: true, displayName: true, status: true } },
           },
         });
-        const nextCursor = items.length > input.limit ? items.pop()!.userId : null;
+        const hasNextPage = items.length > input.limit;
+        if (hasNextPage) items.pop();
+        const nextCursor = hasNextPage ? items[items.length - 1]!.userId : null;
         return { items, nextCursor };
       }),
 
@@ -272,21 +275,37 @@ export const adminLibrariesRouter = t.router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        await assertLibraryNotArchived(input.libraryId);
-        const exists = await db.libraryMember.findUnique({
-          where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
-          select: { libraryId: true },
-        });
-        if (exists) throw new TRPCError({ code: 'CONFLICT', message: 'already a member' });
-        await db.libraryMember.create({
-          data: {
-            libraryId: input.libraryId,
-            userId: input.userId,
-            role: input.role,
-            canRead: input.flags.canRead,
-            canUpload: input.flags.canUpload,
-            canDownload: input.flags.canDownload,
-          },
+        await db.$transaction(async (tx) => {
+          const lib = await tx.library.findUnique({
+            where: { id: input.libraryId },
+            select: { archivedAt: true },
+          });
+          if (!lib) throw new TRPCError({ code: 'NOT_FOUND' });
+          if (lib.archivedAt) {
+            throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'library_archived' });
+          }
+          const exists = await tx.libraryMember.findUnique({
+            where: { userId_libraryId: { userId: input.userId, libraryId: input.libraryId } },
+            select: { libraryId: true },
+          });
+          if (exists) throw new TRPCError({ code: 'CONFLICT', message: 'already a member' });
+          try {
+            await tx.libraryMember.create({
+              data: {
+                libraryId: input.libraryId,
+                userId: input.userId,
+                role: input.role,
+                canRead: input.flags.canRead,
+                canUpload: input.flags.canUpload,
+                canDownload: input.flags.canDownload,
+              },
+            });
+          } catch (err) {
+            if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+              throw new TRPCError({ code: 'CONFLICT', message: 'already a member' });
+            }
+            throw err;
+          }
         });
         await recordAudit({
           action: 'admin.member.added',
