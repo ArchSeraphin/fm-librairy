@@ -3,6 +3,7 @@ import { authRouter } from './auth';
 import { invitationRouter } from './invitation';
 import { passwordRouter } from './password';
 import { adminUsersRouter } from './admin/users';
+import { adminLibrariesRouter } from './admin/libraries';
 
 export const appRouter = t.router({
   auth: authRouter,
@@ -10,6 +11,7 @@ export const appRouter = t.router({
   password: passwordRouter,
   admin: t.router({
     users: adminUsersRouter,
+    libraries: adminLibrariesRouter,
   }),
 });
 
