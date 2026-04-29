@@ -26,6 +26,7 @@ export function AccountSidebar() {
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               active
                 ? 'bg-accent/10 font-medium text-accent'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',

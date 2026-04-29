@@ -103,7 +103,9 @@
   "admin": {
     "header": {
       "phase": "Phase 1A",
-      "signOut": "Déconnexion"
+      "signOut": "Déconnexion",
+      "openMenu": "Ouvrir le menu",
+      "menuTitle": "Navigation administration"
     },
     "welcome": {
       "title": "Bienvenue",
@@ -269,6 +271,10 @@
     }
   },
   "account": {
+    "header": {
+      "openMenu": "Ouvrir le menu",
+      "menuTitle": "Navigation compte"
+    },
     "nav": {
       "navAriaLabel": "Navigation compte",
       "profile": "Profil",
