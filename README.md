@@ -2,7 +2,7 @@
 
 Webapp self-hosted de gestion collective de bibliothèques numériques (epub, pdf, txt, docx) et physiques. Liseuse en ligne avec annotations privées, outils sociaux légers, administration fine des accès.
 
-> Statut : **Phase 1A — Auth core livrée**. Voir [`docs/superpowers/specs/2026-04-25-biblioshare-design.md`](docs/superpowers/specs/2026-04-25-biblioshare-design.md) pour le design global.
+> Statut : **Phase 1C — Admin & Account en cours** (Tasks 0–17 livrés, 18–20 restants). Phases 0, 1A et 1B livrées. Voir [`docs/superpowers/specs/2026-04-25-biblioshare-design.md`](docs/superpowers/specs/2026-04-25-biblioshare-design.md) pour le design global.
 
 ## Stack
 
@@ -168,7 +168,8 @@ Voir [`docs/deployment.md`](docs/deployment.md) pour le guide Coolify pas-à-pas
 | ----- | ---------------------------------------- | -------- |
 | 0     | Fondations                               | complète |
 | 1A    | Auth core (login + 2FA + admin)          | complète |
-| 1B    | Invitations + reset password             | à venir  |
+| 1B    | Invitations + reset password             | complète |
+| 1C    | Admin users/libraries + Account          | en cours |
 | 2     | Catalogue, upload, ClamAV, métadonnées   | à venir  |
 | 3     | Liseuse, annotations, sync               | à venir  |
 | 4     | Recherche, tags, collections             | à venir  |

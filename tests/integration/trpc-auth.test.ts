@@ -19,7 +19,7 @@ function genCode(secret: string): string {
 }
 
 async function buildCtx(opts: { user?: any; session?: any } = {}) {
-  return { user: opts.user ?? null, session: opts.session ?? null };
+  return { user: opts.user ?? null, session: opts.session ?? null, ip: '0.0.0.0' };
 }
 
 beforeEach(async () => {

@@ -3,6 +3,7 @@ import { auth } from '.';
 import { db } from '@/lib/db';
 import { createSessionAdapter } from './adapter';
 import { hashIp, hashUa } from '@/lib/crypto';
+import { parseUserAgentLabel } from '@/lib/user-agent';
 import type { Session, User } from '@prisma/client';
 
 export async function getCurrentSessionAndUser(): Promise<{ session: Session; user: User } | null> {
@@ -39,6 +40,7 @@ export async function getCurrentSessionAndUser(): Promise<{ session: Session; us
             userId,
             ipHash: hashIp(ip),
             userAgentHash: hashUa(ua),
+            userAgentLabel: parseUserAgentLabel(ua),
             pending2fa: !!user.twoFactorEnabled,
           });
         },

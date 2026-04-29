@@ -6,7 +6,7 @@ import { hashPassword } from '@/lib/password';
 const prisma = getTestPrisma();
 
 async function buildCtx(opts: { user?: any; session?: any } = {}) {
-  return { user: opts.user ?? null, session: opts.session ?? null };
+  return { user: opts.user ?? null, session: opts.session ?? null, ip: '0.0.0.0' };
 }
 
 async function seedSession(userId: string) {

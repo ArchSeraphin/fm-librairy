@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { TRPCError } from '@trpc/server';
 import { appRouter } from '@/server/trpc/routers/_app';
 import { createContext } from '@/server/trpc/context';
@@ -28,7 +29,7 @@ export async function submitInvite(_prev: InviteState, formData: FormData): Prom
   });
   if (!parsed.success) return { status: 'error', code: 'VALIDATION' };
 
-  const ctx = await createContext();
+  const ctx = await createContext({ headers: await headers() });
   const caller = appRouter.createCaller(ctx);
   try {
     await caller.invitation.create(parsed.data);

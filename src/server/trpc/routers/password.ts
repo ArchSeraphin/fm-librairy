@@ -39,11 +39,9 @@ const consumeInput = z.object({
 const validateInput = z.object({ rawToken: z.string().min(20).max(100) });
 
 export const passwordRouter = t.router({
-  requestReset: publicProcedure.input(requestInput).mutation(async ({ input }) => {
+  requestReset: publicProcedure.input(requestInput).mutation(async ({ input, ctx }) => {
     return constantTimeBudget(async () => {
-      // Phase 1B follow-up: plumb client IP through createContext (currently {session,user}).
-      // Per-email limiter (resetRequestLimiter) still enforces enumeration protection.
-      const ip = '0.0.0.0';
+      const ip = ctx.ip;
       let rateLimited = false;
       try {
         await resetIpOnlyLimiter.consume(hashIp(ip));
@@ -69,6 +67,7 @@ export const passwordRouter = t.router({
       await recordAudit({
         action: 'auth.password.reset_requested',
         metadata: { emailHash: hashEmail(input.email), userExists, rateLimited },
+        req: { ip },
       });
 
       return { ok: true as const };

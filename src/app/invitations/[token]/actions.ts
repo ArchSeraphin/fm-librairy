@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { TRPCError } from '@trpc/server';
 import { signIn } from '@/server/auth';
 import { appRouter } from '@/server/trpc/routers/_app';
@@ -32,7 +33,7 @@ export async function submitSignup(_prev: SignupState, fd: FormData): Promise<Si
   if (parsed.data.password !== parsed.data.confirmPassword) {
     return { status: 'error', message: 'Les mots de passe ne correspondent pas.' };
   }
-  const ctx = await createContext();
+  const ctx = await createContext({ headers: await headers() });
   const caller = appRouter.createCaller(ctx);
   try {
     await caller.invitation.consumeSignup({
@@ -54,7 +55,7 @@ export async function submitSignup(_prev: SignupState, fd: FormData): Promise<Si
 export type JoinState = { status: 'idle' } | { status: 'error'; message: string };
 
 export async function submitJoin(rawToken: string): Promise<JoinState> {
-  const ctx = await createContext();
+  const ctx = await createContext({ headers: await headers() });
   const caller = appRouter.createCaller(ctx);
   try {
     await caller.invitation.consumeJoin({ rawToken });

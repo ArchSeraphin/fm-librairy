@@ -19,6 +19,10 @@ import {
   handleSendPasswordReset,
   handleSendPasswordResetConfirmation,
 } from './jobs/send-password-reset.js';
+import { sendPasswordResetConfirmation } from './jobs/send-password-reset-confirmation.js';
+import { recordAuditFromFailedJob as _recordAuditFromFailedJob } from './jobs/dlq.js';
+
+export { recordAuditFromFailedJob } from './jobs/dlq.js';
 
 const parsed = z
   .object({
@@ -122,8 +126,33 @@ const mailWorker = new Worker(
         return handleSendInvitationJoinLibrary(job, logger);
       case 'send-password-reset':
         return handleSendPasswordReset(job, logger);
-      case 'send-password-reset-confirmation':
+      case 'send-password-reset-confirmation': {
+        // Two payload shapes co-exist during 1B → 1C migration:
+        //   - Phase 1B (password router): { to, userDisplayName, occurredAtIso }
+        //   - Phase 1C (account.security.changePassword): { userId, triggerSource? }
+        // Discriminate on `userId` presence — the new handler resolves email/UA itself.
+        // TODO(phase-1c-followup): drop legacy branch when password.ts migrates to enqueuePasswordResetConfirmation({ userId })
+        const data = (job.data ?? {}) as Record<string, unknown>;
+        const isNew = typeof data.userId === 'string';
+        const isLegacy = typeof data.to === 'string';
+        if (isNew && isLegacy) {
+          throw new Error(
+            'ambiguous send-password-reset-confirmation payload: both userId and to present',
+          );
+        }
+        if (isNew) {
+          const triggerSource =
+            data.triggerSource === 'reset' || data.triggerSource === 'self_change'
+              ? data.triggerSource
+              : undefined;
+          return sendPasswordResetConfirmation(
+            prisma,
+            { userId: data.userId as string, triggerSource },
+            logger,
+          );
+        }
         return handleSendPasswordResetConfirmation(job, logger);
+      }
       default:
         logger.warn({ name: job.name }, 'unknown mail job');
     }
@@ -132,13 +161,27 @@ const mailWorker = new Worker(
 );
 
 mailWorker.on('failed', (job, err) => {
-  if (job?.attemptsMade && job.opts.attempts && job.attemptsMade >= job.opts.attempts) {
+  if (!job) return;
+  const maxAttempts = job.opts.attempts ?? 1;
+  if (job.attemptsMade >= maxAttempts) {
     logger.error(
       { err, jobName: job.name, jobId: job.id, attempts: job.attemptsMade },
       'email.failed_permanent',
     );
+    _recordAuditFromFailedJob(
+      prisma,
+      {
+        jobName: job.name,
+        jobId: job.id,
+        attemptsMade: job.attemptsMade,
+        maxAttempts,
+        error: err,
+        data: (job.data as Record<string, unknown>) ?? {},
+      },
+      logger,
+    ).catch((auditErr) => logger.error({ err: auditErr }, 'DLQ audit failed'));
   } else {
-    logger.warn({ err, jobName: job?.name, jobId: job?.id }, 'mail job retrying');
+    logger.warn({ err, jobName: job.name, jobId: job.id }, 'mail job retrying');
   }
 });
 

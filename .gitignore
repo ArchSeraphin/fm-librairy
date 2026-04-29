@@ -58,3 +58,6 @@ covers/
 *.dump
 
 /src/generated/prisma
+
+# Superpowers Visual Companion (brainstorming sessions)
+.superpowers/

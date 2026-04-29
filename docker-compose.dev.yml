@@ -1,0 +1,18 @@
+# Dev compose override — Phase 1C+
+# Étend docker-compose.yml en exposant les ports pg/redis sur le host
+# pour que `prisma migrate dev` et le worker BullMQ tournent depuis le code local.
+# Mailpit garde ses ports déjà déclarés dans le compose principal.
+#
+# Usage : `docker compose -f docker-compose.dev.yml --profile dev up -d pg redis mailpit`
+
+include:
+  - path: docker-compose.yml
+
+services:
+  pg:
+    ports:
+      - '127.0.0.1:5433:5432'
+
+  redis:
+    ports:
+      - '127.0.0.1:6380:6379'

@@ -74,6 +74,7 @@ model Session {
   lastActivityAt DateTime @default(now())
   ipHash         String
   userAgentHash  String
+  userAgentLabel String?  // 1C : label lisible "Chrome on macOS", null sur sessions pre-1C
   pending2fa     Boolean  @default(false)
   createdAt      DateTime @default(now())
 
@@ -107,8 +108,8 @@ enum LibraryRole {
 model Invitation {
   id            String       @id @default(cuid())
   email         String       @db.Citext
-  invitedById   String
-  invitedBy     User         @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedById   String?      // 1C : nullable pour préserver audit après delete user
+  invitedBy     User?        @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
   libraryId     String?
   library       Library?     @relation(fields: [libraryId], references: [id], onDelete: SetNull)
   proposedRole  LibraryRole?
@@ -116,10 +117,11 @@ model Invitation {
   expiresAt     DateTime
   consumedAt    DateTime?
   consumedById  String?
-  consumedBy    User?        @relation("ConsumedBy", fields: [consumedById], references: [id])
+  consumedBy    User?        @relation("ConsumedBy", fields: [consumedById], references: [id], onDelete: SetNull)
   createdAt     DateTime     @default(now())
 
   @@index([email])
+  @@index([invitedById])
   @@index([consumedById])
   @@index([expiresAt])
 }
@@ -141,17 +143,20 @@ model PasswordResetToken {
 // =====================================================
 
 model Library {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String    @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  archivedAt  DateTime? // 1C : soft-delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   members     LibraryMember[]
   invitations Invitation[]
   books       Book[]
   tags        Tag[]
+
+  @@index([archivedAt])
 }
 
 model LibraryMember {

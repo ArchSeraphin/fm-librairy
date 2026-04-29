@@ -32,12 +32,25 @@ export interface PasswordResetConfirmationJob {
   userDisplayName: string;
   occurredAtIso: string;
 }
+// 1C: producer in scope of `userId` (account.security.changePassword) — worker
+// resolves email/displayName itself. `triggerSource` lets the worker (or future
+// audit) distinguish reset-flow vs self-change without a payload-shape sniff.
+export interface PasswordResetConfirmationByUserIdJob {
+  userId: string;
+  triggerSource?: 'reset' | 'self_change';
+}
 
-export type MailJobData =
-  | InvitationNewUserJob
-  | InvitationJoinLibraryJob
-  | PasswordResetJob
-  | PasswordResetConfirmationJob;
+export type MailJobMap = {
+  'send-invitation-new-user': InvitationNewUserJob;
+  'send-invitation-join-library': InvitationJoinLibraryJob;
+  'send-password-reset': PasswordResetJob;
+  'send-password-reset-confirmation':
+    | PasswordResetConfirmationJob
+    | PasswordResetConfirmationByUserIdJob;
+};
+
+// Backward-compat alias — prefer `MailJobMap[N]` for new code.
+export type MailJobData = MailJobMap[keyof MailJobMap];
 
 const QUEUE_NAME = 'mail';
 
@@ -57,11 +70,17 @@ export function getMailQueue(): Queue {
   return queue;
 }
 
-export async function enqueueMail<N extends MailJobName>(
+export async function enqueueMail<N extends keyof MailJobMap>(
   name: N,
-  data: MailJobData,
+  data: MailJobMap[N],
 ): Promise<void> {
   await getMailQueue().add(name, data);
+}
+
+export async function enqueuePasswordResetConfirmation(
+  data: PasswordResetConfirmationByUserIdJob,
+): Promise<void> {
+  await getMailQueue().add('send-password-reset-confirmation', data);
 }
 
 export function __resetMailQueueForTest(): void {
