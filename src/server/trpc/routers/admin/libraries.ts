@@ -5,12 +5,12 @@ import { t } from '../../trpc';
 import { globalAdminProcedure } from '../../procedures';
 import { db } from '@/lib/db';
 import { recordAudit } from '@/lib/audit-log';
-import { assertLibraryNotArchived, slugifyUnique } from '@/lib/library-admin';
+import { slugifyUnique } from '@/lib/library-admin';
 
 const cuid = z.string().min(20).max(40);
 const reasonInput = z.string().trim().min(3).max(500);
 const nameInput = z.string().trim().min(3).max(120);
-const descriptionInput = z.string().trim().max(1000).optional();
+const descriptionInput = z.string().trim().max(1000).nullish();
 
 export const adminLibrariesRouter = t.router({
   list: globalAdminProcedure
@@ -75,32 +75,59 @@ export const adminLibrariesRouter = t.router({
     return { ...lib, counts: { members: lib._count.members, books: lib._count.books } };
   }),
 
-  getBySlug: globalAdminProcedure
-    .input(z.object({ slug: z.string().min(1) }))
-    .query(async ({ input }) => {
-      const lib = await db.library.findUnique({
-        where: { slug: input.slug },
-        select: { id: true },
-      });
-      if (!lib) throw new TRPCError({ code: 'NOT_FOUND' });
-      return { id: lib.id };
-    }),
-
   create: globalAdminProcedure
     .input(z.object({ name: nameInput, description: descriptionInput }))
     .mutation(async ({ ctx, input }) => {
       const slug = await slugifyUnique(input.name);
-      const lib = await db.library.create({
-        data: { name: input.name, slug, description: input.description ?? null },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          description: true,
-          archivedAt: true,
-          createdAt: true,
-        },
-      });
+      let lib: {
+        id: string;
+        name: string;
+        slug: string;
+        description: string | null;
+        archivedAt: Date | null;
+        createdAt: Date;
+      };
+      try {
+        lib = await db.library.create({
+          data: { name: input.name, slug, description: input.description ?? null },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            archivedAt: true,
+            createdAt: true,
+          },
+        });
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          // Slug race: retry once with a fresh slugifyUnique
+          const retrySlug = await slugifyUnique(input.name);
+          try {
+            lib = await db.library.create({
+              data: { name: input.name, slug: retrySlug, description: input.description ?? null },
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                description: true,
+                archivedAt: true,
+                createdAt: true,
+              },
+            });
+          } catch (retryErr) {
+            if (
+              retryErr instanceof Prisma.PrismaClientKnownRequestError &&
+              retryErr.code === 'P2002'
+            ) {
+              throw new TRPCError({ code: 'CONFLICT', message: 'slug_collision' });
+            }
+            throw retryErr;
+          }
+        } else {
+          throw err;
+        }
+      }
       await recordAudit({
         action: 'admin.library.created',
         actor: { id: ctx.user.id },
@@ -114,22 +141,34 @@ export const adminLibrariesRouter = t.router({
   rename: globalAdminProcedure
     .input(z.object({ id: cuid, name: nameInput, description: descriptionInput }))
     .mutation(async ({ ctx, input }) => {
-      await assertLibraryNotArchived(input.id);
-      const before = await db.library.findUniqueOrThrow({
-        where: { id: input.id },
-        select: { name: true, description: true },
+      const data: Prisma.LibraryUpdateInput = { name: input.name };
+      if (input.description !== undefined) {
+        data.description = input.description; // null clears, string sets
+      }
+
+      const result = await db.$transaction(async (tx) => {
+        const before = await tx.library.findUnique({
+          where: { id: input.id },
+          select: { name: true, description: true, archivedAt: true },
+        });
+        if (!before) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (before.archivedAt) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'library_archived' });
+        }
+        await tx.library.update({ where: { id: input.id }, data });
+        return { before };
       });
-      await db.library.update({
-        where: { id: input.id },
-        data: { name: input.name, description: input.description ?? null },
-      });
+
+      const afterDescription =
+        input.description !== undefined ? (input.description ?? null) : result.before.description;
+
       await recordAudit({
         action: 'admin.library.renamed',
         actor: { id: ctx.user.id },
         target: { type: 'LIBRARY', id: input.id },
         metadata: {
-          before: { name: before.name, description: before.description },
-          after: { name: input.name, description: input.description ?? null },
+          before: { name: result.before.name, description: result.before.description },
+          after: { name: input.name, description: afterDescription },
         },
         req: { ip: ctx.ip },
       });
