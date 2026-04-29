@@ -219,6 +219,9 @@ model Book {
   uploadedBy      User?           @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  archivedAt      DateTime?
+  /// Postgres-generated tsvector with unaccent; do not write to this field directly.
+  searchVector    Unsupported("tsvector")?
 
   files           BookFile[]
   tags            BookTag[]
@@ -234,6 +237,8 @@ model Book {
 
   @@index([libraryId, title])
   @@index([libraryId, isbn13])
+  @@index([libraryId, archivedAt])
+  // searchVector is indexed via raw SQL GIN (see migration)
 }
 
 model BookFile {
