@@ -287,6 +287,62 @@
       "save": "Enregistrer",
       "savedToast": "Profil mis à jour",
       "errorToast": "Erreur"
+    },
+    "security": {
+      "title": "Sécurité",
+      "subtitle": "Gérer votre mot de passe, vos sessions et le double facteur",
+      "errorToast": "Erreur",
+      "successToast": "Action effectuée avec succès.",
+      "password": {
+        "title": "Mot de passe",
+        "description": "Modifier votre mot de passe. Toutes les autres sessions seront déconnectées.",
+        "changeCta": "Changer le mot de passe",
+        "currentLabel": "Mot de passe actuel",
+        "newLabel": "Nouveau mot de passe",
+        "confirmLabel": "Confirmation",
+        "submit": "Mettre à jour",
+        "successToast": "Mot de passe mis à jour"
+      },
+      "sessions": {
+        "title": "Appareils connectés",
+        "description": "Sessions actives sur vos appareils.",
+        "currentBadge": "Cette session",
+        "revoke": "Révoquer",
+        "revokeAllOthers": "Déconnecter toutes les autres sessions",
+        "revokedToast": "Session révoquée",
+        "revokedAllToast": "Autres sessions déconnectées",
+        "unknownDevice": "Appareil inconnu",
+        "lastActive": "Dernière activité {time}",
+        "loading": "Chargement…",
+        "empty": "Aucune autre session active."
+      },
+      "twofactor": {
+        "title": "Double authentification",
+        "descriptionOff": "Ajoutez un second facteur (TOTP) pour sécuriser votre compte.",
+        "descriptionOn": "Le double facteur est activé.",
+        "setupCta": "Configurer le 2FA",
+        "disableCta": "Désactiver le 2FA",
+        "resetViaBackupCta": "Réinitialiser via backup code",
+        "resetDialogTitle": "Réinitialiser le 2FA",
+        "resetDialogDescription": "Entrez un de vos backup codes pour désactiver le 2FA et permettre une nouvelle configuration.",
+        "backupCodeLabel": "Code de récupération",
+        "submit": "Réinitialiser",
+        "successToast": "2FA réinitialisé"
+      },
+      "backupCodes": {
+        "title": "Backup codes",
+        "description": "Codes de récupération à utiliser si vous perdez votre appareil 2FA.",
+        "remaining": "{count, plural, =0 {Aucun code restant} one {# code restant} other {# codes restants}}",
+        "regenerateCta": "Régénérer",
+        "regenerateDialogTitle": "Régénérer les backup codes",
+        "regenerateDialogDescription": "Confirmez avec votre mot de passe et un code TOTP courant. Les anciens codes seront invalidés.",
+        "passwordLabel": "Mot de passe actuel",
+        "totpLabel": "Code TOTP",
+        "submit": "Régénérer",
+        "newCodesTitle": "Notez ces codes",
+        "newCodesDescription": "Ils ne seront plus jamais affichés. Conservez-les en lieu sûr.",
+        "close": "Fermer"
+      }
     }
   },
   "invitation": {
