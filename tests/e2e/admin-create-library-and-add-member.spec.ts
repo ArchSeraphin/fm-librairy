@@ -90,20 +90,19 @@ test('admin creates a library, adds a member by cuid, then archives it', async (
   // -------------------------------------------------------------------------
   // Step 2: add the member by cuid via the Members tab
   // -------------------------------------------------------------------------
-  // The detail page renders LibrarySettings + MembersPanel side-by-side; the
-  // "Ajouter un membre" button comes from MembersPanel.
+  // MembersPanel exposes a trigger button "Ajouter un membre" that opens a
+  // dialog whose submit button reuses the same i18n key. Disambiguate by
+  // scoping the submit click to the [role=dialog] container.
   await page.getByRole('button', { name: 'Ajouter un membre', exact: true }).first().click();
-  await page.fill('#member-user', memberUser.id);
+  const addDialog = page.getByRole('dialog');
+  await addDialog.locator('#member-user').fill(memberUser.id);
 
   const addResponse = page.waitForResponse(
     (r) =>
       r.url().includes('/api/trpc/admin.libraries.members.add') && r.request().method() === 'POST',
     { timeout: 10_000 },
   );
-  // The dialog has its own "Ajouter un membre" submit button (same i18n key).
-  // Locate by visibility within the dialog content — last() targets the submit,
-  // first() was the trigger. Both click handlers wait for the dialog to be open.
-  await page.getByRole('button', { name: 'Ajouter un membre', exact: true }).last().click();
+  await addDialog.getByRole('button', { name: 'Ajouter un membre', exact: true }).click();
   const added = await addResponse;
   expect(added.status()).toBe(200);
 
@@ -116,15 +115,17 @@ test('admin creates a library, adds a member by cuid, then archives it', async (
   // -------------------------------------------------------------------------
   // Step 3: archive the library
   // -------------------------------------------------------------------------
-  await page.getByRole('button', { name: 'Archiver', exact: true }).click();
-  await page.fill('#archive-reason', 'E2E test cleanup');
+  // LibrarySettings exposes a trigger "Archiver"; the confirm button inside the
+  // dialog reuses the same i18n key — scope the submit to [role=dialog].
+  await page.getByRole('button', { name: 'Archiver', exact: true }).first().click();
+  const archiveDialog = page.getByRole('dialog');
+  await archiveDialog.locator('#archive-reason').fill('E2E test cleanup');
 
   const archiveResponse = page.waitForResponse(
     (r) => r.url().includes('/api/trpc/admin.libraries.archive') && r.request().method() === 'POST',
     { timeout: 10_000 },
   );
-  // The dialog confirm button is also "Archiver" — last() picks the submit.
-  await page.getByRole('button', { name: 'Archiver', exact: true }).last().click();
+  await archiveDialog.getByRole('button', { name: 'Archiver', exact: true }).click();
   const archived = await archiveResponse;
   expect(archived.status()).toBe(200);
 

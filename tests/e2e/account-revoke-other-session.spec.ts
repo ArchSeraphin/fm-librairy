@@ -106,4 +106,9 @@ test('user revokes a phantom "other device" session row from /account/security',
   await expect(page.getByText('Phantom Device', { exact: true })).toHaveCount(0, {
     timeout: 5_000,
   });
+
+  // TODO(phase-1d): once session-bridge takes a per-context disambiguator
+  // (e.g. resolves by JWT `sid` first), this spec can become a real two-context
+  // dance per the plan's original intent (p2 logs in, p1 revokes p2's row,
+  // p2 navigates and bounces to /login).
 });
