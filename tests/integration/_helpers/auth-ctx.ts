@@ -2,6 +2,7 @@ import { hashPassword } from '@/lib/password';
 import type { Session, User } from '@prisma/client';
 import { getTestPrisma } from '../setup/prisma';
 
+// 64-char hex stand-in for SHA-256(ip|ua) — exact bytes irrelevant for gate tests.
 const HASH_64 = 'a'.repeat(64);
 const prisma = getTestPrisma();
 
@@ -11,6 +12,8 @@ export interface RoleCtx {
   session: Session | null;
   user: User | null;
   ip: string;
+  // Not part of TrpcContext today — exposed so tests can pass libraryId as procedure input
+  // (e.g. members.add({ libraryId, ... })). Reserved for future per-library auth context.
   libraryId?: string;
 }
 
@@ -22,8 +25,8 @@ export interface RoleCtx {
  * - MEMBER / LIBRARY_ADMIN: regular USER + Session + a Library + LibraryMember row at the matching role.
  * - GLOBAL_ADMIN: USER row with role=GLOBAL_ADMIN, twoFactorEnabled=true (to pass the 7-day budget check).
  *
- * The DB rows are created fresh for each call; tests must `truncateAll()` between iterations to keep
- * unique-constraint pressure (email, slug, sessionToken) low.
+ * The DB rows are created fresh for each call; tests must `truncateAll()` between iterations
+ * to keep test isolation (each iteration starts with an empty schema).
  */
 export async function makeCtxForRole(role: RoleKey): Promise<RoleCtx> {
   if (role === 'ANON') return { session: null, user: null, ip: '203.0.113.1' };
@@ -43,7 +46,7 @@ export async function makeCtxForRole(role: RoleKey): Promise<RoleCtx> {
 
   const session = await prisma.session.create({
     data: {
-      sessionToken: `${role}-${user.id}`,
+      sessionToken: `${role}-${user.id}-${suffix}`,
       userId: user.id,
       expiresAt: new Date(Date.now() + 60_000),
       ipHash: HASH_64,
