@@ -111,10 +111,10 @@ Namespace nouveau : `library` (parallèle à `admin`, `account`). Sous-router `b
 
 | Procédure | Type | Rôles autorisés | Limiter | Notes |
 |---|---|---|---|---|
-| `library.books.list` | query | Membership any role + GLOBAL_ADMIN | `listLimiter` | Pagination cursor `{ q?, hasDigital?, hasPhysical?, language?, sort, cursor, limit, includeArchived? }`, retourne `{ items, nextCursor }`. `includeArchived` réservé Library Admin/GLOBAL_ADMIN. |
-| `library.books.get` | query | Membership any role + GLOBAL_ADMIN | `listLimiter` | Inclut `physicalCopies._count` read-only. Refuse archived sauf admin. |
+| `library.books.list` | query | Membership any role + GLOBAL_ADMIN | `listLimiter` | Input `{ q?, hasDigital?, hasPhysical?, language?, sort, cursor?, limit, includeArchived? }`. `limit` default 24, max 100, validé Zod. Retourne `{ items, nextCursor }`. `includeArchived` accepté pour tous mais **silently coerced à `false` pour non-admin** (pas d'erreur, juste filtre archived appliqué côté server). |
+| `library.books.get` | query | Membership any role + GLOBAL_ADMIN | `listLimiter` | Inclut `physicalCopies._count` read-only. Pour non-admin : si `archivedAt != null` → `NOT_FOUND` (le livre n'existe pas pour eux). |
 | `library.books.create` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `createLimiter` (5/min/user) | Métadonnées only, `coverPath` = URL HTTPS optionnelle, audit `book.created` |
-| `library.books.update` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` (10/min/user) | Concurrency check via `updatedAt` optimistic ; audit `book.updated` avec diff |
+| `library.books.update` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` (10/min/user) | Concurrency check optimiste : input inclut `expectedUpdatedAt: Date`, le router compare avec la valeur DB et throw `CONFLICT` (TRPCError code) si mismatch. UI affiche "Le livre a été modifié par un autre admin, recharger ?". Audit `book.updated` avec diff. |
 | `library.books.archive` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` | Set `archivedAt = now()` ; refuse si déjà archived (BAD_REQUEST) ; audit `book.archived` |
 | `library.books.unarchive` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` | Clear `archivedAt` ; refuse si pas archived ; audit `book.unarchived` |
 | `library.books.delete` | mutation | **GLOBAL_ADMIN only** | `deleteLimiter` (1/h/user) | Hard delete, refuse si `_count.bookFiles > 0` OR `_count.physicalCopies > 0` OR `_count.annotations > 0` etc. ; audit `book.deleted` ; runbook DBA obligatoire |
@@ -186,7 +186,8 @@ Sous `app/(member)/...` — segment route group nouveau, parallèle à `(admin)`
 - `unarchive` d'un livre non archivé → `BAD_REQUEST`.
 - `update`/`get` cross-library id-guess (book id valide mais d'une autre lib) → `NOT_FOUND` via `assertBookInLibrary`.
 - `delete` avec dépendances → `BAD_REQUEST`, message explicite listant les types de dépendances présentes.
-- `list` avec `includeArchived` côté MEMBER → ignoré silencieusement (pas d'erreur, juste filtre archived hors résultats).
+- `list` avec `includeArchived: true` côté MEMBER → param accepté, server force `false` (filtre archived appliqué) ; pas d'erreur renvoyée. Test vérifie : payload identique à `includeArchived: false`.
+- `update` avec `expectedUpdatedAt` périmé → `CONFLICT`, livre non modifié. Test vérifie idempotence (un autre `update` simultané ne corrompt pas l'état).
 - Search avec patterns SQL-injection (`'; DROP TABLE...`) → handled par `Prisma.sql` (paramétrage), tests dédiés.
 - Search avec query trop courte (< 2 chars) → ignore le filtre `q`, applique seulement les autres.
 - `coverPath` non-HTTPS / non-URL → `BAD_REQUEST` Zod.
