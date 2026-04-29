@@ -17,6 +17,7 @@ export interface CreateSessionInput {
   userId: string;
   ipHash: string;
   userAgentHash: string;
+  userAgentLabel?: string | null;
   pending2fa?: boolean;
 }
 
@@ -35,6 +36,7 @@ export function createSessionAdapter(prisma: PrismaClient) {
           expiresAt: new Date(Date.now() + SESSION_TTL_MS),
           ipHash: input.ipHash,
           userAgentHash: input.userAgentHash,
+          userAgentLabel: input.userAgentLabel ?? null,
           pending2fa: pending,
         },
       });
@@ -74,6 +76,7 @@ export function createSessionAdapter(prisma: PrismaClient) {
       oldSessionId: string;
       ipHash: string;
       userAgentHash: string;
+      userAgentLabel?: string | null;
     }): Promise<Session> {
       const old = await prisma.session.findUnique({ where: { id: input.oldSessionId } });
       if (!old) throw new Error('Session pending introuvable');
@@ -86,6 +89,7 @@ export function createSessionAdapter(prisma: PrismaClient) {
             expiresAt: new Date(Date.now() + SESSION_TTL_MS),
             ipHash: input.ipHash,
             userAgentHash: input.userAgentHash,
+            userAgentLabel: input.userAgentLabel ?? null,
             pending2fa: false,
           },
         }),
