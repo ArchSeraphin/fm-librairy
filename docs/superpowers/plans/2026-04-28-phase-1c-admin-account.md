@@ -13,6 +13,7 @@
 **Branch:** `feat/phase-1c-admin-account` (créée en Task 0).
 
 **Adaptations actées vs spec** :
+
 - `LibraryMember` a une clé composite `(userId, libraryId)` (pas de champ `id`). Les procedures `members.remove/changeRole/updateFlags` prennent `{ libraryId, userId }` au lieu de `{ membershipId }`.
 - `Invitation.invitedById` est actuellement `String` non-nullable sans `onDelete`. Migration corrective dans Task 1 : passe à `String?` + `onDelete: SetNull` (préserve audit invitation après delete user).
 
@@ -23,6 +24,7 @@
 ## Task 0 : Setup branche
 
 **Files:**
+
 - (no files — branch creation only)
 
 - [ ] **Step 0.1: Vérifier le point de départ**
@@ -65,6 +67,7 @@ Expected: tests Phase 1B verts (baseline avant modifications).
 ## Task 1 : Migrations Prisma 1C (userAgentLabel + archivedAt + invitation FK)
 
 **Files:**
+
 - Modify: `prisma/schema.prisma:Session,Library,Invitation`
 - Create: `prisma/migrations/<timestamp>_phase_1c_schema/migration.sql`
 
@@ -179,6 +182,7 @@ git commit -m "feat(phase-1c): schema migrations (userAgentLabel, archivedAt, in
 ## Task 2 : IP plumbing dans le contexte tRPC
 
 **Files:**
+
 - Create: `src/lib/request-meta.ts`
 - Create: `tests/unit/request-meta.test.ts`
 - Modify: `src/server/trpc/context.ts`
@@ -370,6 +374,7 @@ git commit -m "feat(phase-1c): plumb IP into tRPC context (closes 1B debt)"
 ## Task 3 : Audit union 1C + worker DLQ + handler send-password-reset-confirmation
 
 **Files:**
+
 - Modify: `src/lib/audit-log.ts`
 - Create: `worker/jobs/send-password-reset-confirmation.ts`
 - Modify: `worker/index.ts`
@@ -408,7 +413,14 @@ Dans `src/lib/audit-log.ts`, étendre `AuditAction` (ajouter avant la fermeture 
 Étendre aussi `AuditTargetType` :
 
 ```ts
-export type AuditTargetType = 'USER' | 'LIBRARY' | 'INVITATION' | 'SESSION' | 'EMAIL' | 'AUTH' | 'MEMBER';
+export type AuditTargetType =
+  | 'USER'
+  | 'LIBRARY'
+  | 'INVITATION'
+  | 'SESSION'
+  | 'EMAIL'
+  | 'AUTH'
+  | 'MEMBER';
 ```
 
 - [ ] **Step 3.2: Test handler send-password-reset-confirmation**
@@ -473,7 +485,9 @@ export interface SendPasswordResetConfirmationJob {
   triggerSource?: 'reset' | 'self_change';
 }
 
-export async function sendPasswordResetConfirmation(data: SendPasswordResetConfirmationJob): Promise<void> {
+export async function sendPasswordResetConfirmation(
+  data: SendPasswordResetConfirmationJob,
+): Promise<void> {
   const user = await db.user.findUnique({
     where: { id: data.userId },
     select: { id: true, email: true, displayName: true, locale: true },
@@ -499,9 +513,7 @@ export async function sendPasswordResetConfirmation(data: SendPasswordResetConfi
   await sendMail({
     to: user.email,
     subject:
-      user.locale === 'en'
-        ? 'Your password has been changed'
-        : 'Votre mot de passe a été changé',
+      user.locale === 'en' ? 'Your password has been changed' : 'Votre mot de passe a été changé',
     html,
     text,
   });
@@ -542,7 +554,9 @@ describe('worker DLQ listener', () => {
       error: new Error('SMTP refused'),
       data: { userId: user.id, invitationId: 'inv-1' },
     });
-    const log = await prisma.auditLog.findFirst({ where: { action: 'auth.invitation.send_failed' } });
+    const log = await prisma.auditLog.findFirst({
+      where: { action: 'auth.invitation.send_failed' },
+    });
     expect(log).toBeTruthy();
     expect(log?.actorId).toBe(user.id);
     expect(log?.metadata).toMatchObject({ jobId: 'job-123', attempts: 5 });
@@ -575,7 +589,9 @@ describe('worker DLQ listener', () => {
       error: new Error('transient'),
       data: { userId: 'u1' },
     });
-    const log = await prisma.auditLog.findFirst({ where: { action: 'auth.invitation.send_failed' } });
+    const log = await prisma.auditLog.findFirst({
+      where: { action: 'auth.invitation.send_failed' },
+    });
     expect(log).toBeNull();
   });
 });
@@ -679,6 +695,7 @@ git commit -m "feat(phase-1c): audit union 1C, worker DLQ listener, password-res
 ## Task 4 : Helpers user-admin (assertNotLastGlobalAdmin + revokeAllSessionsForUser)
 
 **Files:**
+
 - Create: `src/lib/user-admin.ts`
 - Create: `tests/integration/user-admin.test.ts` (integration coverage suffices; no unit test file)
 
@@ -696,7 +713,11 @@ const prisma = getTestPrisma();
 
 const HASH_64 = 'a'.repeat(64);
 
-async function createUser(opts: { role?: 'GLOBAL_ADMIN' | 'USER'; status?: 'ACTIVE' | 'SUSPENDED'; email: string }) {
+async function createUser(opts: {
+  role?: 'GLOBAL_ADMIN' | 'USER';
+  status?: 'ACTIVE' | 'SUSPENDED';
+  email: string;
+}) {
   return prisma.user.create({
     data: {
       email: opts.email,
@@ -742,8 +763,20 @@ describe('revokeAllSessionsForUser', () => {
     const u = await createUser({ email: 'u1@e2e.test' });
     await prisma.session.createMany({
       data: [
-        { sessionToken: 's1', userId: u.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
-        { sessionToken: 's2', userId: u.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+        {
+          sessionToken: 's1',
+          userId: u.id,
+          expiresAt: new Date(Date.now() + 60_000),
+          ipHash: HASH_64,
+          userAgentHash: HASH_64,
+        },
+        {
+          sessionToken: 's2',
+          userId: u.id,
+          expiresAt: new Date(Date.now() + 60_000),
+          ipHash: HASH_64,
+          userAgentHash: HASH_64,
+        },
       ],
     });
     const count = await revokeAllSessionsForUser(u.id);
@@ -754,10 +787,22 @@ describe('revokeAllSessionsForUser', () => {
   it('preserves the excepted session', async () => {
     const u = await createUser({ email: 'u1@e2e.test' });
     const keep = await prisma.session.create({
-      data: { sessionToken: 'keep', userId: u.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'keep',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     await prisma.session.create({
-      data: { sessionToken: 'kill', userId: u.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'kill',
+        userId: u.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     const count = await revokeAllSessionsForUser(u.id, keep.id);
     expect(count).toBe(1);
@@ -768,10 +813,22 @@ describe('revokeAllSessionsForUser', () => {
     const a = await createUser({ email: 'a@e2e.test' });
     const b = await createUser({ email: 'b@e2e.test' });
     await prisma.session.create({
-      data: { sessionToken: 'a', userId: a.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'a',
+        userId: a.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     await prisma.session.create({
-      data: { sessionToken: 'b', userId: b.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'b',
+        userId: b.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     await revokeAllSessionsForUser(a.id);
     expect(await prisma.session.count({ where: { userId: b.id } })).toBe(1);
@@ -821,9 +878,7 @@ export async function revokeAllSessionsForUser(
   userId: string,
   exceptSessionId?: string,
 ): Promise<number> {
-  const where = exceptSessionId
-    ? { userId, NOT: { id: exceptSessionId } }
-    : { userId };
+  const where = exceptSessionId ? { userId, NOT: { id: exceptSessionId } } : { userId };
   const result = await db.session.deleteMany({ where });
   return result.count;
 }
@@ -850,6 +905,7 @@ git commit -m "feat(phase-1c): user-admin helpers (assertNotLastGlobalAdmin + re
 ## Task 5 : Router admin.users — read procedures (list, get, invitations.list)
 
 **Files:**
+
 - Create: `src/server/trpc/routers/admin/users.ts`
 - Modify: `src/server/trpc/routers/_app.ts`
 - Create: `tests/integration/admin-users-read.test.ts`
@@ -945,7 +1001,9 @@ describe('admin.users — read', () => {
   it('list: rejects non-admin with FORBIDDEN', async () => {
     const ctx = await makeUserCtx();
     const caller = appRouter.createCaller(ctx);
-    await expect(caller.admin.users.list({ limit: 20 })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(caller.admin.users.list({ limit: 20 })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
   });
 
   it('get: returns user with counts', async () => {
@@ -1080,24 +1138,22 @@ export const adminUsersRouter = t.router({
   }),
 
   invitations: t.router({
-    list: globalAdminProcedure
-      .input(z.object({ userId: cuid }))
-      .query(async ({ input }) => {
-        const items = await db.invitation.findMany({
-          where: { invitedById: input.userId },
-          orderBy: { createdAt: 'desc' },
-          select: {
-            id: true,
-            email: true,
-            libraryId: true,
-            proposedRole: true,
-            expiresAt: true,
-            consumedAt: true,
-            createdAt: true,
-          },
-        });
-        return { items };
-      }),
+    list: globalAdminProcedure.input(z.object({ userId: cuid })).query(async ({ input }) => {
+      const items = await db.invitation.findMany({
+        where: { invitedById: input.userId },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          email: true,
+          libraryId: true,
+          proposedRole: true,
+          expiresAt: true,
+          consumedAt: true,
+          createdAt: true,
+        },
+      });
+      return { items };
+    }),
   }),
 });
 ```
@@ -1146,6 +1202,7 @@ git commit -m "feat(phase-1c): admin.users router — read procedures (list/get/
 ## Task 6 : Router admin.users — mutations (suspend, reactivate, delete, changeRole, resetTwoFactor, invitations.revoke)
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/admin/users.ts`
 - Create: `tests/integration/admin-users-mutations.test.ts`
 
@@ -1165,10 +1222,22 @@ const HASH_64 = 'a'.repeat(64);
 
 async function makeAdminCtx() {
   const user = await prisma.user.create({
-    data: { email: 'admin@e2e.test', passwordHash: 'x', displayName: 'Admin', role: 'GLOBAL_ADMIN', twoFactorEnabled: true },
+    data: {
+      email: 'admin@e2e.test',
+      passwordHash: 'x',
+      displayName: 'Admin',
+      role: 'GLOBAL_ADMIN',
+      twoFactorEnabled: true,
+    },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 'a-s', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+    data: {
+      sessionToken: 'a-s',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+    },
   });
   return { session, user, ip: '203.0.113.1' };
 }
@@ -1182,12 +1251,22 @@ describe('admin.users — mutations', () => {
       data: { email: 't@e2e.test', passwordHash: 'x', displayName: 'T' },
     });
     await prisma.session.create({
-      data: { sessionToken: 't-s', userId: target.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 't-s',
+        userId: target.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     await appRouter.createCaller(ctx).admin.users.suspend({ id: target.id, reason: 'spam' });
     expect((await prisma.user.findUnique({ where: { id: target.id } }))?.status).toBe('SUSPENDED');
     expect(await prisma.session.count({ where: { userId: target.id } })).toBe(0);
-    expect(await prisma.auditLog.count({ where: { action: 'admin.user.suspended', targetId: target.id } })).toBe(1);
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'admin.user.suspended', targetId: target.id },
+      }),
+    ).toBe(1);
   });
 
   it('suspend: refuses self', async () => {
@@ -1231,9 +1310,13 @@ describe('admin.users — mutations', () => {
       data: { email: 't@e2e.test', passwordHash: 'x', displayName: 'T' },
     });
     await expect(
-      appRouter.createCaller(ctx).admin.users.delete({ id: target.id, confirmEmail: 'wrong@e2e.test' }),
+      appRouter
+        .createCaller(ctx)
+        .admin.users.delete({ id: target.id, confirmEmail: 'wrong@e2e.test' }),
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    await appRouter.createCaller(ctx).admin.users.delete({ id: target.id, confirmEmail: 't@e2e.test' });
+    await appRouter
+      .createCaller(ctx)
+      .admin.users.delete({ id: target.id, confirmEmail: 't@e2e.test' });
     expect(await prisma.user.findUnique({ where: { id: target.id } })).toBeNull();
   });
 
@@ -1250,19 +1333,40 @@ describe('admin.users — mutations', () => {
       data: { email: 't@e2e.test', passwordHash: 'x', displayName: 'T', twoFactorEnabled: true },
     });
     await prisma.twoFactorSecret.create({
-      data: { userId: target.id, secretCipher: encryptSecret('JBSWY3DPEHPK3PXP'), confirmedAt: new Date(), backupCodes: [] },
+      data: {
+        userId: target.id,
+        secretCipher: encryptSecret('JBSWY3DPEHPK3PXP'),
+        confirmedAt: new Date(),
+        backupCodes: [],
+      },
     });
     await prisma.session.create({
-      data: { sessionToken: 't-s', userId: target.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 't-s',
+        userId: target.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
-    await appRouter.createCaller(ctx).admin.users.resetTwoFactor({ id: target.id, reason: 'lost device' });
-    expect((await prisma.user.findUnique({ where: { id: target.id } }))?.twoFactorEnabled).toBe(false);
+    await appRouter
+      .createCaller(ctx)
+      .admin.users.resetTwoFactor({ id: target.id, reason: 'lost device' });
+    expect((await prisma.user.findUnique({ where: { id: target.id } }))?.twoFactorEnabled).toBe(
+      false,
+    );
     expect(await prisma.twoFactorSecret.findUnique({ where: { userId: target.id } })).toBeNull();
     expect(await prisma.session.count({ where: { userId: target.id } })).toBe(0);
 
     // Refuse on another GLOBAL_ADMIN
     const adminTarget = await prisma.user.create({
-      data: { email: 'a2@e2e.test', passwordHash: 'x', displayName: 'A2', role: 'GLOBAL_ADMIN', twoFactorEnabled: true },
+      data: {
+        email: 'a2@e2e.test',
+        passwordHash: 'x',
+        displayName: 'A2',
+        role: 'GLOBAL_ADMIN',
+        twoFactorEnabled: true,
+      },
     });
     await expect(
       appRouter.createCaller(ctx).admin.users.resetTwoFactor({ id: adminTarget.id, reason: 'no' }),
@@ -1450,6 +1554,7 @@ git commit -m "feat(phase-1c): admin.users router — mutations (suspend/reactiv
 ## Task 7 : Layout admin sidebar + UI /admin/users (list)
 
 **Files:**
+
 - Create: `src/components/admin/AdminSidebar.tsx`
 - Modify: `src/app/admin/layout.tsx`
 - Modify: `src/components/admin/AdminHeader.tsx` (mobile burger)
@@ -1529,7 +1634,7 @@ export function AdminSidebar() {
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
               active
-                ? 'bg-accent/10 text-accent font-medium'
+                ? 'bg-accent/10 font-medium text-accent'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
@@ -1571,7 +1676,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <aside className="lg:w-56 lg:shrink-0 lg:border-r lg:pr-4">
           <AdminSidebar />
         </aside>
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );
@@ -1598,7 +1703,7 @@ export const metadata: Metadata = {
 export default async function AdminUsersPage() {
   const t = await getTranslations('admin.users');
   return (
-    <section className="space-y-6 animate-slide-up">
+    <section className="animate-slide-up space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('pageTitle')}</h1>
@@ -1606,7 +1711,7 @@ export default async function AdminUsersPage() {
         </div>
         <Button asChild>
           <Link href="/admin/users/invite">
-            <UserPlus className="h-4 w-4 mr-2" aria-hidden="true" />
+            <UserPlus className="mr-2 h-4 w-4" aria-hidden="true" />
             {t('inviteCta')}
           </Link>
         </Button>
@@ -1651,10 +1756,15 @@ export function UsersTable() {
     <Card>
       <CardContent className="p-0">
         <div className="flex flex-wrap gap-3 border-b p-4">
-          <div className="flex-1 min-w-[220px]">
-            <Label htmlFor="q" className="sr-only">{t('search')}</Label>
+          <div className="min-w-[220px] flex-1">
+            <Label htmlFor="q" className="sr-only">
+              {t('search')}
+            </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
               <Input
                 id="q"
                 value={q}
@@ -1710,7 +1820,9 @@ export function UsersTable() {
                 <tr key={u.id} className="border-t">
                   <td className="px-4 py-2 font-mono text-xs">{u.email}</td>
                   <td className="px-4 py-2">{u.displayName}</td>
-                  <td className="px-4 py-2">{u.role === 'GLOBAL_ADMIN' ? t('roleAdmin') : t('roleUser')}</td>
+                  <td className="px-4 py-2">
+                    {u.role === 'GLOBAL_ADMIN' ? t('roleAdmin') : t('roleUser')}
+                  </td>
                   <td className="px-4 py-2">
                     <span className={u.status === 'SUSPENDED' ? 'text-destructive' : ''}>
                       {u.status === 'ACTIVE' ? t('statusActive') : t('statusSuspended')}
@@ -1732,7 +1844,12 @@ export function UsersTable() {
         </div>
         {query.hasNextPage && (
           <div className="border-t p-3 text-center">
-            <Button variant="outline" size="sm" onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => query.fetchNextPage()}
+              disabled={query.isFetchingNextPage}
+            >
               {t('loadMore')}
             </Button>
           </div>
@@ -1769,6 +1886,7 @@ git commit -m "feat(phase-1c): admin sidebar layout + /admin/users list page"
 ## Task 8 : UI /admin/users/[id] (fiche détail + dialogs actions)
 
 **Files:**
+
 - Create: `src/app/admin/users/[id]/page.tsx`
 - Create: `src/app/admin/users/[id]/UserActions.tsx` (client, dialogs)
 - Create: `src/app/admin/users/[id]/UserSessionsList.tsx`
@@ -1849,10 +1967,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   if (!user) notFound();
 
   return (
-    <section className="space-y-6 animate-slide-up">
+    <section className="animate-slide-up space-y-6">
       <Button asChild variant="ghost" size="sm">
         <Link href="/admin/users">
-          <ChevronLeft className="h-4 w-4 mr-1" aria-hidden="true" />
+          <ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" />
           {t('detail.back')}
         </Link>
       </Button>
@@ -1865,11 +1983,17 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               <span className="rounded-md bg-muted px-2 py-1">
                 {user.role === 'GLOBAL_ADMIN' ? t('roleAdmin') : t('roleUser')}
               </span>
-              <span className={`rounded-md px-2 py-1 ${user.status === 'SUSPENDED' ? 'bg-destructive/10 text-destructive' : 'bg-muted'}`}>
+              <span
+                className={`rounded-md px-2 py-1 ${user.status === 'SUSPENDED' ? 'bg-destructive/10 text-destructive' : 'bg-muted'}`}
+              >
                 {user.status === 'ACTIVE' ? t('statusActive') : t('statusSuspended')}
               </span>
               <span className="flex items-center gap-1 rounded-md bg-muted px-2 py-1">
-                {user.twoFactorEnabled ? <Shield className="h-3 w-3" /> : <ShieldOff className="h-3 w-3" />}
+                {user.twoFactorEnabled ? (
+                  <Shield className="h-3 w-3" />
+                ) : (
+                  <ShieldOff className="h-3 w-3" />
+                )}
                 2FA {user.twoFactorEnabled ? 'ON' : 'OFF'}
               </span>
             </div>
@@ -1885,12 +2009,20 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="text-base">{t('detail.tabSessions')}</CardTitle></CardHeader>
-        <CardContent><UserSessionsList userId={user.id} /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-base">{t('detail.tabSessions')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UserSessionsList userId={user.id} />
+        </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="text-base">{t('detail.tabAudit')}</CardTitle></CardHeader>
-        <CardContent><UserAuditExcerpt userId={user.id} /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-base">{t('detail.tabAudit')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UserAuditExcerpt userId={user.id} />
+        </CardContent>
       </Card>
     </section>
   );
@@ -1913,7 +2045,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -1929,10 +2067,14 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
   const router = useRouter();
   const { toast } = useToast();
   const utils = trpc.useUtils();
-  const [openDialog, setOpenDialog] = useState<null | 'suspend' | 'reactivate' | 'delete' | 'role' | 'reset2fa'>(null);
+  const [openDialog, setOpenDialog] = useState<
+    null | 'suspend' | 'reactivate' | 'delete' | 'role' | 'reset2fa'
+  >(null);
   const [reason, setReason] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
-  const [newRole, setNewRole] = useState<'GLOBAL_ADMIN' | 'USER'>(currentRole === 'USER' ? 'GLOBAL_ADMIN' : 'USER');
+  const [newRole, setNewRole] = useState<'GLOBAL_ADMIN' | 'USER'>(
+    currentRole === 'USER' ? 'GLOBAL_ADMIN' : 'USER',
+  );
 
   const onSuccess = () => {
     toast({ title: t('successToast') });
@@ -1955,10 +2097,13 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
   return (
     <div className="flex flex-wrap gap-2">
       {currentStatus === 'ACTIVE' && (
-        <Dialog open={openDialog === 'suspend'} onOpenChange={(o) => setOpenDialog(o ? 'suspend' : null)}>
+        <Dialog
+          open={openDialog === 'suspend'}
+          onOpenChange={(o) => setOpenDialog(o ? 'suspend' : null)}
+        >
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
-              <ShieldOff className="h-4 w-4 mr-2" />
+              <ShieldOff className="mr-2 h-4 w-4" />
               Suspendre
             </Button>
           </DialogTrigger>
@@ -1969,10 +2114,18 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
             </DialogHeader>
             <div className="space-y-2">
               <Label htmlFor="reason">{t('reasonLabel')}</Label>
-              <Input id="reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPlaceholder')} maxLength={500} />
+              <Input
+                id="reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={t('reasonPlaceholder')}
+                maxLength={500}
+              />
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpenDialog(null)}>{t('cancelCta')}</Button>
+              <Button variant="ghost" onClick={() => setOpenDialog(null)}>
+                {t('cancelCta')}
+              </Button>
               <Button
                 disabled={reason.trim().length < 3 || suspend.isPending}
                 onClick={() => suspend.mutate({ id: userId, reason })}
@@ -1985,8 +2138,13 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
       )}
 
       {currentStatus === 'SUSPENDED' && (
-        <Button variant="outline" size="sm" onClick={() => reactivate.mutate({ id: userId })} disabled={reactivate.isPending}>
-          <UserCheck className="h-4 w-4 mr-2" />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => reactivate.mutate({ id: userId })}
+          disabled={reactivate.isPending}
+        >
+          <UserCheck className="mr-2 h-4 w-4" />
           Réactiver
         </Button>
       )}
@@ -1994,7 +2152,7 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
       <Dialog open={openDialog === 'role'} onOpenChange={(o) => setOpenDialog(o ? 'role' : null)}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Changer le rôle
           </Button>
         </DialogTrigger>
@@ -2012,8 +2170,13 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
             <option value="GLOBAL_ADMIN">GLOBAL_ADMIN</option>
           </select>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpenDialog(null)}>{t('cancelCta')}</Button>
-            <Button onClick={() => changeRole.mutate({ id: userId, newRole })} disabled={changeRole.isPending || newRole === currentRole}>
+            <Button variant="ghost" onClick={() => setOpenDialog(null)}>
+              {t('cancelCta')}
+            </Button>
+            <Button
+              onClick={() => changeRole.mutate({ id: userId, newRole })}
+              disabled={changeRole.isPending || newRole === currentRole}
+            >
               {t('confirmCta')}
             </Button>
           </DialogFooter>
@@ -2021,10 +2184,13 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
       </Dialog>
 
       {currentRole !== 'GLOBAL_ADMIN' && (
-        <Dialog open={openDialog === 'reset2fa'} onOpenChange={(o) => setOpenDialog(o ? 'reset2fa' : null)}>
+        <Dialog
+          open={openDialog === 'reset2fa'}
+          onOpenChange={(o) => setOpenDialog(o ? 'reset2fa' : null)}
+        >
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
-              <KeyRound className="h-4 w-4 mr-2" />
+              <KeyRound className="mr-2 h-4 w-4" />
               Reset 2FA
             </Button>
           </DialogTrigger>
@@ -2035,11 +2201,21 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
             </DialogHeader>
             <div className="space-y-2">
               <Label htmlFor="reset-reason">{t('reasonLabel')}</Label>
-              <Input id="reset-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+              <Input
+                id="reset-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                maxLength={500}
+              />
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpenDialog(null)}>{t('cancelCta')}</Button>
-              <Button onClick={() => reset2fa.mutate({ id: userId, reason })} disabled={reason.trim().length < 3 || reset2fa.isPending}>
+              <Button variant="ghost" onClick={() => setOpenDialog(null)}>
+                {t('cancelCta')}
+              </Button>
+              <Button
+                onClick={() => reset2fa.mutate({ id: userId, reason })}
+                disabled={reason.trim().length < 3 || reset2fa.isPending}
+              >
                 {t('confirmCta')}
               </Button>
             </DialogFooter>
@@ -2047,10 +2223,13 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
         </Dialog>
       )}
 
-      <Dialog open={openDialog === 'delete'} onOpenChange={(o) => setOpenDialog(o ? 'delete' : null)}>
+      <Dialog
+        open={openDialog === 'delete'}
+        onOpenChange={(o) => setOpenDialog(o ? 'delete' : null)}
+      >
         <DialogTrigger asChild>
           <Button variant="destructive" size="sm">
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="mr-2 h-4 w-4" />
             Supprimer
           </Button>
         </DialogTrigger>
@@ -2061,10 +2240,17 @@ export function UserActions({ userId, userEmail, currentRole, currentStatus }: P
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="confirm-email">{t('deleteConfirmEmailLabel')}</Label>
-            <Input id="confirm-email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} placeholder={userEmail} />
+            <Input
+              id="confirm-email"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              placeholder={userEmail}
+            />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpenDialog(null)}>{t('cancelCta')}</Button>
+            <Button variant="ghost" onClick={() => setOpenDialog(null)}>
+              {t('cancelCta')}
+            </Button>
             <Button
               variant="destructive"
               onClick={() => del.mutate({ id: userId, confirmEmail })}
@@ -2105,7 +2291,8 @@ export function UserSessionsList({ userId }: { userId: string }) {
           <div>
             <p className="font-medium">{s.userAgentLabel ?? 'Unknown device'}</p>
             <p className="text-xs text-muted-foreground">
-              Created {new Date(s.createdAt).toLocaleString('fr-FR')} · Last active {new Date(s.lastSeenAt).toLocaleString('fr-FR')}
+              Created {new Date(s.createdAt).toLocaleString('fr-FR')} · Last active{' '}
+              {new Date(s.lastSeenAt).toLocaleString('fr-FR')}
             </p>
           </div>
         </li>
@@ -2134,7 +2321,9 @@ export function UserAuditExcerpt({ userId }: { userId: string }) {
       {items.map((entry) => (
         <li key={entry.id} className="py-2">
           <span className="font-mono text-xs">{entry.action}</span>{' '}
-          <span className="text-muted-foreground">{new Date(entry.createdAt).toLocaleString('fr-FR')}</span>
+          <span className="text-muted-foreground">
+            {new Date(entry.createdAt).toLocaleString('fr-FR')}
+          </span>
         </li>
       ))}
     </ul>
@@ -2209,6 +2398,7 @@ git commit -m "feat(phase-1c): /admin/users/[id] detail page with action dialogs
 ## Task 9 : Helpers library-admin (slugifyUnique, assertLibraryNotArchived, assertNotLastLibraryAdmin)
 
 **Files:**
+
 - Create: `src/lib/library-admin.ts`
 - Create: `tests/integration/library-admin.test.ts`
 
@@ -2219,7 +2409,11 @@ Créer `tests/integration/library-admin.test.ts` :
 ```ts
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TRPCError } from '@trpc/server';
-import { assertLibraryNotArchived, assertNotLastLibraryAdmin, slugifyUnique } from '@/lib/library-admin';
+import {
+  assertLibraryNotArchived,
+  assertNotLastLibraryAdmin,
+  slugifyUnique,
+} from '@/lib/library-admin';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 
 const prisma = getTestPrisma();
@@ -2331,20 +2525,28 @@ import type { PrismaClient } from '@prisma/client';
 import { db } from './db';
 
 export function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'library';
+  return (
+    input
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'library'
+  );
 }
 
-export async function slugifyUnique(name: string, client: PrismaClient = db as unknown as PrismaClient): Promise<string> {
+export async function slugifyUnique(
+  name: string,
+  client: PrismaClient = db as unknown as PrismaClient,
+): Promise<string> {
   const base = slugify(name);
   for (let i = 1; i <= 100; i++) {
     const candidate = i === 1 ? base : `${base}-${i}`;
-    const exists = await client.library.findUnique({ where: { slug: candidate }, select: { id: true } });
+    const exists = await client.library.findUnique({
+      where: { slug: candidate },
+      select: { id: true },
+    });
     if (!exists) return candidate;
   }
   throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'unable to generate unique slug' });
@@ -2407,6 +2609,7 @@ git commit -m "feat(phase-1c): library-admin helpers (slugifyUnique, assert help
 ## Task 10 : Router admin.libraries — CRUD library
 
 **Files:**
+
 - Create: `src/server/trpc/routers/admin/libraries.ts`
 - Modify: `src/server/trpc/routers/_app.ts`
 - Create: `tests/integration/admin-libraries.test.ts`
@@ -2426,10 +2629,22 @@ const HASH_64 = 'a'.repeat(64);
 
 async function makeAdminCtx(): Promise<{ session: Session; user: User; ip: string }> {
   const user = await prisma.user.create({
-    data: { email: 'admin@e2e.test', passwordHash: 'x', displayName: 'A', role: 'GLOBAL_ADMIN', twoFactorEnabled: true },
+    data: {
+      email: 'admin@e2e.test',
+      passwordHash: 'x',
+      displayName: 'A',
+      role: 'GLOBAL_ADMIN',
+      twoFactorEnabled: true,
+    },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 's', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+    data: {
+      sessionToken: 's',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+    },
   });
   return { session, user, ip: '203.0.113.1' };
 }
@@ -2587,14 +2802,16 @@ export const adminLibrariesRouter = t.router({
     return { ...lib, counts: { members: lib._count.members, books: lib._count.books } };
   }),
 
-  getBySlug: globalAdminProcedure.input(z.object({ slug: z.string().min(1) })).query(async ({ input }) => {
-    const lib = await db.library.findUnique({
-      where: { slug: input.slug },
-      select: { id: true },
-    });
-    if (!lib) throw new TRPCError({ code: 'NOT_FOUND' });
-    return { id: lib.id };
-  }),
+  getBySlug: globalAdminProcedure
+    .input(z.object({ slug: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const lib = await db.library.findUnique({
+        where: { slug: input.slug },
+        select: { id: true },
+      });
+      if (!lib) throw new TRPCError({ code: 'NOT_FOUND' });
+      return { id: lib.id };
+    }),
 
   create: globalAdminProcedure
     .input(z.object({ name: nameInput, description: descriptionInput }))
@@ -2602,7 +2819,14 @@ export const adminLibrariesRouter = t.router({
       const slug = await slugifyUnique(input.name);
       const lib = await db.library.create({
         data: { name: input.name, slug, description: input.description ?? null },
-        select: { id: true, name: true, slug: true, description: true, archivedAt: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          archivedAt: true,
+          createdAt: true,
+        },
       });
       await recordAudit({
         action: 'admin.library.created',
@@ -2715,6 +2939,7 @@ git commit -m "feat(phase-1c): admin.libraries router — CRUD + archive"
 ## Task 11 : Router admin.libraries.members (add/remove/changeRole/updateFlags)
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/admin/libraries.ts`
 - Create: `tests/integration/admin-libraries-members.test.ts`
 
@@ -2732,10 +2957,22 @@ const HASH_64 = 'a'.repeat(64);
 
 async function makeAdminCtx() {
   const user = await prisma.user.create({
-    data: { email: 'admin@e2e.test', passwordHash: 'x', displayName: 'A', role: 'GLOBAL_ADMIN', twoFactorEnabled: true },
+    data: {
+      email: 'admin@e2e.test',
+      passwordHash: 'x',
+      displayName: 'A',
+      role: 'GLOBAL_ADMIN',
+      twoFactorEnabled: true,
+    },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 's', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+    data: {
+      sessionToken: 's',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+    },
   });
   return { session, user, ip: '203.0.113.1' };
 }
@@ -2862,7 +3099,11 @@ pnpm test:integration -- --run tests/integration/admin-libraries-members.test.ts
 Dans `src/server/trpc/routers/admin/libraries.ts`, ajouter à l'import :
 
 ```ts
-import { assertLibraryNotArchived, assertNotLastLibraryAdmin, slugifyUnique } from '@/lib/library-admin';
+import {
+  assertLibraryNotArchived,
+  assertNotLastLibraryAdmin,
+  slugifyUnique,
+} from '@/lib/library-admin';
 ```
 
 Et ajouter dans le `t.router({ ... })` à côté des procedures CRUD :
@@ -3057,6 +3298,7 @@ git commit -m "feat(phase-1c): admin.libraries.members router (add/remove/change
 ## Task 12 : UI /admin/libraries (list + create + detail page with tabs)
 
 **Files:**
+
 - Create: `src/app/admin/libraries/page.tsx`
 - Create: `src/app/admin/libraries/LibrariesTable.tsx`
 - Create: `src/app/admin/libraries/CreateLibraryDialog.tsx`
@@ -3146,7 +3388,7 @@ export const metadata: Metadata = {
 export default async function AdminLibrariesPage() {
   const t = await getTranslations('admin.libraries');
   return (
-    <section className="space-y-6 animate-slide-up">
+    <section className="animate-slide-up space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('pageTitle')}</h1>
@@ -3191,12 +3433,23 @@ export function LibrariesTable() {
     <Card>
       <CardContent className="p-0">
         <div className="flex flex-wrap gap-3 border-b p-4">
-          <div className="flex-1 min-w-[220px]">
-            <Label htmlFor="q-lib" className="sr-only">{t('search')}</Label>
-            <Input id="q-lib" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} />
+          <div className="min-w-[220px] flex-1">
+            <Label htmlFor="q-lib" className="sr-only">
+              {t('search')}
+            </Label>
+            <Input
+              id="q-lib"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t('search')}
+            />
           </div>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={includeArchived}
+              onChange={(e) => setIncludeArchived(e.target.checked)}
+            />
             {t('includeArchived')}
           </label>
         </div>
@@ -3214,7 +3467,11 @@ export function LibrariesTable() {
             </thead>
             <tbody>
               {items.length === 0 && !query.isLoading && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">{t('empty')}</td></tr>
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                    {t('empty')}
+                  </td>
+                </tr>
               )}
               {items.map((l) => (
                 <tr key={l.id} className="border-t">
@@ -3261,7 +3518,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -3290,24 +3552,38 @@ export function CreateLibraryDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           {tList('createCta')}
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>{t('title')}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="lib-name">{t('nameLabel')}</Label>
-            <Input id="lib-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+            <Input
+              id="lib-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={120}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="lib-desc">{t('descriptionLabel')}</Label>
-            <Input id="lib-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
+            <Input
+              id="lib-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={1000}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>{t('cancel')}</Button>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            {t('cancel')}
+          </Button>
           <Button
             onClick={() => create.mutate({ name, description: description || undefined })}
             disabled={name.trim().length < 3 || create.isPending}
@@ -3338,20 +3614,31 @@ import { MembersPanel } from './MembersPanel';
 
 export const metadata = { robots: { index: false, follow: false } };
 
-export default async function AdminLibraryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function AdminLibraryDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const t = await getTranslations('admin.libraries.detail');
   const lib = await db.library.findUnique({
     where: { slug },
-    select: { id: true, name: true, slug: true, description: true, archivedAt: true, createdAt: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      archivedAt: true,
+      createdAt: true,
+    },
   });
   if (!lib) notFound();
 
   return (
-    <section className="space-y-6 animate-slide-up">
+    <section className="animate-slide-up space-y-6">
       <Button asChild variant="ghost" size="sm">
         <Link href="/admin/libraries">
-          <ChevronLeft className="h-4 w-4 mr-1" aria-hidden="true" />
+          <ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" />
           {t('back')}
         </Link>
       </Button>
@@ -3362,7 +3649,9 @@ export default async function AdminLibraryDetailPage({ params }: { params: Promi
         </CardHeader>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="text-base">{t('tabSettings')}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">{t('tabSettings')}</CardTitle>
+        </CardHeader>
         <CardContent>
           <LibrarySettings
             libraryId={lib.id}
@@ -3373,8 +3662,12 @@ export default async function AdminLibraryDetailPage({ params }: { params: Promi
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="text-base">{t('tabMembers')}</CardTitle></CardHeader>
-        <CardContent><MembersPanel libraryId={lib.id} archived={lib.archivedAt !== null} /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-base">{t('tabMembers')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MembersPanel libraryId={lib.id} archived={lib.archivedAt !== null} />
+        </CardContent>
       </Card>
     </section>
   );
@@ -3395,7 +3688,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -3432,29 +3731,47 @@ export function LibrarySettings({ libraryId, initialName, initialDescription, ar
     <div className="space-y-4">
       <div className="space-y-1">
         <Label htmlFor="rename-name">Nom</Label>
-        <Input id="rename-name" value={name} disabled={archived} onChange={(e) => setName(e.target.value)} maxLength={120} />
+        <Input
+          id="rename-name"
+          value={name}
+          disabled={archived}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={120}
+        />
       </div>
       <div className="space-y-1">
         <Label htmlFor="rename-desc">Description</Label>
-        <Input id="rename-desc" value={description} disabled={archived} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
+        <Input
+          id="rename-desc"
+          value={description}
+          disabled={archived}
+          onChange={(e) => setDescription(e.target.value)}
+          maxLength={1000}
+        />
       </div>
       <div className="flex flex-wrap gap-2">
         <Button
           disabled={archived || rename.isPending || name.trim().length < 3}
-          onClick={() => rename.mutate({ id: libraryId, name, description: description || undefined })}
+          onClick={() =>
+            rename.mutate({ id: libraryId, name, description: description || undefined })
+          }
         >
           {t('renameSubmit')}
         </Button>
         {archived ? (
-          <Button variant="outline" onClick={() => unarchive.mutate({ id: libraryId })} disabled={unarchive.isPending}>
-            <ArchiveRestore className="h-4 w-4 mr-2" />
+          <Button
+            variant="outline"
+            onClick={() => unarchive.mutate({ id: libraryId })}
+            disabled={unarchive.isPending}
+          >
+            <ArchiveRestore className="mr-2 h-4 w-4" />
             {t('unarchiveCta')}
           </Button>
         ) : (
           <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <Archive className="h-4 w-4 mr-2" />
+                <Archive className="mr-2 h-4 w-4" />
                 {t('archiveCta')}
               </Button>
             </DialogTrigger>
@@ -3465,10 +3782,17 @@ export function LibrarySettings({ libraryId, initialName, initialDescription, ar
               </DialogHeader>
               <div className="space-y-1">
                 <Label htmlFor="archive-reason">{t('reasonLabel')}</Label>
-                <Input id="archive-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+                <Input
+                  id="archive-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={500}
+                />
               </div>
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setArchiveOpen(false)}>Annuler</Button>
+                <Button variant="ghost" onClick={() => setArchiveOpen(false)}>
+                  Annuler
+                </Button>
                 <Button
                   onClick={() => archive.mutate({ id: libraryId, reason })}
                   disabled={reason.trim().length < 3 || archive.isPending}
@@ -3498,7 +3822,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -3513,11 +3842,19 @@ export function MembersPanel({ libraryId, archived }: { libraryId: string; archi
 
   const list = trpc.admin.libraries.members.list.useQuery({ libraryId, limit: 50 });
   const add = trpc.admin.libraries.members.add.useMutation({
-    onSuccess: () => { utils.admin.libraries.members.invalidate(); setOpenAdd(false); setUserId(''); toast({ title: 'OK' }); },
+    onSuccess: () => {
+      utils.admin.libraries.members.invalidate();
+      setOpenAdd(false);
+      setUserId('');
+      toast({ title: 'OK' });
+    },
     onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
   });
   const remove = trpc.admin.libraries.members.remove.useMutation({
-    onSuccess: () => { utils.admin.libraries.members.invalidate(); toast({ title: 'OK' }); },
+    onSuccess: () => {
+      utils.admin.libraries.members.invalidate();
+      toast({ title: 'OK' });
+    },
     onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
   });
 
@@ -3528,18 +3865,32 @@ export function MembersPanel({ libraryId, archived }: { libraryId: string; archi
       <div className="flex justify-end">
         <Dialog open={openAdd} onOpenChange={setOpenAdd}>
           <DialogTrigger asChild>
-            <Button disabled={archived}><Plus className="h-4 w-4 mr-2" />{t('addCta')}</Button>
+            <Button disabled={archived}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('addCta')}
+            </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{t('addDialogTitle')}</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{t('addDialogTitle')}</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="member-user">{t('addDialogUserLabel')}</Label>
-                <Input id="member-user" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="cl..." />
+                <Input
+                  id="member-user"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="cl..."
+                />
               </div>
               <div className="space-y-1">
                 <Label>Rôle</Label>
-                <select value={role} onChange={(e) => setRole(e.target.value as 'LIBRARY_ADMIN' | 'MEMBER')} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as 'LIBRARY_ADMIN' | 'MEMBER')}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                >
                   <option value="MEMBER">{t('roleMember')}</option>
                   <option value="LIBRARY_ADMIN">{t('roleLibraryAdmin')}</option>
                 </select>
@@ -3547,14 +3898,24 @@ export function MembersPanel({ libraryId, archived }: { libraryId: string; archi
               <div className="flex flex-wrap gap-3">
                 {(['canRead', 'canUpload', 'canDownload'] as const).map((flag) => (
                   <label key={flag} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={flags[flag]} onChange={(e) => setFlags({ ...flags, [flag]: e.target.checked })} />
-                    {flag === 'canRead' ? t('flagRead') : flag === 'canUpload' ? t('flagUpload') : t('flagDownload')}
+                    <input
+                      type="checkbox"
+                      checked={flags[flag]}
+                      onChange={(e) => setFlags({ ...flags, [flag]: e.target.checked })}
+                    />
+                    {flag === 'canRead'
+                      ? t('flagRead')
+                      : flag === 'canUpload'
+                        ? t('flagUpload')
+                        : t('flagDownload')}
                   </label>
                 ))}
               </div>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpenAdd(false)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setOpenAdd(false)}>
+                Annuler
+              </Button>
               <Button
                 onClick={() => add.mutate({ libraryId, userId, role, flags })}
                 disabled={userId.length < 20 || add.isPending}
@@ -3580,10 +3941,18 @@ export function MembersPanel({ libraryId, archived }: { libraryId: string; archi
           <tbody>
             {items.map((m) => (
               <tr key={m.userId} className="border-t">
-                <td className="px-2 py-2">{m.user.displayName}<br /><span className="font-mono text-xs text-muted-foreground">{m.user.email}</span></td>
-                <td className="px-2 py-2">{m.role === 'LIBRARY_ADMIN' ? t('roleLibraryAdmin') : t('roleMember')}</td>
+                <td className="px-2 py-2">
+                  {m.user.displayName}
+                  <br />
+                  <span className="font-mono text-xs text-muted-foreground">{m.user.email}</span>
+                </td>
+                <td className="px-2 py-2">
+                  {m.role === 'LIBRARY_ADMIN' ? t('roleLibraryAdmin') : t('roleMember')}
+                </td>
                 <td className="px-2 py-2 text-xs">
-                  {m.canRead && 'R'}{m.canUpload && 'U'}{m.canDownload && 'D'}
+                  {m.canRead && 'R'}
+                  {m.canUpload && 'U'}
+                  {m.canDownload && 'D'}
                 </td>
                 <td className="px-2 py-2 text-right">
                   <Button
@@ -3624,6 +3993,7 @@ git commit -m "feat(phase-1c): /admin/libraries pages (list, create, detail with
 ## Task 13 : Rate-limiters 1C + account.profile router + /account layout
 
 **Files:**
+
 - Modify: `src/lib/rate-limit.ts`
 - Create: `src/server/trpc/routers/account/profile.ts`
 - Modify: `src/server/trpc/routers/_app.ts`
@@ -3693,7 +4063,13 @@ async function makeUserCtx() {
     data: { email: 'me@e2e.test', passwordHash: 'x', displayName: 'Me', locale: 'fr' },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 's', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+    data: {
+      sessionToken: 's',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+    },
   });
   return { session, user, ip: '203.0.113.1' };
 }
@@ -3887,7 +4263,8 @@ export function AccountSidebar() {
   return (
     <nav aria-label="Account sections" className="flex flex-col gap-1 p-4">
       {items.map(({ href, icon: Icon, key }) => {
-        const active = pathname === href || (href === '/account/security' && pathname.startsWith(href));
+        const active =
+          pathname === href || (href === '/account/security' && pathname.startsWith(href));
         return (
           <Link
             key={href}
@@ -3896,7 +4273,7 @@ export function AccountSidebar() {
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
               active
-                ? 'bg-accent/10 text-accent font-medium'
+                ? 'bg-accent/10 font-medium text-accent'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
@@ -3930,7 +4307,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
         <aside className="lg:w-56 lg:shrink-0 lg:border-r lg:pr-4">
           <AccountSidebar />
         </aside>
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );
@@ -3955,14 +4332,18 @@ export const metadata: Metadata = {
 export default async function AccountPage() {
   const t = await getTranslations('account.profile');
   return (
-    <section className="space-y-6 animate-slide-up">
+    <section className="animate-slide-up space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </header>
       <Card>
-        <CardHeader><CardTitle className="text-base">{t('title')}</CardTitle></CardHeader>
-        <CardContent><ProfileForm /></CardContent>
+        <CardHeader>
+          <CardTitle className="text-base">{t('title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProfileForm />
+        </CardContent>
       </Card>
     </section>
   );
@@ -4020,11 +4401,18 @@ export function ProfileForm() {
       <div className="space-y-1">
         <Label htmlFor="email">{t('emailLabel')}</Label>
         <Input id="email" value={profile.data.email} disabled aria-describedby="email-help" />
-        <p id="email-help" className="text-xs text-muted-foreground">{t('emailHelp')}</p>
+        <p id="email-help" className="text-xs text-muted-foreground">
+          {t('emailHelp')}
+        </p>
       </div>
       <div className="space-y-1">
         <Label htmlFor="displayName">{t('displayNameLabel')}</Label>
-        <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={120} />
+        <Input
+          id="displayName"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          maxLength={120}
+        />
       </div>
       <div className="space-y-1">
         <Label htmlFor="locale">{t('localeLabel')}</Label>
@@ -4063,6 +4451,7 @@ git commit -m "feat(phase-1c): rate-limiters 1C + account.profile router + /acco
 ## Task 14 : Router account.security — changePassword + sessions procedures
 
 **Files:**
+
 - Create: `src/server/trpc/routers/account/security.ts`
 - Modify: `src/server/trpc/routers/_app.ts`
 - Create: `tests/integration/account-security-password.test.ts`
@@ -4093,7 +4482,13 @@ async function makeUserCtx(password = 'CurrentPass123!') {
     data: { email: 'pwd@e2e.test', passwordHash: await hashPassword(password), displayName: 'P' },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 's', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+    data: {
+      sessionToken: 's',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+    },
   });
   return { session, user, ip: '203.0.113.1' };
 }
@@ -4114,7 +4509,9 @@ describe('account.security.changePassword', () => {
       }),
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     // No audit success row
-    expect(await prisma.auditLog.count({ where: { action: 'auth.password.changed_self' } })).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: 'auth.password.changed_self' } })).toBe(
+      0,
+    );
   });
 
   it('rejects when new === current', async () => {
@@ -4143,7 +4540,13 @@ describe('account.security.changePassword', () => {
     const ctx = await makeUserCtx();
     // Add a second session
     await prisma.session.create({
-      data: { sessionToken: 'other', userId: ctx.user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'other',
+        userId: ctx.user.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     await appRouter.createCaller(ctx).account.security.changePassword({
       currentPassword: 'CurrentPass123!',
@@ -4152,9 +4555,14 @@ describe('account.security.changePassword', () => {
     });
     expect(await prisma.session.count({ where: { userId: ctx.user.id } })).toBe(1);
     expect(await prisma.session.findUnique({ where: { id: ctx.session.id } })).not.toBeNull();
-    expect(await prisma.auditLog.count({ where: { action: 'auth.password.changed_self' } })).toBe(1);
+    expect(await prisma.auditLog.count({ where: { action: 'auth.password.changed_self' } })).toBe(
+      1,
+    );
     expect(enqueueMock).toHaveBeenCalledOnce();
-    expect(enqueueMock.mock.calls[0][0]).toMatchObject({ userId: ctx.user.id, triggerSource: 'self_change' });
+    expect(enqueueMock.mock.calls[0][0]).toMatchObject({
+      userId: ctx.user.id,
+      triggerSource: 'self_change',
+    });
   });
 });
 ```
@@ -4176,7 +4584,14 @@ async function ctx() {
     data: { email: 'sess@e2e.test', passwordHash: 'x', displayName: 'S' },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 'cur', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64, userAgentLabel: 'Chrome on macOS' },
+    data: {
+      sessionToken: 'cur',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+      userAgentLabel: 'Chrome on macOS',
+    },
   });
   return { session, user, ip: '203.0.113.1' };
 }
@@ -4187,7 +4602,14 @@ describe('account.security — sessions', () => {
   it('listSessions: returns sessions with isCurrent flag', async () => {
     const c = await ctx();
     await prisma.session.create({
-      data: { sessionToken: 'other', userId: c.user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64, userAgentLabel: 'Safari on iOS' },
+      data: {
+        sessionToken: 'other',
+        userId: c.user.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+        userAgentLabel: 'Safari on iOS',
+      },
     });
     const result = await appRouter.createCaller(c).account.security.listSessions();
     expect(result.items.length).toBe(2);
@@ -4205,9 +4627,17 @@ describe('account.security — sessions', () => {
 
   it('revokeSession: returns NOT_FOUND on cross-user session (anti-IDOR)', async () => {
     const c = await ctx();
-    const other = await prisma.user.create({ data: { email: 'o@e2e.test', passwordHash: 'x', displayName: 'O' } });
+    const other = await prisma.user.create({
+      data: { email: 'o@e2e.test', passwordHash: 'x', displayName: 'O' },
+    });
     const otherSession = await prisma.session.create({
-      data: { sessionToken: 'os', userId: other.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'os',
+        userId: other.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     await expect(
       appRouter.createCaller(c).account.security.revokeSession({ sessionId: otherSession.id }),
@@ -4218,8 +4648,20 @@ describe('account.security — sessions', () => {
     const c = await ctx();
     await prisma.session.createMany({
       data: [
-        { sessionToken: 'a', userId: c.user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
-        { sessionToken: 'b', userId: c.user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+        {
+          sessionToken: 'a',
+          userId: c.user.id,
+          expiresAt: new Date(Date.now() + 60_000),
+          ipHash: HASH_64,
+          userAgentHash: HASH_64,
+        },
+        {
+          sessionToken: 'b',
+          userId: c.user.id,
+          expiresAt: new Date(Date.now() + 60_000),
+          ipHash: HASH_64,
+          userAgentHash: HASH_64,
+        },
       ],
     });
     const result = await appRouter.createCaller(c).account.security.revokeAllOtherSessions();
@@ -4409,6 +4851,7 @@ git commit -m "feat(phase-1c): account.security — changePassword + sessions pr
 ## Task 15 : Router account.security — 2FA self-service (regenerateBackupCodes + startReEnrollWithBackup) + UA label capture
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/account/security.ts`
 - Modify: `src/server/auth/credentials-provider.ts` (capture userAgentLabel à la création de session)
 - Create: `src/lib/user-agent.ts` (parser UA → label)
@@ -4432,10 +4875,18 @@ describe('parseUserAgentLabel', () => {
     ).toBe('Chrome on macOS');
   });
   it('detects Safari on iOS', () => {
-    expect(parseUserAgentLabel('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1')).toBe('Safari on iOS');
+    expect(
+      parseUserAgentLabel(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      ),
+    ).toBe('Safari on iOS');
   });
   it('detects Firefox on Windows', () => {
-    expect(parseUserAgentLabel('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0')).toBe('Firefox on Windows');
+    expect(
+      parseUserAgentLabel(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0',
+      ),
+    ).toBe('Firefox on Windows');
   });
   it('returns null on empty', () => {
     expect(parseUserAgentLabel('')).toBeNull();
@@ -4528,7 +4979,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { appRouter } from '@/server/trpc/routers/_app';
 import { hashPassword } from '@/lib/password';
 import { encryptSecret } from '@/lib/crypto';
-import { generateBackupCodes, hashBackupCodes, generateTotpSecret, verifyTotpCode } from '@/lib/totp';
+import {
+  generateBackupCodes,
+  hashBackupCodes,
+  generateTotpSecret,
+  verifyTotpCode,
+} from '@/lib/totp';
 import { authenticator } from 'otplib';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 
@@ -4537,7 +4993,12 @@ const HASH_64 = 'a'.repeat(64);
 
 async function makeUserWith2fa() {
   const user = await prisma.user.create({
-    data: { email: '2fa@e2e.test', passwordHash: await hashPassword('Pwd12345!XYZ'), displayName: 'F', twoFactorEnabled: true },
+    data: {
+      email: '2fa@e2e.test',
+      passwordHash: await hashPassword('Pwd12345!XYZ'),
+      displayName: 'F',
+      twoFactorEnabled: true,
+    },
   });
   const secret = generateTotpSecret();
   const codes = generateBackupCodes();
@@ -4551,7 +5012,13 @@ async function makeUserWith2fa() {
     },
   });
   const session = await prisma.session.create({
-    data: { sessionToken: 's', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+    data: {
+      sessionToken: 's',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60_000),
+      ipHash: HASH_64,
+      userAgentHash: HASH_64,
+    },
   });
   return { user, session, secret, codes };
 }
@@ -4561,10 +5028,20 @@ describe('account.security — 2FA', () => {
 
   it('regenerateBackupCodes: requires 2FA enabled', async () => {
     const user = await prisma.user.create({
-      data: { email: 'no2fa@e2e.test', passwordHash: await hashPassword('Pwd12345!XYZ'), displayName: 'N' },
+      data: {
+        email: 'no2fa@e2e.test',
+        passwordHash: await hashPassword('Pwd12345!XYZ'),
+        displayName: 'N',
+      },
     });
     const session = await prisma.session.create({
-      data: { sessionToken: 's', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 's',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     const ctx = { user, session, ip: '203.0.113.1' };
     await expect(
@@ -4584,7 +5061,11 @@ describe('account.security — 2FA', () => {
       totpCode: validCode,
     });
     expect(result.codes.length).toBe(10);
-    expect(await prisma.auditLog.count({ where: { action: 'auth.2fa.recovery_codes_regenerated_self' } })).toBe(1);
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'auth.2fa.recovery_codes_regenerated_self' },
+      }),
+    ).toBe(1);
   });
 
   it('startReEnrollWithBackup: refuses GLOBAL_ADMIN', async () => {
@@ -4593,18 +5074,30 @@ describe('account.security — 2FA', () => {
     const refreshed = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     const ctx = { user: refreshed, session, ip: '203.0.113.1' };
     await expect(
-      appRouter.createCaller(ctx).account.security.startReEnrollWithBackup({ backupCode: codes[0] }),
+      appRouter
+        .createCaller(ctx)
+        .account.security.startReEnrollWithBackup({ backupCode: codes[0] }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('startReEnrollWithBackup: clears 2FA, kills other sessions, audit', async () => {
     const { user, session, codes } = await makeUserWith2fa();
     await prisma.session.create({
-      data: { sessionToken: 'other', userId: user.id, expiresAt: new Date(Date.now() + 60_000), ipHash: HASH_64, userAgentHash: HASH_64 },
+      data: {
+        sessionToken: 'other',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
     });
     const ctx = { user, session, ip: '203.0.113.1' };
-    await appRouter.createCaller(ctx).account.security.startReEnrollWithBackup({ backupCode: codes[0] });
-    expect((await prisma.user.findUnique({ where: { id: user.id } }))?.twoFactorEnabled).toBe(false);
+    await appRouter
+      .createCaller(ctx)
+      .account.security.startReEnrollWithBackup({ backupCode: codes[0] });
+    expect((await prisma.user.findUnique({ where: { id: user.id } }))?.twoFactorEnabled).toBe(
+      false,
+    );
     expect(await prisma.twoFactorSecret.findUnique({ where: { userId: user.id } })).toBeNull();
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1); // current preserved
     expect(await prisma.auditLog.count({ where: { action: 'auth.2fa.reset_via_backup' } })).toBe(1);
@@ -4719,6 +5212,7 @@ git commit -m "feat(phase-1c): account.security 2FA self-service + UA label capt
 ## Task 16 : UI /account/security (4 cards)
 
 **Files:**
+
 - Create: `src/app/account/security/page.tsx`
 - Create: `src/app/account/security/PasswordCard.tsx`
 - Create: `src/app/account/security/SessionsCard.tsx`
@@ -4815,7 +5309,7 @@ export default async function AccountSecurityPage() {
   const backupRemaining = sec?.backupCodes.length ?? 0;
 
   return (
-    <section className="space-y-6 animate-slide-up">
+    <section className="animate-slide-up space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
@@ -4826,9 +5320,7 @@ export default async function AccountSecurityPage() {
         twoFactorEnabled={result.user.twoFactorEnabled}
         isGlobalAdmin={result.user.role === 'GLOBAL_ADMIN'}
       />
-      {result.user.twoFactorEnabled && (
-        <BackupCodesCard remaining={backupRemaining} />
-      )}
+      {result.user.twoFactorEnabled && <BackupCodesCard remaining={backupRemaining} />}
     </section>
   );
 }
@@ -4851,7 +5343,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -4900,7 +5397,9 @@ export function PasswordCard() {
             <Button>{t('changeCta')}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{t('changeCta')}</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{t('changeCta')}</DialogTitle>
+            </DialogHeader>
             <form
               className="space-y-3"
               onSubmit={(e) => {
@@ -4910,18 +5409,39 @@ export function PasswordCard() {
             >
               <div className="space-y-1">
                 <Label htmlFor="cur-pwd">{t('currentLabel')}</Label>
-                <Input id="cur-pwd" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" />
+                <Input
+                  id="cur-pwd"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="new-pwd">{t('newLabel')}</Label>
-                <Input id="new-pwd" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" minLength={12} />
+                <Input
+                  id="new-pwd"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  minLength={12}
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="conf-pwd">{t('confirmLabel')}</Label>
-                <Input id="conf-pwd" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" />
+                <Input
+                  id="conf-pwd"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={!valid || change.isPending}>{t('submit')}</Button>
+                <Button type="submit" disabled={!valid || change.isPending}>
+                  {t('submit')}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -4952,11 +5472,17 @@ export function SessionsCard() {
   const utils = trpc.useUtils();
   const list = trpc.account.security.listSessions.useQuery();
   const revoke = trpc.account.security.revokeSession.useMutation({
-    onSuccess: () => { utils.account.security.listSessions.invalidate(); toast({ title: t('revokedToast') }); },
+    onSuccess: () => {
+      utils.account.security.listSessions.invalidate();
+      toast({ title: t('revokedToast') });
+    },
     onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
   });
   const revokeAll = trpc.account.security.revokeAllOtherSessions.useMutation({
-    onSuccess: () => { utils.account.security.listSessions.invalidate(); toast({ title: 'OK' }); },
+    onSuccess: () => {
+      utils.account.security.listSessions.invalidate();
+      toast({ title: 'OK' });
+    },
     onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
   });
 
@@ -4974,7 +5500,12 @@ export function SessionsCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-end">
-          <Button variant="outline" size="sm" disabled={otherCount === 0 || revokeAll.isPending} onClick={() => revokeAll.mutate()}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={otherCount === 0 || revokeAll.isPending}
+            onClick={() => revokeAll.mutate()}
+          >
             {t('revokeAllOthers')}
           </Button>
         </div>
@@ -4988,7 +5519,11 @@ export function SessionsCard() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {s.isCurrent && <span className="rounded-md bg-accent/10 px-2 py-0.5 text-xs text-accent">{t('currentBadge')}</span>}
+                {s.isCurrent && (
+                  <span className="rounded-md bg-accent/10 px-2 py-0.5 text-xs text-accent">
+                    {t('currentBadge')}
+                  </span>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -5025,11 +5560,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
-export function TwoFactorCard({ twoFactorEnabled, isGlobalAdmin }: { twoFactorEnabled: boolean; isGlobalAdmin: boolean }) {
+export function TwoFactorCard({
+  twoFactorEnabled,
+  isGlobalAdmin,
+}: {
+  twoFactorEnabled: boolean;
+  isGlobalAdmin: boolean;
+}) {
   const t = useTranslations('account.security.twofactor');
   const router = useRouter();
   const { toast } = useToast();
@@ -5056,7 +5603,9 @@ export function TwoFactorCard({ twoFactorEnabled, isGlobalAdmin }: { twoFactorEn
         )}
         <div className="space-y-1">
           <CardTitle className="text-base">{t('title')}</CardTitle>
-          <CardDescription>{twoFactorEnabled ? t('descriptionOn') : t('descriptionOff')}</CardDescription>
+          <CardDescription>
+            {twoFactorEnabled ? t('descriptionOn') : t('descriptionOff')}
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">
@@ -5070,7 +5619,7 @@ export function TwoFactorCard({ twoFactorEnabled, isGlobalAdmin }: { twoFactorEn
             <Dialog open={resetOpen} onOpenChange={setResetOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   {t('resetViaBackupCta')}
                 </Button>
               </DialogTrigger>
@@ -5081,10 +5630,18 @@ export function TwoFactorCard({ twoFactorEnabled, isGlobalAdmin }: { twoFactorEn
                 </DialogHeader>
                 <div className="space-y-1">
                   <Label htmlFor="backup-code">{t('backupCodeLabel')}</Label>
-                  <Input id="backup-code" value={backupCode} onChange={(e) => setBackupCode(e.target.value.toUpperCase())} placeholder="ABCD-1234" />
+                  <Input
+                    id="backup-code"
+                    value={backupCode}
+                    onChange={(e) => setBackupCode(e.target.value.toUpperCase())}
+                    placeholder="ABCD-1234"
+                  />
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => reset.mutate({ backupCode })} disabled={!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(backupCode) || reset.isPending}>
+                  <Button
+                    onClick={() => reset.mutate({ backupCode })}
+                    disabled={!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(backupCode) || reset.isPending}
+                  >
                     {t('submit')}
                   </Button>
                 </DialogFooter>
@@ -5112,7 +5669,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -5125,7 +5688,11 @@ export function BackupCodesCard({ remaining }: { remaining: number }) {
   const [codes, setCodes] = useState<string[] | null>(null);
 
   const regen = trpc.account.security.regenerateBackupCodes.useMutation({
-    onSuccess: (res) => { setCodes(res.codes); setPwd(''); setTotp(''); },
+    onSuccess: (res) => {
+      setCodes(res.codes);
+      setPwd('');
+      setTotp('');
+    },
     onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
   });
 
@@ -5140,8 +5707,16 @@ export function BackupCodesCard({ remaining }: { remaining: number }) {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">{t('remaining', { count: remaining })}</p>
-        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCodes(null); }}>
-          <DialogTrigger asChild><Button>{t('regenerateCta')}</Button></DialogTrigger>
+        <Dialog
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) setCodes(null);
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button>{t('regenerateCta')}</Button>
+          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t('regenerateDialogTitle')}</DialogTitle>
@@ -5152,24 +5727,48 @@ export function BackupCodesCard({ remaining }: { remaining: number }) {
                 <h3 className="text-sm font-medium">{t('newCodesTitle')}</h3>
                 <p className="text-xs text-muted-foreground">{t('newCodesDescription')}</p>
                 <ul className="grid grid-cols-2 gap-1 font-mono text-sm">
-                  {codes.map((c) => <li key={c} className="rounded-md bg-muted px-2 py-1">{c}</li>)}
+                  {codes.map((c) => (
+                    <li key={c} className="rounded-md bg-muted px-2 py-1">
+                      {c}
+                    </li>
+                  ))}
                 </ul>
               </div>
             ) : (
               <form
                 className="space-y-3"
-                onSubmit={(e) => { e.preventDefault(); regen.mutate({ currentPassword: pwd, totpCode: totp }); }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  regen.mutate({ currentPassword: pwd, totpCode: totp });
+                }}
               >
                 <div className="space-y-1">
                   <Label htmlFor="regen-pwd">{t('passwordLabel')}</Label>
-                  <Input id="regen-pwd" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoComplete="current-password" />
+                  <Input
+                    id="regen-pwd"
+                    type="password"
+                    value={pwd}
+                    onChange={(e) => setPwd(e.target.value)}
+                    autoComplete="current-password"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="regen-totp">{t('totpLabel')}</Label>
-                  <Input id="regen-totp" inputMode="numeric" maxLength={6} value={totp} onChange={(e) => setTotp(e.target.value)} />
+                  <Input
+                    id="regen-totp"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={totp}
+                    onChange={(e) => setTotp(e.target.value)}
+                  />
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={pwd.length === 0 || totp.length !== 6 || regen.isPending}>{t('submit')}</Button>
+                  <Button
+                    type="submit"
+                    disabled={pwd.length === 0 || totp.length !== 6 || regen.isPending}
+                  >
+                    {t('submit')}
+                  </Button>
                 </DialogFooter>
               </form>
             )}
@@ -5200,6 +5799,7 @@ git commit -m "feat(phase-1c): /account/security page with 4 cards (password, se
 ## Task 17 : Permissions matrix harness
 
 **Files:**
+
 - Create: `tests/integration/_helpers/auth-ctx.ts`
 - Create: `tests/integration/permissions-matrix.test.ts`
 
@@ -5285,39 +5885,66 @@ interface MatrixCase {
   call: (caller: ReturnType<typeof appRouter.createCaller>, ctx: RoleCtx) => Promise<unknown>;
 }
 
-const ANY_DENY = { GLOBAL_ADMIN: 'deny', LIBRARY_ADMIN: 'deny', MEMBER: 'deny', ANON: 'deny', PENDING_2FA: 'deny' } as const;
+const ANY_DENY = {
+  GLOBAL_ADMIN: 'deny',
+  LIBRARY_ADMIN: 'deny',
+  MEMBER: 'deny',
+  ANON: 'deny',
+  PENDING_2FA: 'deny',
+} as const;
 const GLOBAL_ONLY = { ...ANY_DENY, GLOBAL_ADMIN: 'allow' } as const;
-const AUTHED_ONLY = { ...ANY_DENY, GLOBAL_ADMIN: 'allow', LIBRARY_ADMIN: 'allow', MEMBER: 'allow' } as const;
+const AUTHED_ONLY = {
+  ...ANY_DENY,
+  GLOBAL_ADMIN: 'allow',
+  LIBRARY_ADMIN: 'allow',
+  MEMBER: 'allow',
+} as const;
 
 const matrix: MatrixCase[] = [
   // admin.users — global admin only
   {
-    router: 'admin.users', procedure: 'list', byRole: GLOBAL_ONLY,
+    router: 'admin.users',
+    procedure: 'list',
+    byRole: GLOBAL_ONLY,
     call: (c) => c.admin.users.list({ limit: 20 }),
   },
   {
-    router: 'admin.users', procedure: 'suspend', byRole: GLOBAL_ONLY,
-    call: (c) => c.admin.users.suspend({ id: 'cln00000000000000000000', reason: 'm' }).catch((e) => { if (e instanceof TRPCError && e.code !== 'FORBIDDEN' && e.code !== 'UNAUTHORIZED') throw e; throw e; }),
+    router: 'admin.users',
+    procedure: 'suspend',
+    byRole: GLOBAL_ONLY,
+    call: (c) =>
+      c.admin.users.suspend({ id: 'cln00000000000000000000', reason: 'm' }).catch((e) => {
+        if (e instanceof TRPCError && e.code !== 'FORBIDDEN' && e.code !== 'UNAUTHORIZED') throw e;
+        throw e;
+      }),
   },
   // ... (Step 17.3 ajoute les ~28 lignes restantes)
 
   // account.profile — authed
   {
-    router: 'account.profile', procedure: 'get', byRole: AUTHED_ONLY,
+    router: 'account.profile',
+    procedure: 'get',
+    byRole: AUTHED_ONLY,
     call: (c) => c.account.profile.get(),
   },
   {
-    router: 'account.profile', procedure: 'update', byRole: AUTHED_ONLY,
+    router: 'account.profile',
+    procedure: 'update',
+    byRole: AUTHED_ONLY,
     call: (c) => c.account.profile.update({ displayName: 'X', locale: 'fr' }),
   },
 
   // account.security — authed
   {
-    router: 'account.security', procedure: 'listSessions', byRole: AUTHED_ONLY,
+    router: 'account.security',
+    procedure: 'listSessions',
+    byRole: AUTHED_ONLY,
     call: (c) => c.account.security.listSessions(),
   },
   {
-    router: 'account.security', procedure: 'revokeAllOtherSessions', byRole: AUTHED_ONLY,
+    router: 'account.security',
+    procedure: 'revokeAllOtherSessions',
+    byRole: AUTHED_ONLY,
     call: (c) => c.account.security.revokeAllOtherSessions(),
   },
 ];
@@ -5327,7 +5954,13 @@ describe('permissions matrix', () => {
 
   for (const tc of matrix) {
     describe(`${tc.router}.${tc.procedure}`, () => {
-      for (const role of ['GLOBAL_ADMIN', 'LIBRARY_ADMIN', 'MEMBER', 'ANON', 'PENDING_2FA'] as RoleKey[]) {
+      for (const role of [
+        'GLOBAL_ADMIN',
+        'LIBRARY_ADMIN',
+        'MEMBER',
+        'ANON',
+        'PENDING_2FA',
+      ] as RoleKey[]) {
         test(`${role} → ${tc.byRole[role]}`, async () => {
           const ctx = await makeCtxForRole(role);
           const caller = appRouter.createCaller(ctx);
@@ -5362,9 +5995,16 @@ describe('permissions matrix', () => {
 
 function listProtectedProcedures(router: typeof appRouter, prefix = ''): string[] {
   const out: string[] = [];
-  const def = (router as unknown as { _def?: { procedures?: Record<string, unknown>; record?: Record<string, unknown> } })._def;
+  const def = (
+    router as unknown as {
+      _def?: { procedures?: Record<string, unknown>; record?: Record<string, unknown> };
+    }
+  )._def;
   // tRPC v11 stores procedures keyed; iterate
-  const procedures = (def?.procedures ?? {}) as Record<string, { _def?: { meta?: { protected?: boolean } } }>;
+  const procedures = (def?.procedures ?? {}) as Record<
+    string,
+    { _def?: { meta?: { protected?: boolean } } }
+  >;
   for (const [name] of Object.entries(procedures)) {
     out.push(name);
   }
@@ -5372,7 +6012,9 @@ function listProtectedProcedures(router: typeof appRouter, prefix = ''): string[
   const record = (def?.record ?? {}) as Record<string, unknown>;
   for (const [name, child] of Object.entries(record)) {
     if (child && typeof child === 'object' && '_def' in (child as object)) {
-      out.push(...listProtectedProcedures(child as typeof appRouter, prefix ? `${prefix}.${name}` : name));
+      out.push(
+        ...listProtectedProcedures(child as typeof appRouter, prefix ? `${prefix}.${name}` : name),
+      );
     }
   }
   return out.map((p) => (prefix ? `${prefix}.${p}` : p));
@@ -5421,6 +6063,7 @@ git commit -m "feat(phase-1c): permissions matrix harness with anti-drift guard"
 ## Task 18 : E2E Playwright specs (5)
 
 **Files:**
+
 - Create: `tests/e2e/admin-suspend-user.spec.ts`
 - Create: `tests/e2e/admin-create-library-and-add-member.spec.ts`
 - Create: `tests/e2e/account-change-password-others-killed.spec.ts`
@@ -5611,7 +6254,12 @@ test('user re-enrolls 2FA via backup code', async ({ page }) => {
     },
   });
   await db.twoFactorSecret.create({
-    data: { userId: user.id, secretCipher: encryptSecret(secret), confirmedAt: new Date(), backupCodes: hashes },
+    data: {
+      userId: user.id,
+      secretCipher: encryptSecret(secret),
+      confirmedAt: new Date(),
+      backupCodes: hashes,
+    },
   });
 
   await page.goto('/login');
@@ -5681,6 +6329,7 @@ pnpm test:e2e -- --reporter=list tests/e2e/admin-suspend-user.spec.ts tests/e2e/
 ```
 
 Expected: 5 specs PASS. Si fail :
+
 - Vérifier que helpers `submitLogin`, `submitOtpAndWait` existent dans `tests/e2e/helpers/` (sinon créer ou reprendre depuis Phase 1B).
 - Vérifier que la session storage Playwright est bien isolée par context.
 
@@ -5696,6 +6345,7 @@ git commit -m "test(phase-1c): 5 E2E specs covering admin + account flows"
 ## Task 19 : Doc matrice + runbook DBA + WCAG polish
 
 **Files:**
+
 - Create: `docs/permissions-matrix.md`
 - Create: `docs/runbooks/disable-2fa-global-admin.md`
 - Create: `docs/runbooks/README.md`
@@ -5715,19 +6365,19 @@ Légende : ✓ allow · ✗ deny · `(*)` voir contraintes au bas de table.
 
 ## admin.users (global admin only)
 
-| Procedure | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
-|---|---|---|---|---|---|
-| list | ✓ | ✗ | ✗ | ✗ | ✗ |
-| get | ✓ | ✗ | ✗ | ✗ | ✗ |
-| suspend | ✓ (1) | ✗ | ✗ | ✗ | ✗ |
-| reactivate | ✓ | ✗ | ✗ | ✗ | ✗ |
-| delete | ✓ (1)(2) | ✗ | ✗ | ✗ | ✗ |
-| changeRole | ✓ (1) | ✗ | ✗ | ✗ | ✗ |
-| resetTwoFactor | ✓ (3) | ✗ | ✗ | ✗ | ✗ |
-| invitations.list | ✓ | ✗ | ✗ | ✗ | ✗ |
-| invitations.revoke | ✓ | ✗ | ✗ | ✗ | ✗ |
-| sessions.list | ✓ | ✗ | ✗ | ✗ | ✗ |
-| audit.list | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Procedure          | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
+| ------------------ | ------------ | ------------- | ------ | ---- | ----------- |
+| list               | ✓            | ✗             | ✗      | ✗    | ✗           |
+| get                | ✓            | ✗             | ✗      | ✗    | ✗           |
+| suspend            | ✓ (1)        | ✗             | ✗      | ✗    | ✗           |
+| reactivate         | ✓            | ✗             | ✗      | ✗    | ✗           |
+| delete             | ✓ (1)(2)     | ✗             | ✗      | ✗    | ✗           |
+| changeRole         | ✓ (1)        | ✗             | ✗      | ✗    | ✗           |
+| resetTwoFactor     | ✓ (3)        | ✗             | ✗      | ✗    | ✗           |
+| invitations.list   | ✓            | ✗             | ✗      | ✗    | ✗           |
+| invitations.revoke | ✓            | ✗             | ✗      | ✗    | ✗           |
+| sessions.list      | ✓            | ✗             | ✗      | ✗    | ✗           |
+| audit.list         | ✓            | ✗             | ✗      | ✗    | ✗           |
 
 (1) Refuse si target = self ou si target est le **dernier GLOBAL_ADMIN actif**.
 (2) Exige `confirmEmail` matching strictement l'email cible (anti-mistake).
@@ -5735,19 +6385,19 @@ Légende : ✓ allow · ✗ deny · `(*)` voir contraintes au bas de table.
 
 ## admin.libraries (global admin only)
 
-| Procedure | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
-|---|---|---|---|---|---|
-| list | ✓ | ✗ | ✗ | ✗ | ✗ |
-| get | ✓ | ✗ | ✗ | ✗ | ✗ |
-| create | ✓ | ✗ | ✗ | ✗ | ✗ |
-| rename | ✓ (4) | ✗ | ✗ | ✗ | ✗ |
-| archive | ✓ | ✗ | ✗ | ✗ | ✗ |
-| unarchive | ✓ | ✗ | ✗ | ✗ | ✗ |
-| members.list | ✓ | ✗ | ✗ | ✗ | ✗ |
-| members.add | ✓ (4) | ✗ | ✗ | ✗ | ✗ |
-| members.remove | ✓ (4)(5) | ✗ | ✗ | ✗ | ✗ |
-| members.changeRole | ✓ (4)(5) | ✗ | ✗ | ✗ | ✗ |
-| members.updateFlags | ✓ (4)(6) | ✗ | ✗ | ✗ | ✗ |
+| Procedure           | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
+| ------------------- | ------------ | ------------- | ------ | ---- | ----------- |
+| list                | ✓            | ✗             | ✗      | ✗    | ✗           |
+| get                 | ✓            | ✗             | ✗      | ✗    | ✗           |
+| create              | ✓            | ✗             | ✗      | ✗    | ✗           |
+| rename              | ✓ (4)        | ✗             | ✗      | ✗    | ✗           |
+| archive             | ✓            | ✗             | ✗      | ✗    | ✗           |
+| unarchive           | ✓            | ✗             | ✗      | ✗    | ✗           |
+| members.list        | ✓            | ✗             | ✗      | ✗    | ✗           |
+| members.add         | ✓ (4)        | ✗             | ✗      | ✗    | ✗           |
+| members.remove      | ✓ (4)(5)     | ✗             | ✗      | ✗    | ✗           |
+| members.changeRole  | ✓ (4)(5)     | ✗             | ✗      | ✗    | ✗           |
+| members.updateFlags | ✓ (4)(6)     | ✗             | ✗      | ✗    | ✗           |
 
 (4) Refuse si library archived (`archivedAt != null`).
 (5) Refuse si retire/rétrograde le **dernier `LIBRARY_ADMIN`** de la biblio.
@@ -5756,20 +6406,20 @@ Légende : ✓ allow · ✗ deny · `(*)` voir contraintes au bas de table.
 ## account.profile (authed)
 
 | Procedure | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
-|---|---|---|---|---|---|
-| get | ✓ | ✓ | ✓ | ✗ | ✗ |
-| update | ✓ | ✓ | ✓ | ✗ | ✗ |
+| --------- | ------------ | ------------- | ------ | ---- | ----------- |
+| get       | ✓            | ✓             | ✓      | ✗    | ✗           |
+| update    | ✓            | ✓             | ✓      | ✗    | ✗           |
 
 ## account.security (authed)
 
-| Procedure | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
-|---|---|---|---|---|---|
-| changePassword | ✓ (7) | ✓ (7) | ✓ (7) | ✗ | ✗ |
-| listSessions | ✓ | ✓ | ✓ | ✗ | ✗ |
-| revokeSession | ✓ (8) | ✓ (8) | ✓ (8) | ✗ | ✗ |
-| revokeAllOtherSessions | ✓ | ✓ | ✓ | ✗ | ✗ |
-| regenerateBackupCodes | ✓ (9) | ✓ (9) | ✓ (9) | ✗ | ✗ |
-| startReEnrollWithBackup | ✗ (10) | ✓ (9) | ✓ (9) | ✗ | ✗ |
+| Procedure               | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
+| ----------------------- | ------------ | ------------- | ------ | ---- | ----------- |
+| changePassword          | ✓ (7)        | ✓ (7)         | ✓ (7)  | ✗    | ✗           |
+| listSessions            | ✓            | ✓             | ✓      | ✗    | ✗           |
+| revokeSession           | ✓ (8)        | ✓ (8)         | ✓ (8)  | ✗    | ✗           |
+| revokeAllOtherSessions  | ✓            | ✓             | ✓      | ✗    | ✗           |
+| regenerateBackupCodes   | ✓ (9)        | ✓ (9)         | ✓ (9)  | ✗    | ✗           |
+| startReEnrollWithBackup | ✗ (10)       | ✓ (9)         | ✓ (9)  | ✗    | ✗           |
 
 (7) Refuse `newPassword === currentPassword`. Verify password actuel ; échec → log Pino, rate-limiter `passwordChangeLimiter` 5/h. Kill toutes sessions sauf courante au succès.
 (8) Refuse session courante (utiliser logout). Anti-IDOR : session d'un autre user → `NOT_FOUND` (pas `FORBIDDEN`).
@@ -5785,7 +6435,7 @@ Routers `auth.*`, `invitation.*`, `password.*` couverts par leurs propres tests 
 
 Créer `docs/runbooks/disable-2fa-global-admin.md` :
 
-```markdown
+````markdown
 # Runbook — Reset 2FA d'un GLOBAL_ADMIN (cas hors-bande)
 
 **Quand utiliser ce runbook** : un `GLOBAL_ADMIN` a perdu son TOTP **et** ses backup codes, et il n'y a pas d'autre `GLOBAL_ADMIN` actif pour faire le reset via panel admin (qui est de toute façon bloqué pour les global admins, par sécurité).
@@ -5802,6 +6452,7 @@ Créer `docs/runbooks/disable-2fa-global-admin.md` :
 ssh deploy@biblioshare.example
 docker exec -it biblioshare-postgres psql -U biblioshare -d biblioshare
 ```
+````
 
 ```sql
 -- 1. Identifier le user (remplacer email)
@@ -5836,6 +6487,7 @@ VALUES (
 ## Trace post-op
 
 Coller dans le journal d'incident :
+
 - Date + heure UTC
 - Identité du DBA
 - userId concerné
@@ -5845,7 +6497,8 @@ Coller dans le journal d'incident :
 ## Pourquoi pas de procédure UI
 
 Permettre à un `GLOBAL_ADMIN` de reset le 2FA d'un autre `GLOBAL_ADMIN` via UI ouvre un risque privilege escalation : un admin compromis pourrait désactiver le 2FA d'un autre admin et compromettre son compte. Le hors-bande DBA force une intervention humaine traçable.
-```
+
+````
 
 - [ ] **Step 19.3: Runbook README**
 
@@ -5864,7 +6517,7 @@ Procédures opérationnelles pour cas hors-bande. Chaque runbook inclut pré-req
 
 - `hard-delete-library.md` — suppression dure d'une bibliothèque archived (Phase 2+).
 - `restore-from-backup.md` — restauration borgbackup (Phase 8).
-```
+````
 
 - [ ] **Step 19.4: Mobile burger pour AdminHeader/AccountHeader**
 
@@ -5914,6 +6567,7 @@ export function AdminHeader() {
 Et adapter le layout pour cacher la sidebar desktop sous `lg:` (déjà fait Task 7.3 / Task 13.9 via `lg:flex-row`).
 
 Si le composant `Sheet` n'est pas encore installé dans `src/components/ui/`, l'ajouter via shadcn CLI :
+
 ```bash
 pnpm dlx shadcn@latest add sheet
 ```
@@ -5925,6 +6579,7 @@ pnpm dev
 ```
 
 Naviguer `/admin/users`, `/admin/libraries`, `/account`, `/account/security` :
+
 - Tab nav : focus visible, ordre logique.
 - `aria-current="page"` présent sur item sidebar actif (ouvrir devtools, inspecter).
 - Mobile 375px : drawer ouvre/ferme via burger.
@@ -5946,6 +6601,7 @@ git commit -m "docs(phase-1c): permissions matrix + DBA runbook + mobile burger 
 ## Task 20 : Closure (CI sanity, memory, tag, PR)
 
 **Files:**
+
 - Modify: `.claude/projects/.../memory/MEMORY.md` and `project_phase_1c_completed.md` (added post-merge)
 
 - [ ] **Step 20.1: Sanity check global**
@@ -6033,6 +6689,7 @@ name: Phase 1C — clôture
 description: Phase 1C (panel admin + /account self-service + matrice rôles) clôturée 2026-MM-DD, PR #XX mergée, tag phase-1c-complete sur <commit>.
 type: project
 ---
+
 # Phase 1C — clôture
 
 **Date** : 2026-MM-DD
@@ -6042,6 +6699,7 @@ type: project
 **CI finale** : 5/5 verts
 
 ## Livrables
+
 - Migration Prisma : `Session.userAgentLabel`, `Library.archivedAt`, FK `Invitation.invitedById` → SetNull
 - 4 routers : `admin.users`, `admin.libraries`, `account.profile`, `account.security`
 - Helpers : `lib/{user-admin,library-admin,user-agent,request-meta}.ts`, rate-limiters 1C
@@ -6052,6 +6710,7 @@ type: project
 - Doc : `docs/permissions-matrix.md`, `docs/runbooks/disable-2fa-global-admin.md`
 
 ## Suivis non-bloquants Phase 1D
+
 - Drift CI guard `src/emails/` ↔ `worker/emails/` (reporté Phase 1B).
 - Smoke staging Coolify Resend DNS (pré-prod).
 - Lint rule custom Prisma scope (annotations privées) — déclenchera quand router books arrivera.
@@ -6059,6 +6718,7 @@ type: project
 - Audit log viewer global — Phase 2/3.
 
 ## Patterns établis (à reproduire Phase 1D+)
+
 - Helpers ctx test partagés `tests/integration/_helpers/auth-ctx.ts` : `makeCtxForRole(role)`.
 - Composite PK `LibraryMember` : utiliser `userId_libraryId` Prisma compound where.
 - Soft-delete pattern : champ `archivedAt: DateTime?` + helper `assertNotArchived`.
@@ -6066,11 +6726,13 @@ type: project
 - Anti-drift matrice : test guard introspecte `appRouter._def`.
 
 ## Stats vélocité
+
 - Plan : `docs/superpowers/plans/2026-04-28-phase-1c-admin-account.md`
 - 21 tasks principales (Task 0 à 20).
 - ~9-11 jours wall-time réalisés.
 
 ## Prochaine étape
+
 Phase 1D ou Phase 2 selon priorisation : router `library.books` (catalogue + upload + lecture), workflow physique (PhysicalRequest), liseuse en ligne minimale. Spec à écrire.
 ```
 
@@ -6097,6 +6759,7 @@ Si tout OK : Phase 1C officiellement clôturée.
 ## Annexe — checklist transversale CI
 
 Pour chaque task qui ajoute un fichier source impactant le build :
+
 - [ ] `pnpm typecheck` PASS
 - [ ] `pnpm lint` PASS
 - [ ] `pnpm format:check` PASS (sinon `pnpm prettier --write .`)
@@ -6115,12 +6778,7 @@ Pour chaque task qui ajoute un fichier source impactant le build :
 ## Self-Review checkpoints (pour l'implémenteur)
 
 À chaque transition de module (0→1, 1→2, etc.) :
+
 1. Lancer `pnpm test:integration` complet, pas seulement les fichiers du module courant.
 2. Vérifier que la matrice `tests/integration/permissions-matrix.test.ts` (Module 4) inclut les nouvelles procedures du module qui vient de finir.
 3. Si une procedure n'est pas dans la matrice → ajouter la ligne avant de passer au module suivant. Le test anti-drift le rappellera de toute façon.
-
-
-
-
-
-

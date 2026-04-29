@@ -39,16 +39,17 @@ Module 4 (Matrice + closure) ──────── 1.5-2 jours
 
 ### 2.2 Modifications schéma Prisma
 
-| Model | Champ | Type | Migration |
-|---|---|---|---|
+| Model     | Champ            | Type                                            | Migration                      |
+| --------- | ---------------- | ----------------------------------------------- | ------------------------------ |
 | `Session` | `userAgentLabel` | `String?` (max 64 chars, nullable, no backfill) | `add_session_user_agent_label` |
-| `Library` | `archivedAt` | `DateTime?` (nullable) | `add_library_archived_at` |
+| `Library` | `archivedAt`     | `DateTime?` (nullable)                          | `add_library_archived_at`      |
 
 **Rationale `userAgentLabel`** : permet l'UX « Chrome on macOS » sans toucher au hash IP/UA (RGPD). Sessions pré-1C affichent `Unknown device`, acceptable.
 
 **Rationale `archivedAt`** : decision soft-delete. Une biblio peut contenir Books, Members, DownloadLogs → cascade hard = perte audit. Archive = read-only, restaurable, sans cascade. Suppression dure éventuelle = runbook DBA Phase 2+.
 
 **Migration corrective conditionnelle** (Module 1) : audit des FK `onDelete` du model `User` :
+
 - `Invitation.invitedById` / `consumedById` doivent être `SetNull` (préserver audit invitation).
 - `Book.uploadedById` doit être `SetNull` (livres restent).
 - `AuditLog.actorId` doit être `SetNull` (immutabilité audit).
@@ -95,12 +96,12 @@ Si l'état actuel ne correspond pas, migration `fix_fk_on_delete_for_user_deleti
 
 ### 2.4 Routers tRPC
 
-| Router | Procedures | Protection |
-|---|---|---|
-| `admin.users` | `list`, `get`, `suspend`, `reactivate`, `delete`, `changeRole`, `invitations.list`, `invitations.revoke`, `resetTwoFactor` | `globalAdminProcedure` (existant) |
-| `admin.libraries` | `list`, `get`, `create`, `rename`, `archive`, `unarchive`, `members.list`, `members.add`, `members.remove`, `members.changeRole`, `members.updateFlags` | `globalAdminProcedure` |
-| `account.profile` | `get`, `update` | `authedProcedure` (existant) |
-| `account.security` | `changePassword`, `listSessions`, `revokeSession`, `revokeAllOtherSessions`, `regenerateBackupCodes`, `startReEnrollWithBackup` | `authedProcedure` |
+| Router             | Procedures                                                                                                                                              | Protection                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `admin.users`      | `list`, `get`, `suspend`, `reactivate`, `delete`, `changeRole`, `invitations.list`, `invitations.revoke`, `resetTwoFactor`                              | `globalAdminProcedure` (existant) |
+| `admin.libraries`  | `list`, `get`, `create`, `rename`, `archive`, `unarchive`, `members.list`, `members.add`, `members.remove`, `members.changeRole`, `members.updateFlags` | `globalAdminProcedure`            |
+| `account.profile`  | `get`, `update`                                                                                                                                         | `authedProcedure` (existant)      |
+| `account.security` | `changePassword`, `listSessions`, `revokeSession`, `revokeAllOtherSessions`, `regenerateBackupCodes`, `startReEnrollWithBackup`                         | `authedProcedure`                 |
 
 Enregistrement dans `src/server/trpc/routers/_app.ts` à côté de `auth`, `invitation`, `password`.
 
@@ -143,27 +144,29 @@ Enregistrement dans `src/server/trpc/routers/_app.ts` à côté de `auth`, `invi
 
 ### 4.1 Procedures `admin.users`
 
-| Procedure | Input | Behaviour | Audit |
-|---|---|---|---|
-| `list` | `{ q?, status?, role?, cursor?, limit: 20 }` | Pagination cursor (cuid). Tri `createdAt DESC`. `q` matche `email` + `displayName` (citext). | — |
-| `get` | `{ id }` | User + counts (sessions, invitations, libraryMembers). 2FA flag inclus. | — |
-| `suspend` | `{ id, reason: string (3..500) }` | `User.status = SUSPENDED` + révoque sessions actives via `revokeAllSessionsForUser(id)`. Refus si `id === ctx.user.id`. Refus si dernier `GLOBAL_ADMIN` actif. | `admin.user.suspended` |
-| `reactivate` | `{ id }` | `User.status = ACTIVE`. Idempotent. | `admin.user.reactivated` |
-| `delete` | `{ id, confirmEmail }` | `confirmEmail === user.email` requis. Refus self. Refus dernier GLOBAL_ADMIN. Cascade FK auditée (cf. 2.2). | `admin.user.deleted` |
-| `changeRole` | `{ id, newRole }` | Refus self. Refus rétrograde dernier GLOBAL_ADMIN. Pas de session kill (refresh à la prochaine request). | `admin.user.role_changed` |
-| `invitations.list` | `{ userId }` | Invitations créées par ce user. | — |
-| `invitations.revoke` | `{ invitationId }` | Réutilise `lib/invitations.ts:revokeInvitation` Phase 1B. | `auth.invitation.revoked` |
-| `resetTwoFactor` | `{ id, reason }` | Force-clear 2FA + kill toutes sessions du target. **Refus si target = `GLOBAL_ADMIN`** (runbook DBA). | `admin.user.two_factor_reset` |
+| Procedure            | Input                                        | Behaviour                                                                                                                                                      | Audit                         |
+| -------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `list`               | `{ q?, status?, role?, cursor?, limit: 20 }` | Pagination cursor (cuid). Tri `createdAt DESC`. `q` matche `email` + `displayName` (citext).                                                                   | —                             |
+| `get`                | `{ id }`                                     | User + counts (sessions, invitations, libraryMembers). 2FA flag inclus.                                                                                        | —                             |
+| `suspend`            | `{ id, reason: string (3..500) }`            | `User.status = SUSPENDED` + révoque sessions actives via `revokeAllSessionsForUser(id)`. Refus si `id === ctx.user.id`. Refus si dernier `GLOBAL_ADMIN` actif. | `admin.user.suspended`        |
+| `reactivate`         | `{ id }`                                     | `User.status = ACTIVE`. Idempotent.                                                                                                                            | `admin.user.reactivated`      |
+| `delete`             | `{ id, confirmEmail }`                       | `confirmEmail === user.email` requis. Refus self. Refus dernier GLOBAL_ADMIN. Cascade FK auditée (cf. 2.2).                                                    | `admin.user.deleted`          |
+| `changeRole`         | `{ id, newRole }`                            | Refus self. Refus rétrograde dernier GLOBAL_ADMIN. Pas de session kill (refresh à la prochaine request).                                                       | `admin.user.role_changed`     |
+| `invitations.list`   | `{ userId }`                                 | Invitations créées par ce user.                                                                                                                                | —                             |
+| `invitations.revoke` | `{ invitationId }`                           | Réutilise `lib/invitations.ts:revokeInvitation` Phase 1B.                                                                                                      | `auth.invitation.revoked`     |
+| `resetTwoFactor`     | `{ id, reason }`                             | Force-clear 2FA + kill toutes sessions du target. **Refus si target = `GLOBAL_ADMIN`** (runbook DBA).                                                          | `admin.user.two_factor_reset` |
 
 ### 4.2 Helpers serveur
 
 `src/lib/user-admin.ts` :
+
 - `assertNotLastGlobalAdmin(userId, role)` — utilisé par `suspend`, `delete`, `changeRole`.
 - `revokeAllSessionsForUser(userId, exceptSessionId?: string)` — extraction/réutilisation du pattern Phase 1A.
 
 ### 4.3 UI `/admin/users`
 
 Routes :
+
 - `/admin/users` — liste (server component) : filtres + table paginée + lien « Inviter » (vers `/admin/users/invite` Phase 1B).
 - `/admin/users/[id]` — fiche détail. Tabs : Actions / Sessions / Invitations / Audit excerpt (10 dernières entrées avec `actorId === userId` ou `targetId === userId`).
 
@@ -187,23 +190,24 @@ Champs éditables : `name` (3..120), `description` (0..1000). `slug` généré a
 
 ### 5.2 Procedures `admin.libraries`
 
-| Procedure | Input | Behaviour | Audit |
-|---|---|---|---|
-| `list` | `{ q?, includeArchived?: boolean, cursor?, limit: 20 }` | Pagination. `q` sur `name` + `slug`. | — |
-| `get` | `{ id }` | Library + counts (members, books) + `archivedAt`. | — |
-| `create` | `{ name, description? }` | Slug unique généré (boucle `-2`/`-3`/...). | `admin.library.created` |
-| `rename` | `{ id, name, description? }` | Refus si archived. Slug figé. | `admin.library.renamed` |
-| `archive` | `{ id, reason }` | Soft-delete. Idempotent. | `admin.library.archived` |
-| `unarchive` | `{ id }` | Restaure. | `admin.library.unarchived` |
-| `members.list` | `{ libraryId, q?, cursor?, limit: 20 }` | Joint user (email, displayName) + role + flags. | — |
-| `members.add` | `{ libraryId, userId, role, flags }` | Refus si déjà membre (409). Refus si library archived. Suggère uniquement users existants (pas d'invite ici). | `admin.member.added` |
-| `members.remove` | `{ membershipId }` | Refus si dernier `LIBRARY_ADMIN`. | `admin.member.removed` |
-| `members.changeRole` | `{ membershipId, newRole }` | Refus si rétrograde le dernier `LIBRARY_ADMIN`. | `admin.member.role_changed` |
-| `members.updateFlags` | `{ membershipId, flags }` | Au moins un flag à `true`. | `admin.member.flags_changed` |
+| Procedure             | Input                                                   | Behaviour                                                                                                     | Audit                        |
+| --------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `list`                | `{ q?, includeArchived?: boolean, cursor?, limit: 20 }` | Pagination. `q` sur `name` + `slug`.                                                                          | —                            |
+| `get`                 | `{ id }`                                                | Library + counts (members, books) + `archivedAt`.                                                             | —                            |
+| `create`              | `{ name, description? }`                                | Slug unique généré (boucle `-2`/`-3`/...).                                                                    | `admin.library.created`      |
+| `rename`              | `{ id, name, description? }`                            | Refus si archived. Slug figé.                                                                                 | `admin.library.renamed`      |
+| `archive`             | `{ id, reason }`                                        | Soft-delete. Idempotent.                                                                                      | `admin.library.archived`     |
+| `unarchive`           | `{ id }`                                                | Restaure.                                                                                                     | `admin.library.unarchived`   |
+| `members.list`        | `{ libraryId, q?, cursor?, limit: 20 }`                 | Joint user (email, displayName) + role + flags.                                                               | —                            |
+| `members.add`         | `{ libraryId, userId, role, flags }`                    | Refus si déjà membre (409). Refus si library archived. Suggère uniquement users existants (pas d'invite ici). | `admin.member.added`         |
+| `members.remove`      | `{ membershipId }`                                      | Refus si dernier `LIBRARY_ADMIN`.                                                                             | `admin.member.removed`       |
+| `members.changeRole`  | `{ membershipId, newRole }`                             | Refus si rétrograde le dernier `LIBRARY_ADMIN`.                                                               | `admin.member.role_changed`  |
+| `members.updateFlags` | `{ membershipId, flags }`                               | Au moins un flag à `true`.                                                                                    | `admin.member.flags_changed` |
 
 ### 5.3 Helpers serveur
 
 `src/lib/library-admin.ts` :
+
 - `assertLibraryNotArchived(libraryId)`
 - `assertNotLastLibraryAdmin(libraryId, membershipId)`
 - `slugifyUnique(name, db)` (max 100 itérations)
@@ -211,6 +215,7 @@ Champs éditables : `name` (3..120), `description` (0..1000). `slug` généré a
 ### 5.4 UI `/admin/libraries`
 
 Routes :
+
 - `/admin/libraries` — liste avec status badge, action « Open », bouton « New library ».
 - `/admin/libraries/[slug]` — fiche détail. Tabs : Settings / Members / Audit excerpt.
 
@@ -238,10 +243,10 @@ Clés `admin.libraries.*` (~30) + `admin.libraries.members.*` (~20).
 
 ### 6.1 Router `account.profile`
 
-| Procedure | Input | Behaviour | Audit |
-|---|---|---|---|
-| `get` | — | `{ id, email, displayName, locale, role, status, createdAt, twoFactorEnabled }`. Email read-only. | — |
-| `update` | `{ displayName: string (1..120), locale: 'fr' \| 'en' }` | Pas de re-auth (champs non-sensibles). | `account.profile.updated` (metadata = `{ before, after }`) |
+| Procedure | Input                                                    | Behaviour                                                                                         | Audit                                                      |
+| --------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `get`     | —                                                        | `{ id, email, displayName, locale, role, status, createdAt, twoFactorEnabled }`. Email read-only. | —                                                          |
+| `update`  | `{ displayName: string (1..120), locale: 'fr' \| 'en' }` | Pas de re-auth (champs non-sensibles).                                                            | `account.profile.updated` (metadata = `{ before, after }`) |
 
 `email` non éditable en 1C (changement = flow séparé Phase 2).
 
@@ -267,7 +272,9 @@ Renvoie array `{ id, createdAt, lastSeenAt, userAgentLabel, isCurrent }`. Tri : 
 #### `revokeSession`
 
 ```ts
-input: { sessionId }
+input: {
+  sessionId;
+}
 ```
 
 Refus si `sessionId === ctx.session.id` (utiliser logout). Refus si `session.userId !== ctx.user.id` → **`NOT_FOUND`** (anti-IDOR, pas de leak existence). Audit `auth.session.revoked_self`.
@@ -279,7 +286,9 @@ Pas d'input. Renvoie `{ revokedCount }`. Audit `auth.session.revoked_all_others`
 #### `regenerateBackupCodes`
 
 ```ts
-input: { currentPassword, totpCode }
+input: {
+  (currentPassword, totpCode);
+}
 ```
 
 Refus si `twoFactorEnabled === false` (412). Verify password + TOTP. Génère 10 nouveaux codes, hash via `hashBackupCodes`, update `TwoFactorSecret.backupCodes`. **Affichage one-time dans la response** (jamais re-fetchable). Audit `auth.2fa.recovery_codes_regenerated_self`. Rate-limiter `backupCodesRegenLimiter` 5/h.
@@ -287,7 +296,9 @@ Refus si `twoFactorEnabled === false` (412). Verify password + TOTP. Génère 10
 #### `startReEnrollWithBackup`
 
 ```ts
-input: { backupCode: /^[A-Z0-9]{4}-[A-Z0-9]{4}$/ }
+input: {
+  backupCode: /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+}
 ```
 
 Refus si `User.role === 'GLOBAL_ADMIN'` (FORBIDDEN, runbook DBA). Refus si `twoFactorEnabled === false` (412). Verify backup code via `consumeBackupCode` (Phase 1A). Si valide : delete `TwoFactorSecret`, set `twoFactorEnabled = false`, `revokeAllSessionsForUser(userId, ctx.session.id)` (défensif). Audit `auth.2fa.reset_via_backup`. UI redirige vers `/2fa/setup` (flow enroll Phase 1A réutilisé). Rate-limiter `twoFactorReEnrollLimiter` 5/h.
@@ -295,6 +306,7 @@ Refus si `User.role === 'GLOBAL_ADMIN'` (FORBIDDEN, runbook DBA). Refus si `twoF
 ### 6.3 UI `/account`
 
 Layout sidebar (cohérent avec `/admin` après uniformisation décidée § Q8) :
+
 - Header minimal (BrandMark + LogoutButton).
 - Sidebar gauche : `Profil` (icon User Lucide) + `Sécurité` (icon Shield Lucide).
 - Mobile : drawer Sheet shadcn sous breakpoint `lg:`.
@@ -396,44 +408,44 @@ describe.each(matrix)('$router.$procedure', ({ ... }) => {
 
 ### 8.1 Mapping erreurs tRPC
 
-| Cas | Code | Audit ? |
-|---|---|---|
-| Pas de session | `UNAUTHORIZED` | non |
-| Rôle insuffisant | `FORBIDDEN` | **oui** (`permission.denied` middleware existant) |
-| Resource introuvable | `NOT_FOUND` | non |
-| Resource d'autre user (anti-IDOR) | `NOT_FOUND` (pas FORBIDDEN) | non |
-| Resource état invalide (archived, last-admin) | `PRECONDITION_FAILED` | non |
-| Conflit unicité (slug, déjà membre) | `CONFLICT` | non |
-| Validation Zod | `BAD_REQUEST` | non |
-| Rate-limit | `TOO_MANY_REQUESTS` | non |
-| Mauvais credentials | `UNAUTHORIZED` | **oui** sur cas sensibles (Phase 1A pattern) |
+| Cas                                           | Code                        | Audit ?                                           |
+| --------------------------------------------- | --------------------------- | ------------------------------------------------- |
+| Pas de session                                | `UNAUTHORIZED`              | non                                               |
+| Rôle insuffisant                              | `FORBIDDEN`                 | **oui** (`permission.denied` middleware existant) |
+| Resource introuvable                          | `NOT_FOUND`                 | non                                               |
+| Resource d'autre user (anti-IDOR)             | `NOT_FOUND` (pas FORBIDDEN) | non                                               |
+| Resource état invalide (archived, last-admin) | `PRECONDITION_FAILED`       | non                                               |
+| Conflit unicité (slug, déjà membre)           | `CONFLICT`                  | non                                               |
+| Validation Zod                                | `BAD_REQUEST`               | non                                               |
+| Rate-limit                                    | `TOO_MANY_REQUESTS`         | non                                               |
+| Mauvais credentials                           | `UNAUTHORIZED`              | **oui** sur cas sensibles (Phase 1A pattern)      |
 
 ### 8.2 Rate-limiters 1C
 
 Étendus dans `src/lib/rate-limit.ts` :
 
-| Nom | Limite | Clef | Cible |
-|---|---|---|---|
-| `passwordChangeLimiter` | 5/h | userId | `account.security.changePassword` |
-| `twoFactorReEnrollLimiter` | 5/h | userId | `account.security.startReEnrollWithBackup` |
-| `backupCodesRegenLimiter` | 5/h | userId | `account.security.regenerateBackupCodes` |
-| `accountProfileUpdateLimiter` | 30/h | userId | `account.profile.update` |
+| Nom                           | Limite | Clef   | Cible                                      |
+| ----------------------------- | ------ | ------ | ------------------------------------------ |
+| `passwordChangeLimiter`       | 5/h    | userId | `account.security.changePassword`          |
+| `twoFactorReEnrollLimiter`    | 5/h    | userId | `account.security.startReEnrollWithBackup` |
+| `backupCodesRegenLimiter`     | 5/h    | userId | `account.security.regenerateBackupCodes`   |
+| `accountProfileUpdateLimiter` | 30/h   | userId | `account.profile.update`                   |
 
 Pattern `rate-limiter-flexible` Redis (Phase 1A). Consume **avant** verif credentials (anti-timing leak).
 
 ### 8.3 Session invalidation — règles transversales
 
-| Action | Sessions tuées |
-|---|---|
-| `account.security.changePassword` | toutes sauf courante |
-| `account.security.revokeSession` | la session ciblée |
-| `account.security.revokeAllOtherSessions` | toutes sauf courante |
-| `account.security.startReEnrollWithBackup` | toutes sauf courante (défensif) |
-| `password.consume` (reset 1B) | toutes (re-login forcé) |
-| `admin.users.suspend` (target) | toutes du target |
-| `admin.users.delete` (target) | toutes (cascade Prisma) |
-| `admin.users.changeRole` (target) | aucune (refresh à la prochaine request) |
-| `admin.users.resetTwoFactor` (target) | toutes du target |
+| Action                                     | Sessions tuées                          |
+| ------------------------------------------ | --------------------------------------- |
+| `account.security.changePassword`          | toutes sauf courante                    |
+| `account.security.revokeSession`           | la session ciblée                       |
+| `account.security.revokeAllOtherSessions`  | toutes sauf courante                    |
+| `account.security.startReEnrollWithBackup` | toutes sauf courante (défensif)         |
+| `password.consume` (reset 1B)              | toutes (re-login forcé)                 |
+| `admin.users.suspend` (target)             | toutes du target                        |
+| `admin.users.delete` (target)              | toutes (cascade Prisma)                 |
+| `admin.users.changeRole` (target)          | aucune (refresh à la prochaine request) |
+| `admin.users.resetTwoFactor` (target)      | toutes du target                        |
 
 ### 8.4 Anti-énumération
 
@@ -456,6 +468,7 @@ PII : userId/libraryId (cuid OK), **jamais** email en clair, **jamais** password
 ### 8.7 Observabilité
 
 Pas de Prometheus/OTEL en 1C. Sources :
+
 - Pino logs structurés (Phase 0).
 - AuditLog Postgres (Phase 1A).
 - BullMQ stats via DLQ listener (Module 0).
@@ -464,16 +477,17 @@ Dashboard Grafana = Phase 8.
 
 ## 9. Tests — stratégie consolidée
 
-| Niveau | Volume | Couverture | Module(s) |
-|---|---|---|---|
-| Unit (Vitest) | ~12 fichiers, ~50 tests | Helpers, validators, rate-limiters | 0, 1, 2, 3 |
-| Integration (Vitest + Prisma test DB) | ~30 fichiers, ~150 tests | 1 par procedure (happy + unhappy), audit, sessions | 0, 1, 2, 3 |
-| Matrice (générée) | 1 fichier, ~150 tests | 30 procedures × 5 rôles, anti-drift | 4 |
-| Attack tests | ~3 fichiers, ~10 tests | IDOR, enum, timing budget changePassword (delta <80ms) | 1, 3 |
-| E2E (Playwright) | 5 specs, ~15 scénarios | Flux complets, multi-tab session kill | 4 |
-| **Total** | **~375 tests** | CI cible <8 min | — |
+| Niveau                                | Volume                   | Couverture                                             | Module(s)  |
+| ------------------------------------- | ------------------------ | ------------------------------------------------------ | ---------- |
+| Unit (Vitest)                         | ~12 fichiers, ~50 tests  | Helpers, validators, rate-limiters                     | 0, 1, 2, 3 |
+| Integration (Vitest + Prisma test DB) | ~30 fichiers, ~150 tests | 1 par procedure (happy + unhappy), audit, sessions     | 0, 1, 2, 3 |
+| Matrice (générée)                     | 1 fichier, ~150 tests    | 30 procedures × 5 rôles, anti-drift                    | 4          |
+| Attack tests                          | ~3 fichiers, ~10 tests   | IDOR, enum, timing budget changePassword (delta <80ms) | 1, 3       |
+| E2E (Playwright)                      | 5 specs, ~15 scénarios   | Flux complets, multi-tab session kill                  | 4          |
+| **Total**                             | **~375 tests**           | CI cible <8 min                                        | —          |
 
 **Patterns obligatoires** (héritage Phase 1B) :
+
 - `truncateAll()` partout integration.
 - `expiresAt:` + 64-char placeholders pour `ipHash`/`userAgentHash` dans seeds session.
 - `useActionState` from `react`.
@@ -499,13 +513,13 @@ errors.*                     ~10
 
 ## 11. Risques & mitigations
 
-| Risque | Probabilité | Impact | Mitigation |
-|---|---|---|---|
-| Cascade FK Prisma incorrecte sur `User` delete | Moyen | Élevé | Audit du schéma Module 1 → migration corrective. Tests integration vérifient survivants. |
-| Matrice testable lente (>30s) | Moyen | Faible | `test.concurrent` ou seed partagé par rôle si dépassement. |
-| Sidebar mobile drawer non responsive | Faible | Moyen | Tests Playwright mobile viewport (375px) sur les 5 specs. |
-| Reset 2FA via backup laisse fenêtre `twoFactorEnabled = false` sans re-enroll | Faible | Élevé | UI redirige hard vers `/2fa/setup`. Si fermeture onglet, bannière 7j Phase 1A re-déclenchée. Gap acceptable documenté. |
-| Drift audit union vs `AuditLog.action` Postgres | Faible | Moyen | `action` est `String` libre côté DB. Test integration vérifie chaque action écrit/lu identique. |
+| Risque                                                                        | Probabilité | Impact | Mitigation                                                                                                             |
+| ----------------------------------------------------------------------------- | ----------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Cascade FK Prisma incorrecte sur `User` delete                                | Moyen       | Élevé  | Audit du schéma Module 1 → migration corrective. Tests integration vérifient survivants.                               |
+| Matrice testable lente (>30s)                                                 | Moyen       | Faible | `test.concurrent` ou seed partagé par rôle si dépassement.                                                             |
+| Sidebar mobile drawer non responsive                                          | Faible      | Moyen  | Tests Playwright mobile viewport (375px) sur les 5 specs.                                                              |
+| Reset 2FA via backup laisse fenêtre `twoFactorEnabled = false` sans re-enroll | Faible      | Élevé  | UI redirige hard vers `/2fa/setup`. Si fermeture onglet, bannière 7j Phase 1A re-déclenchée. Gap acceptable documenté. |
+| Drift audit union vs `AuditLog.action` Postgres                               | Faible      | Moyen  | `action` est `String` libre côté DB. Test integration vérifie chaque action écrit/lu identique.                        |
 
 ## 12. Hors-scope explicite (NE PAS FAIRE en 1C)
 
@@ -528,14 +542,14 @@ Cadenassé pour empêcher scope creep :
 
 Basé sur vélocité Phase 1B (28 commits, 7 jours wall, 17 tasks acted en 19) :
 
-| Module | Effort | Tasks plan |
-|---|---|---|
-| 0 — Plumbing & dette 1B | 1 jour | ~3 |
-| 1 — Users panel admin | 2-2.5 jours | ~5 |
-| 2 — Libraries panel admin | 2-2.5 jours | ~5 |
-| 3 — Account self-service | 2.5-3 jours | ~6 |
-| 4 — Matrice + closure | 1.5-2 jours | ~4 |
-| **Total** | **~9-11 jours wall-time** | **~23 tasks** |
+| Module                    | Effort                    | Tasks plan    |
+| ------------------------- | ------------------------- | ------------- |
+| 0 — Plumbing & dette 1B   | 1 jour                    | ~3            |
+| 1 — Users panel admin     | 2-2.5 jours               | ~5            |
+| 2 — Libraries panel admin | 2-2.5 jours               | ~5            |
+| 3 — Account self-service  | 2.5-3 jours               | ~6            |
+| 4 — Matrice + closure     | 1.5-2 jours               | ~4            |
+| **Total**                 | **~9-11 jours wall-time** | **~23 tasks** |
 
 Plan détaillé à rédiger : `docs/superpowers/plans/2026-04-28-phase-1c-admin-account.md` (via `superpowers:writing-plans` post-validation).
 
