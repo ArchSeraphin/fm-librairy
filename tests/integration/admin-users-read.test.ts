@@ -141,4 +141,31 @@ describe('admin.users — read', () => {
     const result = await caller.admin.users.invitations.list({ userId: ctx.user.id });
     expect(result.items.length).toBe(1);
   });
+
+  it('list: cursor pagination returns each user exactly once', async () => {
+    // makeAdminCtx already creates 1 admin user, add 3 more → 4 total
+    const ctx = await makeAdminCtx();
+    await prisma.user.createMany({
+      data: [
+        { email: 'u1@e2e.test', passwordHash: 'x', displayName: 'U1' },
+        { email: 'u2@e2e.test', passwordHash: 'x', displayName: 'U2' },
+        { email: 'u3@e2e.test', passwordHash: 'x', displayName: 'U3' },
+      ],
+    });
+    const caller = appRouter.createCaller(ctx);
+
+    // Page 1: limit 3 → expect 3 items + cursor
+    const page1 = await caller.admin.users.list({ limit: 3 });
+    expect(page1.items).toHaveLength(3);
+    expect(page1.nextCursor).not.toBeNull();
+
+    // Page 2: cursor → expect 1 item + no cursor
+    const page2 = await caller.admin.users.list({ limit: 3, cursor: page1.nextCursor! });
+    expect(page2.items).toHaveLength(1);
+    expect(page2.nextCursor).toBeNull();
+
+    // All 4 users returned exactly once — no duplicates, no gaps
+    const allIds = [...page1.items.map((u) => u.id), ...page2.items.map((u) => u.id)];
+    expect(new Set(allIds).size).toBe(4);
+  });
 });

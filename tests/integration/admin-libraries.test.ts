@@ -176,4 +176,30 @@ describe('admin.libraries — CRUD', () => {
     expect(second.slug).toBe('foo-2');
     expect(third.slug).toBe('foo-3');
   });
+
+  it('list: cursor pagination returns each library exactly once', async () => {
+    const ctx = await makeAdminCtx();
+    await prisma.library.createMany({
+      data: [
+        { name: 'lib-a', slug: 'lib-a' },
+        { name: 'lib-b', slug: 'lib-b' },
+        { name: 'lib-c', slug: 'lib-c' },
+      ],
+    });
+    const caller = appRouter.createCaller(ctx);
+
+    // Page 1: limit 2 → expect 2 items + cursor
+    const page1 = await caller.admin.libraries.list({ limit: 2 });
+    expect(page1.items).toHaveLength(2);
+    expect(page1.nextCursor).not.toBeNull();
+
+    // Page 2: cursor → expect 1 item + no cursor
+    const page2 = await caller.admin.libraries.list({ limit: 2, cursor: page1.nextCursor! });
+    expect(page2.items).toHaveLength(1);
+    expect(page2.nextCursor).toBeNull();
+
+    // All 3 libraries returned exactly once — no duplicates, no gaps
+    const allIds = [...page1.items.map((l) => l.id), ...page2.items.map((l) => l.id)];
+    expect(new Set(allIds).size).toBe(3);
+  });
 });

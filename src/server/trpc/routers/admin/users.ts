@@ -47,7 +47,9 @@ export const adminUsersRouter = t.router({
         lastLoginAt: true,
       },
     });
-    const nextCursor = items.length > input.limit ? items.pop()!.id : null;
+    const hasNextPage = items.length > input.limit;
+    if (hasNextPage) items.pop();
+    const nextCursor = hasNextPage ? items[items.length - 1]!.id : null;
     return { items, nextCursor };
   }),
 

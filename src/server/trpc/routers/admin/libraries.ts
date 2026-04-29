@@ -51,7 +51,9 @@ export const adminLibrariesRouter = t.router({
           _count: { select: { members: true, books: true } },
         },
       });
-      const nextCursor = items.length > input.limit ? items.pop()!.id : null;
+      const hasNextPage = items.length > input.limit;
+      if (hasNextPage) items.pop();
+      const nextCursor = hasNextPage ? items[items.length - 1]!.id : null;
       return {
         items: items.map((l) => ({
           ...l,
