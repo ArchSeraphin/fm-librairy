@@ -32,12 +32,20 @@ export interface PasswordResetConfirmationJob {
   userDisplayName: string;
   occurredAtIso: string;
 }
+// 1C: producer in scope of `userId` (account.security.changePassword) — worker
+// resolves email/displayName itself. `triggerSource` lets the worker (or future
+// audit) distinguish reset-flow vs self-change without a payload-shape sniff.
+export interface PasswordResetConfirmationByUserIdJob {
+  userId: string;
+  triggerSource?: 'reset' | 'self_change';
+}
 
 export type MailJobData =
   | InvitationNewUserJob
   | InvitationJoinLibraryJob
   | PasswordResetJob
-  | PasswordResetConfirmationJob;
+  | PasswordResetConfirmationJob
+  | PasswordResetConfirmationByUserIdJob;
 
 const QUEUE_NAME = 'mail';
 
@@ -62,6 +70,12 @@ export async function enqueueMail<N extends MailJobName>(
   data: MailJobData,
 ): Promise<void> {
   await getMailQueue().add(name, data);
+}
+
+export async function enqueuePasswordResetConfirmation(
+  data: PasswordResetConfirmationByUserIdJob,
+): Promise<void> {
+  await getMailQueue().add('send-password-reset-confirmation', data);
 }
 
 export function __resetMailQueueForTest(): void {

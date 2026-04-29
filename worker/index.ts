@@ -19,6 +19,7 @@ import {
   handleSendPasswordReset,
   handleSendPasswordResetConfirmation,
 } from './jobs/send-password-reset.js';
+import { sendPasswordResetConfirmation } from './jobs/send-password-reset-confirmation.js';
 import { recordAuditFromFailedJob as _recordAuditFromFailedJob } from './jobs/dlq.js';
 
 export { recordAuditFromFailedJob } from './jobs/dlq.js';
@@ -125,8 +126,24 @@ const mailWorker = new Worker(
         return handleSendInvitationJoinLibrary(job, logger);
       case 'send-password-reset':
         return handleSendPasswordReset(job, logger);
-      case 'send-password-reset-confirmation':
+      case 'send-password-reset-confirmation': {
+        // Two payload shapes co-exist during 1B → 1C migration:
+        //   - Phase 1B (password router): { to, userDisplayName, occurredAtIso }
+        //   - Phase 1C (account.security.changePassword): { userId, triggerSource? }
+        // Discriminate on `userId` presence — the new handler resolves email/UA itself.
+        const data = (job.data ?? {}) as Record<string, unknown>;
+        if (typeof data.userId === 'string') {
+          return sendPasswordResetConfirmation(
+            prisma,
+            {
+              userId: data.userId,
+              triggerSource: data.triggerSource as 'reset' | 'self_change' | undefined,
+            },
+            logger,
+          );
+        }
         return handleSendPasswordResetConfirmation(job, logger);
+      }
       default:
         logger.warn({ name: job.name }, 'unknown mail job');
     }

@@ -14,6 +14,11 @@ import PasswordResetConfirmation from '../emails/password-reset-confirmation.js'
 
 export interface SendPasswordResetConfirmationJob {
   userId: string;
+  // 1C: producer-side discriminator. The worker accepts either `'reset'`
+  // (Phase 1B reset flow, future migration) or `'self_change'`
+  // (account.security.changePassword). Currently does not affect the rendered
+  // email — audit/metadata is captured by the producer, not the worker.
+  triggerSource?: 'reset' | 'self_change';
 }
 
 function getWorkerLogger() {
