@@ -226,6 +226,9 @@
       "includeArchived": "Inclure archivées",
       "open": "Ouvrir",
       "empty": "Aucune bibliothèque",
+      "loadMore": "Charger plus",
+      "successToast": "Action effectuée avec succès.",
+      "errorToast": "Erreur",
       "create": {
         "title": "Créer une bibliothèque",
         "nameLabel": "Nom",

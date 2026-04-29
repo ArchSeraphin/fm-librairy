@@ -28,6 +28,7 @@ type Props = {
 
 export function LibrarySettings({ libraryId, initialName, initialDescription, archivedAt }: Props) {
   const t = useTranslations('admin.libraries.detail');
+  const tLib = useTranslations('admin.libraries');
   const router = useRouter();
   const { toast } = useToast();
   const utils = trpc.useUtils();
@@ -40,13 +41,17 @@ export function LibrarySettings({ libraryId, initialName, initialDescription, ar
   const onSuccess = () => {
     utils.admin.libraries.invalidate();
     router.refresh();
-    toast({ title: 'OK' });
+    toast({ title: tLib('successToast') });
     setArchiveOpen(false);
     setReason('');
   };
-  const rename = trpc.admin.libraries.rename.useMutation({ onSuccess });
-  const archive = trpc.admin.libraries.archive.useMutation({ onSuccess });
-  const unarchive = trpc.admin.libraries.unarchive.useMutation({ onSuccess });
+  const onError = (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    toast({ title: tLib('errorToast'), description: message, variant: 'destructive' });
+  };
+  const rename = trpc.admin.libraries.rename.useMutation({ onSuccess, onError });
+  const archive = trpc.admin.libraries.archive.useMutation({ onSuccess, onError });
+  const unarchive = trpc.admin.libraries.unarchive.useMutation({ onSuccess, onError });
 
   return (
     <div className="space-y-4">

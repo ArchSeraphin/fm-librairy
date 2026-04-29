@@ -29,14 +29,15 @@ export function CreateLibraryDialog() {
   const utils = trpc.useUtils();
   const create = trpc.admin.libraries.create.useMutation({
     onSuccess: (lib) => {
-      toast({ title: t('submit') + ' OK' });
+      toast({ title: tList('successToast') });
       utils.admin.libraries.invalidate();
       setOpen(false);
       setName('');
       setDescription('');
       router.push(`/admin/libraries/${lib.slug}`);
     },
-    onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
+    onError: (err) =>
+      toast({ title: tList('errorToast'), description: err.message, variant: 'destructive' }),
   });
 
   return (

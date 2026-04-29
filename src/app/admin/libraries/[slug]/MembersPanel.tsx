@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export function MembersPanel({ libraryId, archived }: { libraryId: string; archived: boolean }) {
   const t = useTranslations('admin.libraries.members');
+  const tLib = useTranslations('admin.libraries');
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const [openAdd, setOpenAdd] = useState(false);
@@ -32,16 +33,20 @@ export function MembersPanel({ libraryId, archived }: { libraryId: string; archi
       utils.admin.libraries.members.invalidate();
       setOpenAdd(false);
       setUserId('');
-      toast({ title: 'OK' });
+      setRole('MEMBER');
+      setFlags({ canRead: true, canUpload: false, canDownload: true });
+      toast({ title: tLib('successToast') });
     },
-    onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
+    onError: (err) =>
+      toast({ title: tLib('errorToast'), description: err.message, variant: 'destructive' }),
   });
   const remove = trpc.admin.libraries.members.remove.useMutation({
     onSuccess: () => {
       utils.admin.libraries.members.invalidate();
-      toast({ title: 'OK' });
+      toast({ title: tLib('successToast') });
     },
-    onError: (err) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
+    onError: (err) =>
+      toast({ title: tLib('errorToast'), description: err.message, variant: 'destructive' }),
   });
 
   const items = list.data?.items ?? [];
@@ -146,6 +151,7 @@ export function MembersPanel({ libraryId, archived }: { libraryId: string; archi
                     size="sm"
                     disabled={archived || remove.isPending}
                     onClick={() => remove.mutate({ libraryId, userId: m.userId })}
+                    aria-label={t('remove')}
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </Button>
