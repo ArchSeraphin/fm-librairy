@@ -57,3 +57,38 @@ export const resetIpOnlyLimiter = new RateLimiterRedis({
   blockDuration: 60 * 60,
   insuranceLimiter: memInsurance(30, 60 * 60),
 });
+
+export const passwordChangeLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:pwd_change',
+  points: 5,
+  duration: 60 * 60,
+  blockDuration: 60 * 60,
+  insuranceLimiter: memInsurance(5, 60 * 60),
+});
+
+export const twoFactorReEnrollLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:2fa_reenroll',
+  points: 5,
+  duration: 60 * 60,
+  blockDuration: 60 * 60,
+  insuranceLimiter: memInsurance(5, 60 * 60),
+});
+
+export const backupCodesRegenLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:backup_regen',
+  points: 5,
+  duration: 60 * 60,
+  blockDuration: 60 * 60,
+  insuranceLimiter: memInsurance(5, 60 * 60),
+});
+
+export const accountProfileUpdateLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:profile_update',
+  points: 30,
+  duration: 60 * 60,
+  insuranceLimiter: memInsurance(30, 60 * 60),
+});

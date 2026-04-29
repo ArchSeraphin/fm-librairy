@@ -268,6 +268,25 @@
       }
     }
   },
+  "account": {
+    "nav": {
+      "profile": "Profil",
+      "security": "Sécurité"
+    },
+    "profile": {
+      "title": "Profil",
+      "subtitle": "Vos informations personnelles",
+      "emailLabel": "Email",
+      "emailHelp": "Le changement d'email arrive dans une phase ultérieure",
+      "displayNameLabel": "Nom affiché",
+      "localeLabel": "Langue",
+      "localeFr": "Français",
+      "localeEn": "English",
+      "save": "Enregistrer",
+      "savedToast": "Profil mis à jour",
+      "errorToast": "Erreur"
+    }
+  },
   "invitation": {
     "signup": {
       "title": "Bienvenue sur BiblioShare",
