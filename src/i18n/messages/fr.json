@@ -209,6 +209,60 @@
         "successToast": "Action effectuée avec succès.",
         "errorToast": "Erreur"
       }
+    },
+    "libraries": {
+      "pageTitle": "Bibliothèques",
+      "subtitle": "Gérer les bibliothèques de la plateforme",
+      "createCta": "Nouvelle bibliothèque",
+      "tableName": "Nom",
+      "tableSlug": "Slug",
+      "tableMembers": "Membres",
+      "tableBooks": "Livres",
+      "tableStatus": "Statut",
+      "tableAction": "Action",
+      "statusActive": "Active",
+      "statusArchived": "Archivée",
+      "search": "Rechercher",
+      "includeArchived": "Inclure archivées",
+      "open": "Ouvrir",
+      "empty": "Aucune bibliothèque",
+      "create": {
+        "title": "Créer une bibliothèque",
+        "nameLabel": "Nom",
+        "descriptionLabel": "Description",
+        "submit": "Créer",
+        "cancel": "Annuler"
+      },
+      "detail": {
+        "back": "Retour aux bibliothèques",
+        "tabSettings": "Réglages",
+        "tabMembers": "Membres",
+        "tabAudit": "Audit",
+        "renameSubmit": "Enregistrer",
+        "archiveCta": "Archiver",
+        "unarchiveCta": "Désarchiver",
+        "archiveDialogTitle": "Archiver la bibliothèque",
+        "archiveDialogDescription": "La bibliothèque devient lecture seule. Restaurable à tout moment.",
+        "reasonLabel": "Motif"
+      },
+      "members": {
+        "title": "Membres",
+        "addCta": "Ajouter un membre",
+        "tableUser": "Utilisateur",
+        "tableRole": "Rôle",
+        "tableFlags": "Permissions",
+        "tableAction": "Action",
+        "roleLibraryAdmin": "Admin biblio",
+        "roleMember": "Membre",
+        "flagRead": "Lecture",
+        "flagUpload": "Upload",
+        "flagDownload": "Téléchargement",
+        "remove": "Retirer",
+        "save": "Enregistrer",
+        "addDialogTitle": "Ajouter un membre",
+        "addDialogUserLabel": "Utilisateur (cuid)",
+        "empty": "Aucun membre"
+      }
     }
   },
   "invitation": {
