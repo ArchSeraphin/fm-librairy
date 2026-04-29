@@ -313,15 +313,13 @@
         "revokedAllToast": "Autres sessions déconnectées",
         "unknownDevice": "Appareil inconnu",
         "lastActive": "Dernière activité {time}",
-        "loading": "Chargement…",
-        "empty": "Aucune autre session active."
+        "loading": "Chargement…"
       },
       "twofactor": {
         "title": "Double authentification",
         "descriptionOff": "Ajoutez un second facteur (TOTP) pour sécuriser votre compte.",
         "descriptionOn": "Le double facteur est activé.",
         "setupCta": "Configurer le 2FA",
-        "disableCta": "Désactiver le 2FA",
         "resetViaBackupCta": "Réinitialiser via backup code",
         "resetDialogTitle": "Réinitialiser le 2FA",
         "resetDialogDescription": "Entrez un de vos backup codes pour désactiver le 2FA et permettre une nouvelle configuration.",

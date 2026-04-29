@@ -62,8 +62,6 @@ export function SessionsCard() {
           <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
             {t('loading')}
           </p>
-        ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('empty')}</p>
         ) : (
           <ul className="divide-y">
             {items.map((s) => (
