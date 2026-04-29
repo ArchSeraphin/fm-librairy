@@ -131,14 +131,23 @@ const mailWorker = new Worker(
         //   - Phase 1B (password router): { to, userDisplayName, occurredAtIso }
         //   - Phase 1C (account.security.changePassword): { userId, triggerSource? }
         // Discriminate on `userId` presence — the new handler resolves email/UA itself.
+        // TODO(phase-1c-followup): drop legacy branch when password.ts migrates to enqueuePasswordResetConfirmation({ userId })
         const data = (job.data ?? {}) as Record<string, unknown>;
-        if (typeof data.userId === 'string') {
+        const isNew = typeof data.userId === 'string';
+        const isLegacy = typeof data.to === 'string';
+        if (isNew && isLegacy) {
+          throw new Error(
+            'ambiguous send-password-reset-confirmation payload: both userId and to present',
+          );
+        }
+        if (isNew) {
+          const triggerSource =
+            data.triggerSource === 'reset' || data.triggerSource === 'self_change'
+              ? data.triggerSource
+              : undefined;
           return sendPasswordResetConfirmation(
             prisma,
-            {
-              userId: data.userId,
-              triggerSource: data.triggerSource as 'reset' | 'self_change' | undefined,
-            },
+            { userId: data.userId as string, triggerSource },
             logger,
           );
         }

@@ -6,12 +6,10 @@ import { getTestPrisma, truncateAll } from './setup/prisma';
 
 const mocks = vi.hoisted(() => ({
   enqueuePasswordResetConfirmation: vi.fn().mockResolvedValue(undefined),
-  enqueueMail: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/lib/mail-queue', () => ({
   enqueuePasswordResetConfirmation: mocks.enqueuePasswordResetConfirmation,
-  enqueueMail: mocks.enqueueMail,
 }));
 
 const prisma = getTestPrisma();
@@ -43,7 +41,6 @@ describe('account.security.changePassword', () => {
   beforeEach(async () => {
     await truncateAll();
     mocks.enqueuePasswordResetConfirmation.mockClear();
-    mocks.enqueueMail.mockClear();
   });
 
   it('rejects with UNAUTHORIZED when current password wrong', async () => {

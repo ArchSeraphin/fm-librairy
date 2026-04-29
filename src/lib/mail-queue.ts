@@ -40,12 +40,17 @@ export interface PasswordResetConfirmationByUserIdJob {
   triggerSource?: 'reset' | 'self_change';
 }
 
-export type MailJobData =
-  | InvitationNewUserJob
-  | InvitationJoinLibraryJob
-  | PasswordResetJob
-  | PasswordResetConfirmationJob
-  | PasswordResetConfirmationByUserIdJob;
+export type MailJobMap = {
+  'send-invitation-new-user': InvitationNewUserJob;
+  'send-invitation-join-library': InvitationJoinLibraryJob;
+  'send-password-reset': PasswordResetJob;
+  'send-password-reset-confirmation':
+    | PasswordResetConfirmationJob
+    | PasswordResetConfirmationByUserIdJob;
+};
+
+// Backward-compat alias — prefer `MailJobMap[N]` for new code.
+export type MailJobData = MailJobMap[keyof MailJobMap];
 
 const QUEUE_NAME = 'mail';
 
@@ -65,9 +70,9 @@ export function getMailQueue(): Queue {
   return queue;
 }
 
-export async function enqueueMail<N extends MailJobName>(
+export async function enqueueMail<N extends keyof MailJobMap>(
   name: N,
-  data: MailJobData,
+  data: MailJobMap[N],
 ): Promise<void> {
   await getMailQueue().add(name, data);
 }
