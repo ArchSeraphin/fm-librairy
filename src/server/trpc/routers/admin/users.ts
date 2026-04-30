@@ -5,7 +5,7 @@ import { t } from '../../trpc';
 import { globalAdminProcedure } from '../../procedures';
 import { db } from '@/lib/db';
 import { recordAudit } from '@/lib/audit-log';
-import { assertNotLastGlobalAdmin, revokeAllSessionsForUser } from '@/lib/user-admin';
+import { assertNotLastGlobalAdmin, purgeAllUserSessionsAndJwts } from '@/lib/user-admin';
 import { revokeInvitation } from '@/lib/invitations';
 
 const cuid = z.string().min(20).max(40);
@@ -91,7 +91,7 @@ export const adminUsersRouter = t.router({
       }
       await assertNotLastGlobalAdmin(input.id, 'suspend');
       await db.user.update({ where: { id: input.id }, data: { status: 'SUSPENDED' } });
-      const revoked = await revokeAllSessionsForUser(input.id);
+      const revoked = await purgeAllUserSessionsAndJwts(input.id);
       await recordAudit({
         action: 'admin.user.suspended',
         actor: { id: ctx.user.id },
@@ -204,7 +204,7 @@ export const adminUsersRouter = t.router({
         db.twoFactorSecret.deleteMany({ where: { userId: input.id } }),
         db.user.update({ where: { id: input.id }, data: { twoFactorEnabled: false } }),
       ]);
-      const sessionsRevoked = await revokeAllSessionsForUser(input.id);
+      const sessionsRevoked = await purgeAllUserSessionsAndJwts(input.id);
       await recordAudit({
         action: 'admin.user.two_factor_reset',
         actor: { id: ctx.user.id },

@@ -2,15 +2,19 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
 import { auth, signOut } from '@/server/auth';
-import { db } from '@/lib/db';
 import { recordAudit } from '@/lib/audit-log';
+import { purgeAllUserSessionsAndJwts } from '@/lib/user-admin';
 
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session ? (session as { userId?: string }).userId : null;
 
   if (userId) {
-    await db.session.deleteMany({ where: { userId } });
+    // Purge all Session rows AND set the JWT-revocation watermark so that
+    // leftover JWT cookies on other devices cannot resurrect a session via
+    // session-bridge's find-or-create. The current device's cookie is cleared
+    // below by signOut().
+    await purgeAllUserSessionsAndJwts(userId);
     const h = await headers();
     const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
     const userAgent = h.get('user-agent') ?? undefined;

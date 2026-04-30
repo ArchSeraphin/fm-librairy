@@ -46,7 +46,9 @@ describe('admin.users — mutations', () => {
       },
     });
     await appRouter.createCaller(ctx).admin.users.suspend({ id: target.id, reason: 'spam' });
-    expect((await prisma.user.findUnique({ where: { id: target.id } }))?.status).toBe('SUSPENDED');
+    const fresh = await prisma.user.findUnique({ where: { id: target.id } });
+    expect(fresh?.status).toBe('SUSPENDED');
+    expect(fresh?.revokedSessionsAt).toBeInstanceOf(Date);
     expect(await prisma.session.count({ where: { userId: target.id } })).toBe(0);
     expect(
       await prisma.auditLog.count({
@@ -156,9 +158,9 @@ describe('admin.users — mutations', () => {
     await appRouter
       .createCaller(ctx)
       .admin.users.resetTwoFactor({ id: target.id, reason: 'lost device' });
-    expect((await prisma.user.findUnique({ where: { id: target.id } }))?.twoFactorEnabled).toBe(
-      false,
-    );
+    const freshTarget = await prisma.user.findUnique({ where: { id: target.id } });
+    expect(freshTarget?.twoFactorEnabled).toBe(false);
+    expect(freshTarget?.revokedSessionsAt).toBeInstanceOf(Date);
     expect(await prisma.twoFactorSecret.findUnique({ where: { userId: target.id } })).toBeNull();
     expect(await prisma.session.count({ where: { userId: target.id } })).toBe(0);
     expect(
