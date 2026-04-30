@@ -146,6 +146,17 @@ jobs:
 
       - run: pnpm build
 
+      - name: Start worker (BullMQ consumer for email queue)
+        run: |
+          pnpm --filter biblioshare-worker exec tsx index.ts > worker.log 2>&1 &
+          echo $! > worker.pid
+          sleep 3
+          if ! kill -0 "$(cat worker.pid)" 2>/dev/null; then
+            echo "Worker failed to start" >&2
+            cat worker.log >&2
+            exit 1
+          fi
+
       - name: Run E2E shard ${{ matrix.shard }}/4
         env:
           PORT: '3000'
@@ -153,6 +164,18 @@ jobs:
           pnpm exec next start &
           npx wait-on http://localhost:3000 -t 60000
           pnpm exec playwright test --shard=${{ matrix.shard }}/4
+
+      - name: Stop worker + dump log on failure
+        if: always()
+        run: |
+          if [ -f worker.pid ]; then
+            kill "$(cat worker.pid)" 2>/dev/null || true
+          fi
+          if [ "${{ job.status }}" != "success" ] && [ -f worker.log ]; then
+            echo "::group::Worker log"
+            tail -200 worker.log
+            echo "::endgroup::"
+          fi
 
       - uses: actions/upload-artifact@v7
         if: failure()
