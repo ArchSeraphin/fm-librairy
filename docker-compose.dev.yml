@@ -1,9 +1,9 @@
-# Dev compose override — Phase 1C+
-# Étend docker-compose.yml en exposant les ports pg/redis sur le host
-# pour que `prisma migrate dev` et le worker BullMQ tournent depuis le code local.
-# Mailpit garde ses ports déjà déclarés dans le compose principal.
+# Dev compose override — Phase 1D
+# Étend docker-compose.yml en exposant les ports pg/redis/mailpit sur le host
+# avec un décalage Phase 1D pour cohabiter avec un éventuel stack phase-1c
+# (5433/6380/1025/8025) toujours actif.
 #
-# Usage : `docker compose -f docker-compose.dev.yml --profile dev up -d pg redis mailpit`
+# Usage : `docker compose -p phase-1d -f docker-compose.dev.yml --profile dev up -d pg redis mailpit`
 
 include:
   - path: docker-compose.yml
@@ -11,8 +11,15 @@ include:
 services:
   pg:
     ports:
-      - '127.0.0.1:5433:5432'
+      - '127.0.0.1:5434:5432'
 
   redis:
     ports:
-      - '127.0.0.1:6380:6379'
+      - '127.0.0.1:6381:6379'
+
+  mailpit:
+    # !override to replace the default 1025/8025 host bindings declared in docker-compose.yml,
+    # otherwise `include:` concatenates the lists and the container fights phase-1c for 1025.
+    ports: !override
+      - '127.0.0.1:1026:1025' # SMTP
+      - '127.0.0.1:8026:8025' # Web UI + API

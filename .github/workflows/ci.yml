@@ -43,14 +43,21 @@ jobs:
 
       - run: pnpm format:check
       - run: pnpm lint
+      - name: Check email templates drift
+        run: pnpm check:emails-drift
       - run: pnpm typecheck
       - run: pnpm test
 
   # ClamAV volontairement absent du services: aucun spec E2E ne touche /api/health.
   e2e:
-    name: Playwright E2E
+    name: Playwright E2E (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    needs: [lint-typecheck-unit]
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     services:
       postgres:
         image: postgres:16-alpine
@@ -139,19 +146,44 @@ jobs:
 
       - run: pnpm build
 
-      - name: Run E2E
+      - name: Start worker (BullMQ consumer for email queue)
+        run: |
+          pnpm --filter biblioshare-worker exec tsx index.ts > worker.log 2>&1 &
+          echo $! > worker.pid
+          sleep 3
+          if ! kill -0 "$(cat worker.pid)" 2>/dev/null; then
+            echo "Worker failed to start" >&2
+            cat worker.log >&2
+            exit 1
+          fi
+
+      - name: Run E2E shard ${{ matrix.shard }}/4
         env:
           PORT: '3000'
         run: |
           pnpm exec next start &
-          npx wait-on http://localhost:3000
-          pnpm e2e tests/e2e/landing.spec.ts
+          npx wait-on http://localhost:3000 -t 60000
+          pnpm exec playwright test --shard=${{ matrix.shard }}/4
+
+      - name: Stop worker + dump log on failure
+        if: always()
+        run: |
+          if [ -f worker.pid ]; then
+            kill "$(cat worker.pid)" 2>/dev/null || true
+          fi
+          if [ "${{ job.status }}" != "success" ] && [ -f worker.log ]; then
+            echo "::group::Worker log"
+            tail -200 worker.log
+            echo "::endgroup::"
+          fi
 
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 7
 
   docker-build:

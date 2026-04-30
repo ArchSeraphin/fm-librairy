@@ -6,6 +6,7 @@ import { adminUsersRouter } from './admin/users';
 import { adminLibrariesRouter } from './admin/libraries';
 import { accountProfileRouter } from './account/profile';
 import { accountSecurityRouter } from './account/security';
+import { libraryRouter } from './library';
 
 export const appRouter = t.router({
   auth: authRouter,
@@ -19,6 +20,7 @@ export const appRouter = t.router({
     profile: accountProfileRouter,
     security: accountSecurityRouter,
   }),
+  library: libraryRouter,
 });
 
 export type AppRouter = typeof appRouter;

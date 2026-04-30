@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
+import { hashEmail } from '../../../src/lib/crypto';
 
 let prisma: PrismaClient | undefined;
 let redis: Redis | undefined;
@@ -25,8 +26,6 @@ function getRedis(): Redis {
 // AuditLog rows that target EMAIL hashes (no FK) are scoped to the @e2e.test
 // emails by computing their hashes — keeps dev audit history intact.
 export async function cleanupTestData(): Promise<void> {
-  // Lazy import so .env vars are guaranteed loaded before src/lib/crypto reads them.
-  const { hashEmail } = await import('../../../src/lib/crypto');
   const p = getPrisma();
   const testUsers = await p.user.findMany({
     where: { email: { endsWith: TEST_EMAIL_SUFFIX } },
@@ -58,7 +57,6 @@ export async function cleanupE2ELibrary(slug: string): Promise<void> {
 
 // Hash a raw test email for audit-row lookups (e.g. Scenario 5).
 export async function hashTestEmail(email: string): Promise<string> {
-  const { hashEmail } = await import('../../../src/lib/crypto');
   return hashEmail(email);
 }
 

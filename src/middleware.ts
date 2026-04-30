@@ -11,6 +11,8 @@ const PUBLIC_PATHS = [
   '/',
   '/login',
   '/api/auth',
+  // Healthcheck endpoint — intentionally unauthenticated, called by orchestrators.
+  '/api/health',
   '/_next',
   '/favicon.ico',
   '/fonts',

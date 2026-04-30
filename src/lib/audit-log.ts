@@ -54,7 +54,13 @@ export type AuditAction =
   // 1C — dette 1B (worker DLQ)
   | 'auth.invitation.send_failed'
   | 'auth.password.reset_send_failed'
-  | 'auth.password.reset_confirmation_send_failed';
+  | 'auth.password.reset_confirmation_send_failed'
+  // 1D — library catalog book operations
+  | 'library.book.created'
+  | 'library.book.updated'
+  | 'library.book.archived'
+  | 'library.book.unarchived'
+  | 'library.book.deleted';
 
 export type AuditTargetType =
   | 'USER'
@@ -63,7 +69,8 @@ export type AuditTargetType =
   | 'SESSION'
   | 'EMAIL'
   | 'AUTH'
-  | 'MEMBER';
+  | 'MEMBER'
+  | 'BOOK';
 
 const SENSITIVE_KEYS = new Set([
   'password',

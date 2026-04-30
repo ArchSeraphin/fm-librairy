@@ -378,6 +378,154 @@
       "body": "Cette invitation ne vous est pas adressée. Connectez-vous avec le compte concerné ou demandez une nouvelle invitation."
     }
   },
+  "member": {
+    "header": {
+      "openMenu": "Ouvrir le menu",
+      "menuTitle": "Menu",
+      "phase": "Membre"
+    },
+    "nav": {
+      "myLibraries": "Mes bibliothèques",
+      "catalog": "Catalogue",
+      "loans": "Mes prêts",
+      "loansComingSoon": "Phase 2"
+    },
+    "switcher": {
+      "label": "Sélectionner une bibliothèque",
+      "loading": "Chargement…",
+      "placeholder": "Choisir une bibliothèque",
+      "searchPlaceholder": "Rechercher une bibliothèque…",
+      "noResults": "Aucune bibliothèque trouvée"
+    },
+    "libraries": {
+      "pageTitle": "Mes bibliothèques",
+      "subtitle": "Sélectionnez une bibliothèque pour parcourir son catalogue.",
+      "empty": "Vous n'avez accès à aucune bibliothèque pour le moment.",
+      "errors": {
+        "notAMember": "Vous n'avez pas accès à cette bibliothèque.",
+        "notFound": "Cette bibliothèque est introuvable ou a été archivée."
+      }
+    }
+  },
+  "books": {
+    "card": {
+      "coverAlt": "Couverture de {title}",
+      "archived": "Archivé",
+      "digital": "Numérique",
+      "physical": "Physique"
+    },
+    "list": {
+      "empty": "Aucun livre dans cette bibliothèque pour le moment."
+    },
+    "paginator": {
+      "prev": "Précédent",
+      "next": "Suivant"
+    },
+    "search": {
+      "label": "Rechercher un livre",
+      "placeholder": "Titre, auteur, ISBN…"
+    },
+    "filters": {
+      "title": "Filtres",
+      "hasDigital": "Disponible en numérique",
+      "hasPhysical": "Disponible en physique",
+      "languageLabel": "Langue",
+      "languageAny": "Toutes les langues",
+      "languages": {
+        "fr": "Français",
+        "en": "Anglais",
+        "es": "Espagnol",
+        "de": "Allemand",
+        "it": "Italien",
+        "pt": "Portugais"
+      }
+    },
+    "sort": {
+      "createdAt_desc": "Plus récents",
+      "createdAt_asc": "Plus anciens",
+      "title_asc": "Titre (A→Z)"
+    },
+    "page": {
+      "subtitle": "Catalogue de la bibliothèque",
+      "createCta": "Ajouter un livre"
+    },
+    "catalog": {
+      "showArchived": "Inclure les livres archivés"
+    },
+    "form": {
+      "title": "Titre",
+      "authors": "Auteurs",
+      "authorsHelp": "Séparez plusieurs auteurs par des virgules.",
+      "isbn10": "ISBN-10",
+      "isbn13": "ISBN-13",
+      "publisher": "Éditeur",
+      "year": "Année de publication",
+      "language": "Langue",
+      "coverUrl": "URL de la couverture",
+      "coverHelp": "Lien HTTPS direct vers une image (jpg/png/webp).",
+      "description": "Description"
+    },
+    "new": {
+      "pageTitle": "Ajouter un livre",
+      "subtitle": "Créez manuellement une fiche livre dans cette bibliothèque.",
+      "submit": "Créer le livre",
+      "successToast": "Livre ajouté",
+      "errorToast": "Échec de la création"
+    },
+    "detail": {
+      "coverAlt": "Couverture de {title}",
+      "archived": "Archivé",
+      "digital": "Numérique",
+      "physical": "Physique",
+      "publisher": "Éditeur",
+      "year": "Année",
+      "language": "Langue",
+      "descriptionLabel": "Description"
+    },
+    "actions": {
+      "open": "Ouvrir le menu d'actions",
+      "edit": "Modifier",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "delete": "Supprimer définitivement"
+    },
+    "edit": {
+      "pageTitle": "Modifier le livre",
+      "submit": "Enregistrer les modifications",
+      "successToast": "Modifications enregistrées",
+      "errorToast": "Échec de la mise à jour",
+      "conflictTitle": "Conflit de modification",
+      "conflictDescription": "Une autre personne a modifié ce livre depuis votre dernière lecture. Rafraîchissez la page pour voir la version actuelle."
+    },
+    "dialogs": {
+      "archive": {
+        "title": "Archiver ce livre ?",
+        "description": "Le livre ne sera plus visible dans le catalogue mais ses données et ses copies sont conservées.",
+        "confirm": "Archiver",
+        "cancel": "Annuler",
+        "successToast": "Livre archivé",
+        "errorToast": "Échec de l'archivage"
+      },
+      "unarchive": {
+        "title": "Désarchiver ce livre ?",
+        "description": "Le livre redeviendra visible dans le catalogue.",
+        "confirm": "Désarchiver",
+        "cancel": "Annuler",
+        "successToast": "Livre désarchivé",
+        "errorToast": "Échec du désarchivage"
+      },
+      "delete": {
+        "title": "Supprimer définitivement ?",
+        "description": "Cette action est irréversible. Toutes les données du livre seront perdues.",
+        "warning": "Cette suppression est définitive et inscrite dans les journaux d'audit.",
+        "confirm": "Supprimer définitivement",
+        "cancel": "Annuler",
+        "successToast": "Livre supprimé",
+        "errorToast": "Échec de la suppression",
+        "depsTitle": "Suppression bloquée — dépendances présentes"
+      }
+    }
+  },
   "password": {
     "forgot": {
       "title": "Mot de passe oublié",

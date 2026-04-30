@@ -92,3 +92,35 @@ export const accountProfileUpdateLimiter = new RateLimiterRedis({
   duration: 60 * 60,
   insuranceLimiter: memInsurance(30, 60 * 60),
 });
+
+export const libraryBookListLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:lib_book_list',
+  points: 600,
+  duration: 60,
+  insuranceLimiter: memInsurance(600, 60),
+});
+
+export const libraryBookCreateLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:lib_book_create',
+  points: 5,
+  duration: 60,
+  insuranceLimiter: memInsurance(5, 60),
+});
+
+export const libraryBookUpdateLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:lib_book_update',
+  points: 10,
+  duration: 60,
+  insuranceLimiter: memInsurance(10, 60),
+});
+
+export const libraryBookDeleteLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:lib_book_delete',
+  points: 1,
+  duration: 60 * 60,
+  insuranceLimiter: memInsurance(1, 60 * 60),
+});

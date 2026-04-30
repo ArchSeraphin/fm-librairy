@@ -47,13 +47,12 @@ test('Password reset flow — request, consume, login with new password', async 
   // /password/forgot
   await page.goto('/password/forgot');
   await page.fill('input[name="email"]', 'reset@e2e.test');
-  const reqResponse = page.waitForResponse(
-    (r) => r.url().includes('/api/trpc/password.requestReset') && r.request().method() === 'POST',
-    { timeout: 10_000 },
-  );
+  // The form is wired to a server action that calls
+  // caller.password.requestReset server-to-server — no client-side
+  // /api/trpc/password.requestReset POST is emitted, so we wait on the
+  // success message instead of a network response.
   await page.click('button[type="submit"]');
-  await reqResponse;
-  await expect(page.getByText(/lien de réinitialisation/i)).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/lien de réinitialisation/i)).toBeVisible({ timeout: 15_000 });
 
   // Mailpit — subject "Réinitialisation de votre mot de passe"
   const msg = await waitForEmail('reset@e2e.test', (m) =>
@@ -79,5 +78,7 @@ test('Password reset flow — request, consume, login with new password', async 
   // Re-login avec le nouveau mot de passe
   await submitLogin(page, 'reset@e2e.test', NEW_PASSWORD);
   // USER → /
-  await expect(page).toHaveURL(/^\/(\?.*)?$/, { timeout: 10_000 });
+  await expect(async () => {
+    expect(new URL(page.url()).pathname).toBe('/');
+  }).toPass({ timeout: 10_000 });
 });
