@@ -11,6 +11,13 @@ const PUBLIC_PATHS = [
   '/',
   '/login',
   '/api/auth',
+  // Healthcheck + password-reset tRPC procedures are intentionally
+  // unauthenticated (publicProcedure server-side). They were caught by the
+  // global auth redirect before this whitelist; allow them through explicitly.
+  '/api/health',
+  '/api/trpc/password.requestReset',
+  '/api/trpc/password.validateToken',
+  '/api/trpc/password.consumeReset',
   '/_next',
   '/favicon.ico',
   '/fonts',
