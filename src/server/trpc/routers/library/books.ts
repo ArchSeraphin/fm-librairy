@@ -1,11 +1,12 @@
 import { TRPCError } from '@trpc/server';
 import { t } from '../../trpc';
 import { libraryMemberProcedure, libraryAdminProcedure } from '../../procedures-library';
-import { libraryBookListLimiter, libraryBookCreateLimiter } from '@/lib/rate-limit';
+import { libraryBookListLimiter, libraryBookCreateLimiter, libraryBookUpdateLimiter } from '@/lib/rate-limit';
 import { buildSearchQuery } from '@/lib/book-search';
 import { db } from '@/lib/db';
-import { listBooksInput, getBookInput, createBookInput } from '../../schemas/book';
+import { listBooksInput, getBookInput, createBookInput, updateBookInput } from '../../schemas/book';
 import { recordAudit } from '@/lib/audit-log';
+import { assertBookInLibrary, assertNotArchived } from '@/lib/book-admin';
 
 export const libraryBooksRouter = t.router({
   list: libraryMemberProcedure
@@ -102,5 +103,49 @@ export const libraryBooksRouter = t.router({
       });
 
       return book;
+    }),
+
+  update: libraryAdminProcedure
+    .input(updateBookInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await libraryBookUpdateLimiter.consume(ctx.user.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      const existing = await assertBookInLibrary(input.id, ctx.library.id);
+
+      assertNotArchived(existing);
+
+      if (existing.updatedAt.getTime() !== input.expectedUpdatedAt.getTime()) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'book was modified by someone else; reload and retry',
+        });
+      }
+
+      const updated = await db.book.update({
+        where: { id: input.id },
+        data: input.patch,
+      });
+
+      // Compute field-level diff
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      for (const [k, v] of Object.entries(input.patch)) {
+        if ((existing as Record<string, unknown>)[k] !== v) {
+          changes[k] = { from: (existing as Record<string, unknown>)[k], to: v };
+        }
+      }
+
+      await recordAudit({
+        action: 'library.book.updated',
+        actor: { id: ctx.user.id },
+        target: { type: 'BOOK', id: updated.id },
+        metadata: { libraryId: ctx.library.id, changes },
+        req: { ip: ctx.ip },
+      });
+
+      return updated;
     }),
 });
