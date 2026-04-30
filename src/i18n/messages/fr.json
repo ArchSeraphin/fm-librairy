@@ -389,6 +389,13 @@
       "catalog": "Catalogue",
       "loans": "Mes prêts",
       "loansComingSoon": "Phase 2"
+    },
+    "switcher": {
+      "label": "Sélectionner une bibliothèque",
+      "loading": "Chargement…",
+      "placeholder": "Choisir une bibliothèque",
+      "searchPlaceholder": "Rechercher une bibliothèque…",
+      "noResults": "Aucune bibliothèque trouvée"
     }
   },
   "password": {

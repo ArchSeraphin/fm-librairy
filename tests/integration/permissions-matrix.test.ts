@@ -342,6 +342,12 @@ const matrix: MatrixCase[] = [
       return c.library.books.delete({ slug, id: STUB_CUID });
     },
   },
+  {
+    router: 'library.libraries',
+    procedure: 'listAccessible',
+    byRole: AUTHED_ONLY,
+    call: (c) => c.library.libraries.listAccessible(),
+  },
 ];
 
 const ALL_ROLES: RoleKey[] = ['GLOBAL_ADMIN', 'LIBRARY_ADMIN', 'MEMBER', 'ANON', 'PENDING_2FA'];
