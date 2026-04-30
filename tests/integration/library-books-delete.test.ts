@@ -91,6 +91,7 @@ describe('library.books.delete', () => {
     await prisma.bookFile.create({
       data: {
         bookId: book.id,
+        libraryId: lib.id,
         format: 'EPUB',
         isOriginal: true,
         storagePath: '/storage/test.epub',

@@ -160,6 +160,7 @@ model Library {
   members     LibraryMember[]
   invitations Invitation[]
   books       Book[]
+  bookFiles   BookFile[]
   tags        Tag[]
 
   @@index([archivedAt])
@@ -251,6 +252,8 @@ model BookFile {
   id            String     @id @default(cuid())
   bookId        String
   book          Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  libraryId     String
+  library       Library    @relation(fields: [libraryId], references: [id], onDelete: Cascade)
   format        BookFormat
   isOriginal    Boolean
   storagePath   String
@@ -265,6 +268,7 @@ model BookFile {
   downloadLogs  DownloadLog[]
 
   @@unique([bookId, format])
+  @@unique([libraryId, sha256])
   @@index([sha256])
 }
 
