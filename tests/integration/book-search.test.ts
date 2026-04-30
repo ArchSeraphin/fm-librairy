@@ -8,7 +8,12 @@ const SEEDS = [
   { title: 'Le Petit Prince', authors: ['Saint-Exupéry'], language: 'fr', publisher: 'Gallimard' },
   { title: 'Frankenstein', authors: ['Mary Shelley'], language: 'en', publisher: 'Penguin' },
   { title: 'Les Misérables', authors: ['Victor Hugo'], language: 'fr', publisher: 'Gallimard' },
-  { title: 'Don Quichotte', authors: ['Miguel de Cervantès'], language: 'es', publisher: 'Galaxia' },
+  {
+    title: 'Don Quichotte',
+    authors: ['Miguel de Cervantès'],
+    language: 'es',
+    publisher: 'Galaxia',
+  },
   { title: '1984', authors: ['George Orwell'], language: 'en', publisher: 'Penguin' },
 ];
 

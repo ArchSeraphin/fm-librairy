@@ -15,11 +15,7 @@ export async function generateMetadata({
   return { title: `Catalogue ${slug} — BiblioShare`, robots: { index: false, follow: false } };
 }
 
-export default async function BooksCatalogPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BooksCatalogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = await getTranslations('books.page');
   const { user, library, membership } = await requireMembership(slug);

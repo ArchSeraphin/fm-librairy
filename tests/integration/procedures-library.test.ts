@@ -43,7 +43,9 @@ describe('libraryMemberProcedure', () => {
     const ctx: TrpcContext = { session, user, ip: '203.0.113.1' };
     const caller = router.createCaller(ctx);
 
-    await expect(caller.memberPing({ slug: lib.slug })).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(caller.memberPing({ slug: lib.slug })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
   });
 
   it('ANON: throws UNAUTHORIZED (authedProcedure gate)', async () => {

@@ -33,7 +33,9 @@ test.afterAll(async () => {
   await disconnect();
 });
 
-test('FR accent-insensitive search finds "Les Misérables" when typing "miserables"', async ({ page }) => {
+test('FR accent-insensitive search finds "Les Misérables" when typing "miserables"', async ({
+  page,
+}) => {
   // Seed admin + library
   const admin = await prisma.user.create({
     data: {
@@ -89,7 +91,10 @@ test('FR accent-insensitive search finds "Les Misérables" when typing "miserabl
   await expect(page.getByText('Les Misérables')).toBeVisible({ timeout: 10_000 });
 
   // At least one unrelated book should not be visible
-  const unrelatedVisible = await page.getByText('Bonjour Monde').isVisible().catch(() => false);
+  const unrelatedVisible = await page
+    .getByText('Bonjour Monde')
+    .isVisible()
+    .catch(() => false);
   expect(unrelatedVisible).toBe(false);
 });
 

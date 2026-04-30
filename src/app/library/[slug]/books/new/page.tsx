@@ -3,11 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { requireMembership } from '@/server/auth/member-guard';
 import { CreateBookForm } from './CreateBookForm';
 
-export default async function NewBookPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function NewBookPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = await getTranslations('books.new');
   const { user, membership } = await requireMembership(slug);

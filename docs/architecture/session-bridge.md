@@ -18,7 +18,7 @@ The `Session.userAgentLabel` field holds a human-readable label like
 2. **Privacy** — we don't store the raw UA at all (it would tie the
    session to a fingerprintable browser version). The parsed label
    coarsens the data: `"Firefox 137 on Linux"` becomes `"Firefox on
-   Linux"`.
+Linux"`.
 
 The parser lives at `src/lib/user-agent.ts` and uses a small allowlist
 (no third-party UA-parsing dep). New browsers fall back to `"Other"`

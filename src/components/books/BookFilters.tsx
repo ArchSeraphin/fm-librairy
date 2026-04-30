@@ -3,7 +3,13 @@
 import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useUrlState } from '@/lib/url-state';
 
 const LANGUAGES = ['fr', 'en', 'es', 'de', 'it', 'pt'];
@@ -23,7 +29,9 @@ export function BookFilters() {
           <Checkbox
             id="f-digital"
             checked={hasDigital}
-            onCheckedChange={(c) => set({ hasDigital: c === true ? 'true' : undefined, cursor: undefined })}
+            onCheckedChange={(c) =>
+              set({ hasDigital: c === true ? 'true' : undefined, cursor: undefined })
+            }
           />
           <Label htmlFor="f-digital" className="text-sm font-normal">
             {t('hasDigital')}
@@ -33,14 +41,19 @@ export function BookFilters() {
           <Checkbox
             id="f-physical"
             checked={hasPhysical}
-            onCheckedChange={(c) => set({ hasPhysical: c === true ? 'true' : undefined, cursor: undefined })}
+            onCheckedChange={(c) =>
+              set({ hasPhysical: c === true ? 'true' : undefined, cursor: undefined })
+            }
           />
           <Label htmlFor="f-physical" className="text-sm font-normal">
             {t('hasPhysical')}
           </Label>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="f-lang" className="text-xs uppercase tracking-wider text-muted-foreground">
+          <Label
+            htmlFor="f-lang"
+            className="text-xs uppercase tracking-wider text-muted-foreground"
+          >
             {t('languageLabel')}
           </Label>
           <Select

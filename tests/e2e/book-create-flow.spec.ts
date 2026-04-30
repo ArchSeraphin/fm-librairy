@@ -100,10 +100,9 @@ test('admin creates a book; member can see it in the catalog', async ({ browser 
   await adminPage.getByRole('button', { name: 'Créer le livre', exact: true }).click();
 
   // Expect redirect to book detail page
-  await expect(adminPage).toHaveURL(
-    new RegExp(`/library/${LIBRARY_SLUG}/books/[a-z0-9]+$`),
-    { timeout: 15_000 },
-  );
+  await expect(adminPage).toHaveURL(new RegExp(`/library/${LIBRARY_SLUG}/books/[a-z0-9]+$`), {
+    timeout: 15_000,
+  });
 
   // Expect the book title on the detail page
   await expect(adminPage.getByRole('heading', { name: 'Le Petit Prince' })).toBeVisible({

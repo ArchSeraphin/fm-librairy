@@ -71,7 +71,7 @@ export function BooksCatalog({ slug, isAdmin }: { slug: string; isAdmin: boolean
       </div>
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-[240px]">
+          <div className="min-w-[240px] flex-1">
             <BookSearchBar />
           </div>
           <BookSortSelect />

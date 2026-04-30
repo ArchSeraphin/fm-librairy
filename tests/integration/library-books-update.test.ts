@@ -155,8 +155,11 @@ describe('library.books.update', () => {
   // 5) MEMBER cannot update — FORBIDDEN
   it('MEMBER of the same library cannot update a book — FORBIDDEN', async () => {
     // Create admin and library
-    const { session: adminSession, user: adminUser, libraryId } =
-      await makeCtxForRole('LIBRARY_ADMIN');
+    const {
+      session: adminSession,
+      user: adminUser,
+      libraryId,
+    } = await makeCtxForRole('LIBRARY_ADMIN');
     const lib = await prisma.library.findUniqueOrThrow({ where: { id: libraryId } });
 
     // Create the book as admin

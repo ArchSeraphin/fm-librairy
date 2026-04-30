@@ -90,7 +90,10 @@ export function BookForm({
   const submit = form.handleSubmit((values) => {
     const payload: BookFormPayload = {
       title: values.title,
-      authors: values.authorsCsv.split(',').map((s) => s.trim()).filter(Boolean),
+      authors: values.authorsCsv
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
       isbn10: values.isbn10 || null,
       isbn13: values.isbn13 || null,
       publisher: values.publisher || null,

@@ -33,7 +33,9 @@ test.afterAll(async () => {
   await disconnect();
 });
 
-test('mobile burger drawer lists nav items and navigates to Mes bibliothèques', async ({ browser }) => {
+test('mobile burger drawer lists nav items and navigates to Mes bibliothèques', async ({
+  browser,
+}) => {
   // Seed member + library
   const member = await prisma.user.create({
     data: {
@@ -88,7 +90,9 @@ test('mobile burger drawer lists nav items and navigates to Mes bibliothèques',
   await context.close();
 });
 
-test('a11y smoke: /libraries page has the burger button and a navigation landmark', async ({ browser }) => {
+test('a11y smoke: /libraries page has the burger button and a navigation landmark', async ({
+  browser,
+}) => {
   // Seed member + library
   const member = await prisma.user.create({
     data: {

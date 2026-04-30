@@ -107,9 +107,9 @@ describe('library.books.get', () => {
     const ctx: TrpcContext = { session, user, ip: '203.0.113.1' };
     const caller = appRouter.createCaller(ctx);
 
-    await expect(
-      caller.library.books.get({ slug: lib.slug, id: book.id }),
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(caller.library.books.get({ slug: lib.slug, id: book.id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
   });
 
   // 5) Archived book IS visible to LIBRARY_ADMIN with archivedAt populated

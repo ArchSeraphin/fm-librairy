@@ -12,12 +12,12 @@
 
 **Drift from spec, ratified during plan writing:**
 
-| Spec said | Plan says | Why |
-|---|---|---|
-| Files like `member-header.tsx` (kebab-case) | `MemberHeader.tsx` (PascalCase) | Existing 1C codebase uses PascalCase for component files |
-| Route group `(member)` parallel to `(admin)`, `(account)` | No route group — `src/app/library/`, `src/app/libraries/` | Existing 1A–1C never used route groups (`src/app/admin/`, `src/app/account/`) |
-| Audit action names `book.created`, `book.updated`, … | `library.book.created`, `library.book.updated`, … | Matches existing dotted `domain.entity.verb` pattern |
-| "ESLint plugin local NEW" | Extend existing local plugin | `eslint-plugin-local` already exists with `local/no-unscoped-prisma` rule; we extend instead of creating |
+| Spec said                                                 | Plan says                                                 | Why                                                                                                      |
+| --------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Files like `member-header.tsx` (kebab-case)               | `MemberHeader.tsx` (PascalCase)                           | Existing 1C codebase uses PascalCase for component files                                                 |
+| Route group `(member)` parallel to `(admin)`, `(account)` | No route group — `src/app/library/`, `src/app/libraries/` | Existing 1A–1C never used route groups (`src/app/admin/`, `src/app/account/`)                            |
+| Audit action names `book.created`, `book.updated`, …      | `library.book.created`, `library.book.updated`, …         | Matches existing dotted `domain.entity.verb` pattern                                                     |
+| "ESLint plugin local NEW"                                 | Extend existing local plugin                              | `eslint-plugin-local` already exists with `local/no-unscoped-prisma` rule; we extend instead of creating |
 
 **Worktree:** `.worktrees/phase-1d` on branch `feat/phase-1d-books`. Dev Docker compose project name `phase-1d` on shifted ports (3001/5434/6381/8026/1026) so it does not collide with the still-running phase-1c containers.
 
@@ -135,6 +135,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task A1 — Prisma migration: `Book.archivedAt` + `searchVector` + indexes
 
 **Files:**
+
 - Create: `prisma/migrations/2026_phase_1d_books/migration.sql`
 - Modify: `prisma/schema.prisma` (Book model — add `archivedAt`, `searchVector` Unsupported, indexes)
 
@@ -221,7 +222,9 @@ import { prisma } from '@/lib/db';
 
 describe('Phase 1D migration smoke', () => {
   test('Book.archivedAt is nullable and writable', async () => {
-    const lib = await prisma.library.create({ data: { name: 'M-Test', slug: `m-test-${Date.now()}` } });
+    const lib = await prisma.library.create({
+      data: { name: 'M-Test', slug: `m-test-${Date.now()}` },
+    });
     const book = await prisma.book.create({
       data: { libraryId: lib.id, title: 'Test', authors: ['A'] },
     });
@@ -236,7 +239,9 @@ describe('Phase 1D migration smoke', () => {
   });
 
   test('searchVector is populated automatically and indexable', async () => {
-    const lib = await prisma.library.create({ data: { name: 'M-Test2', slug: `m-test-${Date.now()}-2` } });
+    const lib = await prisma.library.create({
+      data: { name: 'M-Test2', slug: `m-test-${Date.now()}-2` },
+    });
     await prisma.book.create({
       data: {
         libraryId: lib.id,
@@ -290,6 +295,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task A2 — Audit union extension (5 new actions)
 
 **Files:**
+
 - Modify: `src/lib/audit-log.ts` — extend `AuditAction` type
 - Modify: `tests/unit/audit-log.test.ts` — add coverage for new action names
 
@@ -319,12 +325,7 @@ In `src/lib/audit-log.ts`, find the `export type AuditAction = ` block and appen
 In the same file, locate `export type AuditTargetType` and ensure `'BOOK'` is in the union. If not, add it:
 
 ```typescript
-export type AuditTargetType =
-  | 'USER'
-  | 'LIBRARY'
-  | 'INVITATION'
-  | 'SESSION'
-  | 'BOOK';
+export type AuditTargetType = 'USER' | 'LIBRARY' | 'INVITATION' | 'SESSION' | 'BOOK';
 ```
 
 - [ ] **Step 4: Add a unit test asserting the new actions are valid**
@@ -395,6 +396,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task A3 — Helper `lib/library-membership.ts`
 
 **Files:**
+
 - Create: `src/lib/library-membership.ts`
 - Create: `tests/integration/library-membership.test.ts`
 
@@ -580,6 +582,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task A4 — Helper `lib/book-admin.ts` (assertBookInLibrary, assertNotArchived, assertNoBookDependencies)
 
 **Files:**
+
 - Create: `src/lib/book-admin.ts`
 - Create: `tests/integration/book-admin.test.ts`
 
@@ -590,16 +593,15 @@ Create `tests/integration/book-admin.test.ts`:
 ```typescript
 import { TRPCError } from '@trpc/server';
 import { describe, expect, test } from 'vitest';
-import {
-  assertBookInLibrary,
-  assertNotArchived,
-  assertNoBookDependencies,
-} from '@/lib/book-admin';
+import { assertBookInLibrary, assertNotArchived, assertNoBookDependencies } from '@/lib/book-admin';
 import { prisma } from '@/lib/db';
 
 async function seedLibAndBook() {
   const lib = await prisma.library.create({
-    data: { name: `BA-${Date.now()}`, slug: `ba-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+    data: {
+      name: `BA-${Date.now()}`,
+      slug: `ba-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    },
   });
   const book = await prisma.book.create({
     data: { libraryId: lib.id, title: 'BA Test', authors: ['Author'] },
@@ -616,7 +618,10 @@ describe('assertBookInLibrary', () => {
   test('throws NOT_FOUND when book in different library', async () => {
     const { book } = await seedLibAndBook();
     const otherLib = await prisma.library.create({
-      data: { name: 'Other', slug: `other-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+      data: {
+        name: 'Other',
+        slug: `other-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      },
     });
     await expect(assertBookInLibrary(book.id, otherLib.id)).rejects.toThrowError(
       expect.objectContaining({ code: 'NOT_FOUND' }),
@@ -801,6 +806,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task A5 — Helper `lib/book-search.ts` (Postgres tsvector raw SQL)
 
 **Files:**
+
 - Create: `src/lib/book-search.ts`
 - Create: `tests/integration/book-search.test.ts`
 
@@ -822,10 +828,20 @@ beforeAll(async () => {
   });
   libId = lib.id;
   const seeds = [
-    { title: 'Le Petit Prince', authors: ['Saint-Exupéry'], language: 'fr', publisher: 'Gallimard' },
+    {
+      title: 'Le Petit Prince',
+      authors: ['Saint-Exupéry'],
+      language: 'fr',
+      publisher: 'Gallimard',
+    },
     { title: 'Frankenstein', authors: ['Mary Shelley'], language: 'en', publisher: 'Penguin' },
     { title: 'Les Misérables', authors: ['Victor Hugo'], language: 'fr', publisher: 'Gallimard' },
-    { title: 'Don Quichotte', authors: ['Miguel de Cervantès'], language: 'es', publisher: 'Galaxia' },
+    {
+      title: 'Don Quichotte',
+      authors: ['Miguel de Cervantès'],
+      language: 'es',
+      publisher: 'Galaxia',
+    },
     { title: '1984', authors: ['George Orwell'], language: 'en', publisher: 'Penguin' },
   ];
   for (const s of seeds) {
@@ -971,7 +987,8 @@ export async function buildSearchQuery(input: SearchInput): Promise<SearchResult
   const where: Prisma.Sql[] = [Prisma.sql`b."libraryId" = ${input.libraryId}`];
   if (!input.includeArchived) where.push(Prisma.sql`b."archivedAt" IS NULL`);
   if (input.hasDigital !== undefined) where.push(Prisma.sql`b."hasDigital" = ${input.hasDigital}`);
-  if (input.hasPhysical !== undefined) where.push(Prisma.sql`b."hasPhysical" = ${input.hasPhysical}`);
+  if (input.hasPhysical !== undefined)
+    where.push(Prisma.sql`b."hasPhysical" = ${input.hasPhysical}`);
   if (input.language) where.push(Prisma.sql`b."language" = ${input.language}`);
   if (useFullText) {
     where.push(
@@ -1015,8 +1032,7 @@ export async function buildSearchQuery(input: SearchInput): Promise<SearchResult
   if (rows.length > input.limit) {
     items = rows.slice(0, input.limit);
     const last = items[items.length - 1];
-    const sortKey =
-      sort === 'title_asc' ? last.title : last.createdAt.toISOString();
+    const sortKey = sort === 'title_asc' ? last.title : last.createdAt.toISOString();
     nextCursor = Buffer.from(`${sortKey}|${last.id}`, 'utf8').toString('base64url');
   }
 
@@ -1051,6 +1067,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task A6 — Rate-limiters + procedure builders + checkpoint
 
 **Files:**
+
 - Modify: `src/lib/rate-limit.ts` — add 4 limiters
 - Create: `src/server/trpc/procedures-library.ts` — `libraryMemberProcedure(slug)`, `libraryAdminProcedure(slug)` factories
 - Create: `tests/integration/procedures-library.test.ts`
@@ -1218,9 +1235,9 @@ interface SlugInput {
  *
  * The middleware injects ctx.library and ctx.membership.
  */
-export function libraryMemberProcedure<T extends ReturnType<typeof initTRPC.context<CtxBase>>['create']>(
-  t: T,
-) {
+export function libraryMemberProcedure<
+  T extends ReturnType<typeof initTRPC.context<CtxBase>>['create'],
+>(t: T) {
   return t.procedure.use(async ({ ctx, rawInput, next }) => {
     if (!ctx.session || ctx.session.pending2fa || !ctx.user) {
       throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -1246,9 +1263,9 @@ export function libraryMemberProcedure<T extends ReturnType<typeof initTRPC.cont
  * Factory: same as libraryMemberProcedure but requires LIBRARY_ADMIN role
  * (or GLOBAL_ADMIN).
  */
-export function libraryAdminProcedure<T extends ReturnType<typeof initTRPC.context<CtxBase>>['create']>(
-  t: T,
-) {
+export function libraryAdminProcedure<
+  T extends ReturnType<typeof initTRPC.context<CtxBase>>['create'],
+>(t: T) {
   return t.procedure.use(async ({ ctx, rawInput, next }) => {
     if (!ctx.session || ctx.session.pending2fa || !ctx.user) {
       throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -1297,6 +1314,7 @@ git tag phase-1d-checkpoint-module-A -m "Module A complete: foundations (migrati
 ```
 
 **Module A acceptance criteria:**
+
 - ✅ Migration applied + verified in psql + smoke test passes
 - ✅ AuditAction union + AuditTargetType union extended; recordAudit accepts new actions
 - ✅ `assertMembership` covers GA bypass / member / non-member / archived / requiredRole (7 tests)
@@ -1316,6 +1334,7 @@ git tag phase-1d-checkpoint-module-A -m "Module A complete: foundations (migrati
 ### Task B1 — Router skeleton + Zod schemas + `list` procedure
 
 **Files:**
+
 - Create: `src/server/trpc/routers/library/books.ts`
 - Create: `src/server/trpc/routers/library/index.ts`
 - Create: `src/server/trpc/schemas/book.ts`
@@ -1367,9 +1386,7 @@ describe('library.books.list', () => {
     const caller = appRouter.createCaller(memberCtx);
     const r1 = await caller.library.books.list({ slug: memberLibSlug });
     expect(r1.items.length).toBeLessThanOrEqual(24);
-    await expect(
-      caller.library.books.list({ slug: memberLibSlug, limit: 1000 }),
-    ).rejects.toThrow();
+    await expect(caller.library.books.list({ slug: memberLibSlug, limit: 1000 })).rejects.toThrow();
   });
 
   test('language filter narrows results', async () => {
@@ -1494,8 +1511,16 @@ export const createBookInput = z.object({
   slug,
   title: z.string().min(1).max(500),
   authors: z.array(z.string().min(1).max(200)).min(1).max(20),
-  isbn10: z.string().regex(/^\d{9}[\dX]$/).optional().nullable(),
-  isbn13: z.string().regex(/^\d{13}$/).optional().nullable(),
+  isbn10: z
+    .string()
+    .regex(/^\d{9}[\dX]$/)
+    .optional()
+    .nullable(),
+  isbn13: z
+    .string()
+    .regex(/^\d{13}$/)
+    .optional()
+    .nullable(),
   publisher: z.string().max(200).optional().nullable(),
   publishedYear: z.number().int().min(1000).max(2100).optional().nullable(),
   language: z.string().min(2).max(8).optional().nullable(),
@@ -1510,8 +1535,16 @@ export const updateBookInput = z.object({
   patch: z.object({
     title: z.string().min(1).max(500).optional(),
     authors: z.array(z.string().min(1).max(200)).min(1).max(20).optional(),
-    isbn10: z.string().regex(/^\d{9}[\dX]$/).nullable().optional(),
-    isbn13: z.string().regex(/^\d{13}$/).nullable().optional(),
+    isbn10: z
+      .string()
+      .regex(/^\d{9}[\dX]$/)
+      .nullable()
+      .optional(),
+    isbn13: z
+      .string()
+      .regex(/^\d{13}$/)
+      .nullable()
+      .optional(),
     publisher: z.string().max(200).nullable().optional(),
     publishedYear: z.number().int().min(1000).max(2100).nullable().optional(),
     language: z.string().min(2).max(8).nullable().optional(),
@@ -1543,8 +1576,7 @@ export const libraryBooksRouter = t.router({
     .input(listBooksInput)
     .query(async ({ ctx, input }) => {
       await applyRateLimiter(libraryBookListLimiter, ctx.user!.id);
-      const isAdmin =
-        ctx.user!.role === 'GLOBAL_ADMIN' || ctx.membership?.role === 'LIBRARY_ADMIN';
+      const isAdmin = ctx.user!.role === 'GLOBAL_ADMIN' || ctx.membership?.role === 'LIBRARY_ADMIN';
       // Silently coerce includeArchived for non-admin
       const includeArchived = isAdmin ? input.includeArchived : false;
       return buildSearchQuery({
@@ -1615,6 +1647,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task B2 — `library.books.get` procedure
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/library/books.ts` — add `get`
 - Create: `tests/integration/library-books-get.test.ts`
 
@@ -1667,9 +1700,9 @@ describe('library.books.get', () => {
   test('non-member gets NOT_FOUND on slug, not on book', async () => {
     const otherCtx = await makeCtxForRole('MEMBER');
     const caller = appRouter.createCaller(otherCtx);
-    await expect(
-      caller.library.books.get({ slug: libSlug, id: bookId }),
-    ).rejects.toThrowError(expect.objectContaining({ code: 'NOT_FOUND' }));
+    await expect(caller.library.books.get({ slug: libSlug, id: bookId })).rejects.toThrowError(
+      expect.objectContaining({ code: 'NOT_FOUND' }),
+    );
   });
 
   test('archived book returns NOT_FOUND for non-admin', async () => {
@@ -1783,6 +1816,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task B3 — `library.books.create` procedure
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/library/books.ts` — add `create`
 - Create: `tests/integration/library-books-create.test.ts`
 
@@ -1949,11 +1983,7 @@ import {
   applyRateLimiter,
 } from '@/lib/rate-limit';
 import { recordAudit } from '@/lib/audit-log';
-import {
-  listBooksInput,
-  getBookInput,
-  createBookInput,
-} from '../../schemas/book';
+import { listBooksInput, getBookInput, createBookInput } from '../../schemas/book';
 ```
 
 - [ ] **Step 4: Run test, expect pass**
@@ -1983,6 +2013,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task B4 — `library.books.update` (with optimistic concurrency)
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/library/books.ts` — add `update`
 - Create: `tests/integration/library-books-update.test.ts`
 
@@ -2020,7 +2051,9 @@ describe('library.books.update', () => {
       where: { action: 'library.book.updated', targetId: book.id },
     });
     expect(audit).not.toBeNull();
-    expect((audit!.metadata as any).changes).toMatchObject({ title: { from: 'Original Title', to: 'New Title' } });
+    expect((audit!.metadata as any).changes).toMatchObject({
+      title: { from: 'Original Title', to: 'New Title' },
+    });
   });
 
   test('concurrency: stale expectedUpdatedAt throws CONFLICT', async () => {
@@ -2164,12 +2197,7 @@ import {
   libraryBookUpdateLimiter,
   applyRateLimiter,
 } from '@/lib/rate-limit';
-import {
-  listBooksInput,
-  getBookInput,
-  createBookInput,
-  updateBookInput,
-} from '../../schemas/book';
+import { listBooksInput, getBookInput, createBookInput, updateBookInput } from '../../schemas/book';
 ```
 
 - [ ] **Step 4: Run test, expect pass**
@@ -2200,6 +2228,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task B5 — `archive` + `unarchive` procedures
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/library/books.ts`
 - Create: `tests/integration/library-books-archive.test.ts`
 
@@ -2368,6 +2397,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task B6 — `library.books.delete` (GLOBAL_ADMIN only, hard delete)
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/library/books.ts`
 - Create: `tests/integration/library-books-delete.test.ts`
 
@@ -2408,9 +2438,9 @@ describe('library.books.delete', () => {
       data: { libraryId: lib.id, title: 'Cant', authors: ['X'] },
     });
     const caller = appRouter.createCaller(ctx);
-    await expect(
-      caller.library.books.delete({ slug: lib.slug, id: book.id }),
-    ).rejects.toThrowError(expect.objectContaining({ code: 'FORBIDDEN' }));
+    await expect(caller.library.books.delete({ slug: lib.slug, id: book.id })).rejects.toThrowError(
+      expect.objectContaining({ code: 'FORBIDDEN' }),
+    );
   });
 
   test('refuses delete when book has BookFile (BAD_REQUEST)', async () => {
@@ -2433,9 +2463,7 @@ describe('library.books.delete', () => {
       },
     });
     const caller = appRouter.createCaller(ctx);
-    await expect(
-      caller.library.books.delete({ slug: lib.slug, id: book.id }),
-    ).rejects.toThrowError(
+    await expect(caller.library.books.delete({ slug: lib.slug, id: book.id })).rejects.toThrowError(
       expect.objectContaining({
         code: 'BAD_REQUEST',
         message: expect.stringContaining('files'),
@@ -2547,6 +2575,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task B7 — Permissions matrix delta (35 cases) + anti-drift extension
 
 **Files:**
+
 - Modify: `tests/integration/permissions-matrix.test.ts`
 
 - [ ] **Step 1: Read current matrix structure**
@@ -2676,9 +2705,9 @@ Append to the matrix array (before its closing `]`):
 },
 ```
 
-- [ ] **Step 3: Update the harness to support library.* slug + bookId seeding**
+- [ ] **Step 3: Update the harness to support library.\* slug + bookId seeding**
 
-Locate the test loop (likely a `describe.each` or `for (const row of matrix)` block). Each iteration of the matrix runs the `call` against a `caller` for each role. For library.* the harness needs:
+Locate the test loop (likely a `describe.each` or `for (const row of matrix)` block). Each iteration of the matrix runs the `call` against a `caller` for each role. For library.\* the harness needs:
 
 1. To seed (or be passed) the slug of "this" library that the actor is a member of for `MEMBER_THIS`/`LIBRARY_ADMIN_THIS`, and a different lib for `_OTHER`.
 2. To seed a book in "this" library when `needsBookId` is set, and pass its id (and `updatedAt` for `update`) into `call`.
@@ -2726,7 +2755,7 @@ for (const row of matrix) {
 ```
 
 > **Note**: the existing 1C harness uses `STUB_CUID` for cases that don't need
-> a real id (because they fail before id resolution). Library.* needs real
+> a real id (because they fail before id resolution). Library.\* needs real
 > ids when the role gets past the slug check — `MEMBER_THIS` for `archive`
 > goes far enough into the procedure to need a real bookId. Audit the existing
 > harness file carefully and add the seeding only where needed.
@@ -2741,9 +2770,7 @@ function listProtectedProcedures(router: typeof appRouter): string[] {
   const procedures = def?.procedures ?? {};
   return Object.keys(procedures).filter(
     (name) =>
-      name.startsWith('admin.') ||
-      name.startsWith('account.') ||
-      name.startsWith('library.'),
+      name.startsWith('admin.') || name.startsWith('account.') || name.startsWith('library.'),
   );
 }
 ```
@@ -2790,6 +2817,7 @@ git tag phase-1d-checkpoint-module-B -m "Module B complete: library.books router
 ```
 
 **Module B acceptance criteria:**
+
 - ✅ `library.books.{list, get, create, update, archive, unarchive, delete}` all implemented
 - ✅ Each procedure has its own integration test file (5–9 tests each)
 - ✅ Permissions matrix delta of 35 cases passes
@@ -2811,6 +2839,7 @@ git tag phase-1d-checkpoint-module-B -m "Module B complete: library.books router
 ### Task C1 — Install missing shadcn components
 
 **Files:**
+
 - Modify: `src/components/ui/*` (additions)
 
 - [ ] **Step 1: Inventory existing**
@@ -2864,6 +2893,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task C2 — `MemberHeader.tsx` + `MemberSidebar.tsx`
 
 **Files:**
+
 - Create: `src/components/member/MemberHeader.tsx`
 - Create: `src/components/member/MemberSidebar.tsx`
 - Create: `tests/unit/MemberHeader.test.tsx` (a smoke render test)
@@ -3096,6 +3126,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task C3 — `LibrarySwitcher.tsx` (combobox)
 
 **Files:**
+
 - Create (replace stub): `src/components/member/LibrarySwitcher.tsx`
 - Create: `tests/unit/LibrarySwitcher.test.tsx`
 
@@ -3321,6 +3352,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task C4 — Member layout + auth guard
 
 **Files:**
+
 - Create: `src/app/library/[slug]/layout.tsx`
 - Create: `src/app/libraries/layout.tsx`
 
@@ -3447,6 +3479,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task C5 — Page `/libraries` + Module C checkpoint
 
 **Files:**
+
 - Create: `src/app/libraries/page.tsx`
 - Create: `src/app/libraries/LibrariesGrid.tsx` (client component for trpc data)
 - Create: `tests/unit/LibrariesGrid.test.tsx`
@@ -3629,6 +3662,7 @@ git tag phase-1d-checkpoint-module-C -m "Module C complete: member shell (/libra
 ```
 
 **Module C acceptance criteria:**
+
 - ✅ shadcn primitives `dropdown-menu, command, popover, select, form, table, badge, skeleton` installed
 - ✅ `MemberHeader.tsx` + `MemberSidebar.tsx` mirror Admin pattern, Sheet burger drawer mobile
 - ✅ `LibrarySwitcher.tsx` combobox functional + i18n keys + render test
@@ -3649,6 +3683,7 @@ git tag phase-1d-checkpoint-module-C -m "Module C complete: member shell (/libra
 ### Task D1 — `BookCard` + `BookListGrid` + `Paginator`
 
 **Files:**
+
 - Create: `src/components/books/BookCard.tsx`
 - Create: `src/components/books/BookListGrid.tsx`
 - Create: `src/components/books/Paginator.tsx`
@@ -3885,6 +3920,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task D2 — `BookSearchBar` + `BookFilters` + `BookSortSelect` (URL state)
 
 **Files:**
+
 - Create: `src/components/books/BookSearchBar.tsx`
 - Create: `src/components/books/BookFilters.tsx`
 - Create: `src/components/books/BookSortSelect.tsx`
@@ -4098,6 +4134,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task D3 — Page `/library/[slug]/books` (catalog view)
 
 **Files:**
+
 - Create: `src/app/library/[slug]/books/page.tsx`
 - Create: `src/app/library/[slug]/books/BooksCatalog.tsx` (client)
 
@@ -4276,6 +4313,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task D4 — `BookForm` (shared create/update)
 
 **Files:**
+
 - Create: `src/components/books/BookForm.tsx`
 - Create: `tests/unit/BookForm.test.tsx`
 
@@ -4581,6 +4619,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task D5 — Page `/library/[slug]/books/new`
 
 **Files:**
+
 - Create: `src/app/library/[slug]/books/new/page.tsx`
 - Create: `src/app/library/[slug]/books/new/CreateBookForm.tsx`
 
@@ -4670,6 +4709,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task D6 — Page `/library/[slug]/books/[bookId]` (detail + actions)
 
 **Files:**
+
 - Create: `src/app/library/[slug]/books/[bookId]/page.tsx`
 - Create: `src/app/library/[slug]/books/[bookId]/BookDetail.tsx`
 - Create: `src/app/library/[slug]/books/[bookId]/BookActionsMenu.tsx`
@@ -5006,6 +5046,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task D7 — Archive / Unarchive / Delete dialogs + Module D checkpoint
 
 **Files:**
+
 - Create: `src/components/books/ArchiveBookDialog.tsx`
 - Create: `src/components/books/UnarchiveBookDialog.tsx`
 - Create: `src/components/books/DeleteBookDialog.tsx`
@@ -5118,6 +5159,7 @@ git tag phase-1d-checkpoint-module-D -m "Module D complete: catalog UI + form + 
 ```
 
 **Module D acceptance criteria:**
+
 - ✅ `BookCard, BookListGrid, Paginator` rendered correctly with skeleton + empty state
 - ✅ `BookSearchBar` (debounced 300ms) + `BookFilters` (digital/physical/language) + `BookSortSelect` all bound to URL params
 - ✅ `/library/[slug]/books` catalog page with cursor-history previous nav
@@ -5137,6 +5179,7 @@ git tag phase-1d-checkpoint-module-D -m "Module D complete: catalog UI + form + 
 ### Task E1 — Fix `toHaveURL` regex on 5 pre-1B specs
 
 **Files:**
+
 - Modify: `tests/e2e/health.spec.ts`
 - Modify: `tests/e2e/password-reset.spec.ts`
 - Modify: `tests/e2e/reset-invalidates-sessions.spec.ts`
@@ -5172,16 +5215,13 @@ await expect(async () => {
 And replace:
 
 ```typescript
-page.waitForURL(/^\/(\?.*)?$/, { timeout: 15_000 })
+page.waitForURL(/^\/(\?.*)?$/, { timeout: 15_000 });
 ```
 
 with:
 
 ```typescript
-page.waitForURL(
-  (url) => url.pathname === '/',
-  { timeout: 15_000 },
-)
+page.waitForURL((url) => url.pathname === '/', { timeout: 15_000 });
 ```
 
 > The `URL`-based assertion is more explicit (matches the pathname only,
@@ -5221,6 +5261,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task E2 — Email templates drift guard
 
 **Files:**
+
 - Create: `scripts/check-email-templates-drift.ts`
 - Modify: `package.json` — add script `check:emails-drift`
 - Modify: `.github/workflows/ci.yml` — invoke the check in the lint job
@@ -5296,8 +5337,8 @@ Add to `"scripts"`:
 In `.github/workflows/ci.yml`, in the lint job, after `pnpm lint`:
 
 ```yaml
-      - name: Check email templates drift
-        run: pnpm check:emails-drift
+- name: Check email templates drift
+  run: pnpm check:emails-drift
 ```
 
 - [ ] **Step 5: Create the reconcile runbook**
@@ -5347,6 +5388,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task E3 — Extend ESLint local plugin (Book/BookFile scope rule)
 
 **Files:**
+
 - Modify: `eslint-plugin-local/...` (the existing local plugin)
 - Modify: `.eslintrc.json` — wire the new rule
 
@@ -5390,20 +5432,14 @@ module.exports = {
       const arg = node.arguments[0];
       if (!arg || arg.type !== 'ObjectExpression') return;
       const where = arg.properties.find(
-        (p) =>
-          p.type === 'Property' &&
-          p.key.type === 'Identifier' &&
-          p.key.name === 'where',
+        (p) => p.type === 'Property' && p.key.type === 'Identifier' && p.key.name === 'where',
       );
       if (!where || where.value.type !== 'ObjectExpression') {
         context.report({ node, messageId, data: { model } });
         return;
       }
       const hasKey = where.value.properties.some(
-        (p) =>
-          p.type === 'Property' &&
-          p.key.type === 'Identifier' &&
-          p.key.name === requiredKey,
+        (p) => p.type === 'Property' && p.key.type === 'Identifier' && p.key.name === requiredKey,
       );
       if (!hasKey) context.report({ node, messageId, data: { model } });
     }
@@ -5421,7 +5457,8 @@ module.exports = {
           return;
         const model = callee.object.property.name;
         const method = callee.property.name;
-        if (!['findMany', 'findFirst', 'count', 'updateMany', 'deleteMany'].includes(method)) return;
+        if (!['findMany', 'findFirst', 'count', 'updateMany', 'deleteMany'].includes(method))
+          return;
         if (USER_SCOPED_MODELS.includes(model)) {
           check(node, model, 'userId', 'missingUserScope');
         }
@@ -5506,6 +5543,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task E4 — Broaden CI E2E job
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Read current e2e job**
@@ -5519,76 +5557,76 @@ Note the current scope: only `tests/e2e/landing.spec.ts` runs on CI.
 - [ ] **Step 2: Replace the e2e job to run all specs with full services**
 
 ```yaml
-  e2e:
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck-unit, build-docker]
-    timeout-minutes: 20
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: fmlib
-          POSTGRES_PASSWORD: fmlib
-          POSTGRES_DB: fmlib
-        options: >-
-          --health-cmd "pg_isready -U fmlib"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-        ports:
-          - 5432:5432
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
-        ports:
-          - 6379:6379
-      mailpit:
-        image: axllent/mailpit:latest
-        ports:
-          - 1025:1025
-          - 8025:8025
-    env:
-      DATABASE_URL: postgresql://fmlib:fmlib@localhost:5432/fmlib
-      REDIS_URL: redis://localhost:6379
-      NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: ci-secret-change-me-1234567890abcdef
-      SMTP_HOST: localhost
-      SMTP_PORT: 1025
-      APP_URL: http://localhost:3000
-      APP_PORT: 3000
-      NODE_ENV: test
-      CI: '1'
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm prisma migrate deploy
-      - run: pnpm prisma generate
-      - run: pnpm build
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-      - name: Start app
-        run: |
-          pnpm exec next start -p 3000 &
-          npx wait-on http://localhost:3000 -t 60000
-      - name: Run E2E shard ${{ matrix.shard }}/4
-        run: pnpm exec playwright test --shard=${{ matrix.shard }}/4
-      - name: Upload Playwright traces on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-traces-shard-${{ matrix.shard }}
-          path: test-results/
-          retention-days: 7
+e2e:
+  runs-on: ubuntu-latest
+  needs: [lint-typecheck-unit, build-docker]
+  timeout-minutes: 20
+  services:
+    postgres:
+      image: postgres:16-alpine
+      env:
+        POSTGRES_USER: fmlib
+        POSTGRES_PASSWORD: fmlib
+        POSTGRES_DB: fmlib
+      options: >-
+        --health-cmd "pg_isready -U fmlib"
+        --health-interval 5s --health-timeout 5s --health-retries 10
+      ports:
+        - 5432:5432
+    redis:
+      image: redis:7-alpine
+      options: >-
+        --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+      ports:
+        - 6379:6379
+    mailpit:
+      image: axllent/mailpit:latest
+      ports:
+        - 1025:1025
+        - 8025:8025
+  env:
+    DATABASE_URL: postgresql://fmlib:fmlib@localhost:5432/fmlib
+    REDIS_URL: redis://localhost:6379
+    NEXTAUTH_URL: http://localhost:3000
+    NEXTAUTH_SECRET: ci-secret-change-me-1234567890abcdef
+    SMTP_HOST: localhost
+    SMTP_PORT: 1025
+    APP_URL: http://localhost:3000
+    APP_PORT: 3000
+    NODE_ENV: test
+    CI: '1'
+  strategy:
+    fail-fast: false
+    matrix:
+      shard: [1, 2, 3, 4]
+  steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v3
+      with:
+        version: 9
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm prisma migrate deploy
+    - run: pnpm prisma generate
+    - run: pnpm build
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium
+    - name: Start app
+      run: |
+        pnpm exec next start -p 3000 &
+        npx wait-on http://localhost:3000 -t 60000
+    - name: Run E2E shard ${{ matrix.shard }}/4
+      run: pnpm exec playwright test --shard=${{ matrix.shard }}/4
+    - name: Upload Playwright traces on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-traces-shard-${{ matrix.shard }}
+        path: test-results/
+        retention-days: 7
 ```
 
 > **Sharding note**: `--shard=N/M` splits specs across runs. Four shards
@@ -5619,6 +5657,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task E5 — Architectural docs (session-bridge + soft-delete + runbook hard-delete-book)
 
 **Files:**
+
 - Create: `docs/architecture/session-bridge.md`
 - Create: `docs/architecture/soft-delete.md`
 - Create: `docs/runbooks/hard-delete-book.md`
@@ -5646,7 +5685,7 @@ The `Session.userAgentLabel` field holds a human-readable label like
 2. **Privacy** — we don't store the raw UA at all (it would tie the
    session to a fingerprintable browser version). The parsed label
    coarsens the data: `"Firefox 137 on Linux"` becomes `"Firefox on
-   Linux"`.
+Linux"`.
 
 The parser lives at `src/lib/user-agent.ts` and uses a small allowlist
 (no third-party UA-parsing dep). New browsers fall back to `"Other"`
@@ -5675,10 +5714,10 @@ deletion is reserved for GLOBAL_ADMIN with a runbook.
 
 ## Entities using the pattern
 
-| Entity   | `archivedAt` since |
-|----------|---------------------|
-| Library  | Phase 1C            |
-| Book     | Phase 1D            |
+| Entity                                           | `archivedAt` since |
+| ------------------------------------------------ | ------------------ |
+| Library                                          | Phase 1C           |
+| Book                                             | Phase 1D           |
 | (BookFile, PhysicalCopy: TBD when Phase 2 lands) |
 
 ## Invariants
@@ -5709,7 +5748,7 @@ small (~2k rows expected by year 1).
 
 - [ ] **Step 3: `hard-delete-book.md`**
 
-```markdown
+````markdown
 # Runbook — Hard delete a Book (GLOBAL_ADMIN, DBA-scoped)
 
 ## When to use this
@@ -5738,6 +5777,7 @@ is reversible; hard delete is not.
      (SELECT COUNT(*) FROM "ReadingSession" WHERE "bookId" = '<id>') AS sessions,
      (SELECT COUNT(*) FROM "BookTag" WHERE "bookId" = '<id>') AS tags;
    ```
+````
 
 4. **If any non-zero count exists**, the API will refuse with `BAD_REQUEST`. Choose:
    - For `files`: delete file rows + the on-disk artifacts (Phase 2+ runbook needed).
@@ -5768,7 +5808,8 @@ DELETE FROM "Book" WHERE "id" = '<bookId>';
 
 Hard delete is irreversible and bypasses the soft-delete safety net. The
 runbook + GLOBAL_ADMIN-only API enforces a manual decision point.
-```
+
+````
 
 - [ ] **Step 4: Commit**
 
@@ -5783,13 +5824,14 @@ hard-delete-book.md walks GLOBAL_ADMIN through the SQL pre-flight,
 dependency cleanup decision tree, and post-flight audit verification.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
-```
+````
 
 ---
 
 ### Task E6 — 5 new E2E specs
 
 **Files:**
+
 - Create: `tests/e2e/book-create-flow.spec.ts`
 - Create: `tests/e2e/book-search.spec.ts`
 - Create: `tests/e2e/book-archive.spec.ts`
@@ -5998,6 +6040,7 @@ git tag phase-1d-checkpoint-module-E -m "Module E complete: debt cleared + 5 new
 ```
 
 **Module E acceptance criteria:**
+
 - ✅ 5 pre-1B E2E specs fixed (toHaveURL/waitForURL pathname comparison)
 - ✅ Email templates drift guard script + CI hook + runbook
 - ✅ ESLint local plugin extended (Book/BookFile/PhysicalCopy require `libraryId` scope)
@@ -6016,12 +6059,14 @@ git tag phase-1d-checkpoint-module-E -m "Module E complete: debt cleared + 5 new
 Before flipping the PR from Draft to Ready-for-review, walk through this list on the phase-1d dev stack (`http://localhost:3001`). Tick each item.
 
 **Auth & nav (regression check)**
+
 - [ ] Login flow works for admin@test.local
 - [ ] /admin/users still loads and works (1C regression check)
 - [ ] /account/security still loads and works (1C regression check)
 - [ ] Burger drawer on /admin works (no regression from MemberHeader changes)
 
 **Member shell**
+
 - [ ] /libraries shows the seeded library card (or "empty" state)
 - [ ] LibrarySwitcher in MemberHeader lists accessible libs
 - [ ] Selecting a lib in the switcher navigates to /library/[slug]/books
@@ -6029,6 +6074,7 @@ Before flipping the PR from Draft to Ready-for-review, walk through this list on
 - [ ] /library/[slug]/books for a non-member slug redirects to /libraries?error=not-a-member
 
 **Catalog**
+
 - [ ] Empty catalog renders friendly empty state
 - [ ] Seed 5–10 books via `prisma studio` or seed script; cards render
 - [ ] Search "petit" finds "Le Petit Prince" (FR accent-insensitive)
@@ -6038,6 +6084,7 @@ Before flipping the PR from Draft to Ready-for-review, walk through this list on
 - [ ] URL params survive page reload
 
 **Create / edit / archive / delete**
+
 - [ ] Library Admin sees "Ajouter un livre" button; Member does not
 - [ ] /books/new form: required-field validation works
 - [ ] coverPath rejects `http://` URL with inline error
@@ -6049,16 +6096,19 @@ Before flipping the PR from Draft to Ready-for-review, walk through this list on
 - [ ] Hard-delete dialog visible only to GLOBAL_ADMIN; refuses with helpful message when book has a BookFile
 
 **Cross-library isolation**
+
 - [ ] Direct URL `/library/<otherSlug>/books/<existingBookIdInOther>` returns 404 for a non-member
 - [ ] tRPC matrix integration test passes (executable proof)
 
 **Mobile + a11y**
+
 - [ ] /libraries renders correctly at 375px width
 - [ ] Catalog grid wraps correctly at 375/768/1024
 - [ ] All buttons have `aria-label` or visible text
 - [ ] Tab order through catalog filters → search → grid is logical
 
 **Tech debt smoke**
+
 - [ ] `pnpm check:emails-drift` passes
 - [ ] `pnpm lint` passes including the extended Prisma scope rule
 - [ ] CI shows all 4 e2e shards green
@@ -6107,6 +6157,7 @@ name: Phase 1D — clôture
 description: Phase 1D (library.books router + member UI + 1C debt) clôturée 2026-MM-DD, PR #XX mergée, tag phase-1d-complete sur <merge-sha>.
 type: project
 ---
+
 # Phase 1D — clôture
 
 **Date** : 2026-MM-DD
@@ -6117,20 +6168,24 @@ type: project
 **Smoke manuel** : ✅ validé par l'utilisateur 2026-MM-DD (checklist F1).
 
 ## Livrables
+
 - ... (see plan modules A–E)
 
 ## Patterns établis (à reproduire Phase 2+)
-- assertMembership(slug, role?) helper for all future library.* routers
+
+- assertMembership(slug, role?) helper for all future library.\* routers
 - Optimistic concurrency via expectedUpdatedAt + CONFLICT
 - Postgres tsvector + unaccent + GIN until Meili lands in Phase 4
 - HTTPS-only external URL fields (no server-side fetch)
-- Anti-drift matrice extended to library.* prefix
+- Anti-drift matrice extended to library.\* prefix
 - ESLint local rule for required scope keys (libraryId, userId)
 
 ## Suivis non-bloquants Phase 2
+
 - ... (TBD per smoke + PR review)
 
 ## Stats vélocité
+
 - Plan : ~2500 lignes / ~28 tasks (5 modules)
 - Branche : XX commits, ~XX jours wall-time
 - Tests deltas : +XX unit, +XX integration, +5 E2E

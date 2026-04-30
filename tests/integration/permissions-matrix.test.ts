@@ -413,8 +413,6 @@ function listProtectedProcedures(router: typeof appRouter): string[] {
   const procedures = def?.procedures ?? {};
   return Object.keys(procedures).filter(
     (name) =>
-      name.startsWith('admin.') ||
-      name.startsWith('account.') ||
-      name.startsWith('library.'),
+      name.startsWith('admin.') || name.startsWith('account.') || name.startsWith('library.'),
   );
 }

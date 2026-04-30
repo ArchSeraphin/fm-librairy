@@ -17,7 +17,8 @@ export function CreateBookForm({ slug }: { slug: string }) {
       utils.library.books.list.invalidate();
       router.push(`/library/${slug}/books/${book.id}`);
     },
-    onError: (err) => toast({ title: t('errorToast'), description: err.message, variant: 'destructive' }),
+    onError: (err) =>
+      toast({ title: t('errorToast'), description: err.message, variant: 'destructive' }),
   });
 
   function handleSubmit(payload: BookFormPayload) {
@@ -36,10 +37,6 @@ export function CreateBookForm({ slug }: { slug: string }) {
   }
 
   return (
-    <BookForm
-      onSubmit={handleSubmit}
-      submitLabel={t('submit')}
-      isSubmitting={create.isPending}
-    />
+    <BookForm onSubmit={handleSubmit} submitLabel={t('submit')} isSubmitting={create.isPending} />
   );
 }

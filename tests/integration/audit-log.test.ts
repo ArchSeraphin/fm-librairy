@@ -73,7 +73,7 @@ describe('Phase 1D audit actions', () => {
     'library.book.deleted',
   ];
 
-  test.each(bookActions)('enregistre l\'action %s avec target BOOK', async (action) => {
+  test.each(bookActions)("enregistre l'action %s avec target BOOK", async (action) => {
     const user = await prisma.user.create({
       data: {
         email: `audit-book-${action.replace(/\./g, '-')}@test.local`,

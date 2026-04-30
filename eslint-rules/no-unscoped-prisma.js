@@ -53,7 +53,7 @@ module.exports = {
       missingLibraryScope:
         '`db.{{model}}` : la clause `where` doit contenir `libraryId` pour scoper la requête à la librairie courante (anti-IDOR).',
       missingUserScope:
-        '`db.{{model}}` : la clause `where` doit contenir `userId` pour scoper la requête à l\'utilisateur courant (anti-IDOR).',
+        "`db.{{model}}` : la clause `where` doit contenir `userId` pour scoper la requête à l'utilisateur courant (anti-IDOR).",
     },
   },
   create(context) {
@@ -148,9 +148,7 @@ module.exports = {
 
         const hasScopeKey = whereValue.properties.some(
           (p) =>
-            p.type === 'Property' &&
-            p.key.type === 'Identifier' &&
-            p.key.name === scopeReq.key,
+            p.type === 'Property' && p.key.type === 'Identifier' && p.key.name === scopeReq.key,
         );
 
         if (!hasScopeKey) {

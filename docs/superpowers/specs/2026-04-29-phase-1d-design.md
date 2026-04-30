@@ -27,14 +27,14 @@
 
 ## 2. Décisions verrouillées en brainstorming
 
-| # | Décision | Choix |
-|---|---|---|
-| Q1 | Découpage Phase 1D vs 2 | A — sous-ensemble pré-upload, fidèle au design original |
-| Q2 | Niveau d'écriture en 1D | B — `list`/`get` + admin manual `create` (sans fichier), tags reportés |
-| Q3 | Niveau de richesse `list` | B — pagination + recherche Postgres `tsvector` + filtres `hasDigital`/`hasPhysical`/`language` (pas de Meili) |
-| Q4 | Dettes 1C absorbées | A — toutes (5 + bonus runbook hard-delete-book) |
-| Q5 | Mental model multi-bibliothèques | A — drill-in `/libraries` → `/library/[slug]/books`, + `MemberHeader` + library switcher |
-| Q6 | Scope CRUD Book en 1D | A + nuances — `create` + `update` + `archive`/`unarchive` + `delete` (GLOBAL_ADMIN only) ; `coverPath` = URL HTTPS optionnelle ; `physicalCopies.count` read-only |
+| #   | Décision                         | Choix                                                                                                                                                             |
+| --- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Découpage Phase 1D vs 2          | A — sous-ensemble pré-upload, fidèle au design original                                                                                                           |
+| Q2  | Niveau d'écriture en 1D          | B — `list`/`get` + admin manual `create` (sans fichier), tags reportés                                                                                            |
+| Q3  | Niveau de richesse `list`        | B — pagination + recherche Postgres `tsvector` + filtres `hasDigital`/`hasPhysical`/`language` (pas de Meili)                                                     |
+| Q4  | Dettes 1C absorbées              | A — toutes (5 + bonus runbook hard-delete-book)                                                                                                                   |
+| Q5  | Mental model multi-bibliothèques | A — drill-in `/libraries` → `/library/[slug]/books`, + `MemberHeader` + library switcher                                                                          |
+| Q6  | Scope CRUD Book en 1D            | A + nuances — `create` + `update` + `archive`/`unarchive` + `delete` (GLOBAL_ADMIN only) ; `coverPath` = URL HTTPS optionnelle ; `physicalCopies.count` read-only |
 
 ## 3. Architecture en un coup d'œil
 
@@ -109,15 +109,15 @@ Côté `schema.prisma` : `searchVector` typé `Unsupported("tsvector")?`. Prisma
 
 Namespace nouveau : `library` (parallèle à `admin`, `account`). Sous-router `books`.
 
-| Procédure | Type | Rôles autorisés | Limiter | Notes |
-|---|---|---|---|---|
-| `library.books.list` | query | Membership any role + GLOBAL_ADMIN | `listLimiter` | Input `{ q?, hasDigital?, hasPhysical?, language?, sort, cursor?, limit, includeArchived? }`. `limit` default 24, max 100, validé Zod. Retourne `{ items, nextCursor }`. `includeArchived` accepté pour tous mais **silently coerced à `false` pour non-admin** (pas d'erreur, juste filtre archived appliqué côté server). |
-| `library.books.get` | query | Membership any role + GLOBAL_ADMIN | `listLimiter` | Inclut `physicalCopies._count` read-only. Pour non-admin : si `archivedAt != null` → `NOT_FOUND` (le livre n'existe pas pour eux). |
-| `library.books.create` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `createLimiter` (5/min/user) | Métadonnées only, `coverPath` = URL HTTPS optionnelle, audit `book.created` |
-| `library.books.update` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` (10/min/user) | Concurrency check optimiste : input inclut `expectedUpdatedAt: Date`, le router compare avec la valeur DB et throw `CONFLICT` (TRPCError code) si mismatch. UI affiche "Le livre a été modifié par un autre admin, recharger ?". Audit `book.updated` avec diff. |
-| `library.books.archive` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` | Set `archivedAt = now()` ; refuse si déjà archived (BAD_REQUEST) ; audit `book.archived` |
-| `library.books.unarchive` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` | Clear `archivedAt` ; refuse si pas archived ; audit `book.unarchived` |
-| `library.books.delete` | mutation | **GLOBAL_ADMIN only** | `deleteLimiter` (1/h/user) | Hard delete, refuse si `_count.bookFiles > 0` OR `_count.physicalCopies > 0` OR `_count.annotations > 0` etc. ; audit `book.deleted` ; runbook DBA obligatoire |
+| Procédure                 | Type     | Rôles autorisés                         | Limiter                       | Notes                                                                                                                                                                                                                                                                                                                       |
+| ------------------------- | -------- | --------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `library.books.list`      | query    | Membership any role + GLOBAL_ADMIN      | `listLimiter`                 | Input `{ q?, hasDigital?, hasPhysical?, language?, sort, cursor?, limit, includeArchived? }`. `limit` default 24, max 100, validé Zod. Retourne `{ items, nextCursor }`. `includeArchived` accepté pour tous mais **silently coerced à `false` pour non-admin** (pas d'erreur, juste filtre archived appliqué côté server). |
+| `library.books.get`       | query    | Membership any role + GLOBAL_ADMIN      | `listLimiter`                 | Inclut `physicalCopies._count` read-only. Pour non-admin : si `archivedAt != null` → `NOT_FOUND` (le livre n'existe pas pour eux).                                                                                                                                                                                          |
+| `library.books.create`    | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `createLimiter` (5/min/user)  | Métadonnées only, `coverPath` = URL HTTPS optionnelle, audit `book.created`                                                                                                                                                                                                                                                 |
+| `library.books.update`    | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter` (10/min/user) | Concurrency check optimiste : input inclut `expectedUpdatedAt: Date`, le router compare avec la valeur DB et throw `CONFLICT` (TRPCError code) si mismatch. UI affiche "Le livre a été modifié par un autre admin, recharger ?". Audit `book.updated` avec diff.                                                            |
+| `library.books.archive`   | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter`               | Set `archivedAt = now()` ; refuse si déjà archived (BAD_REQUEST) ; audit `book.archived`                                                                                                                                                                                                                                    |
+| `library.books.unarchive` | mutation | LIBRARY_ADMIN (this lib) + GLOBAL_ADMIN | `updateLimiter`               | Clear `archivedAt` ; refuse si pas archived ; audit `book.unarchived`                                                                                                                                                                                                                                                       |
+| `library.books.delete`    | mutation | **GLOBAL_ADMIN only**                   | `deleteLimiter` (1/h/user)    | Hard delete, refuse si `_count.bookFiles > 0` OR `_count.physicalCopies > 0` OR `_count.annotations > 0` etc. ; audit `book.deleted` ; runbook DBA obligatoire                                                                                                                                                              |
 
 ### Helpers
 
@@ -137,13 +137,13 @@ Audit union 1D étendue : `book.created`, `book.updated`, `book.archived`, `book
 
 Sous `app/(member)/...` — segment route group nouveau, parallèle à `(admin)` et `(account)`.
 
-| Page | Path | Rôle minimum |
-|---|---|---|
-| Liste libs accessibles | `/libraries` | Membership any role + GLOBAL_ADMIN |
-| Layout member (header + sidebar) | `/library/[slug]/...` | Membership de cette lib + GLOBAL_ADMIN |
-| Catalogue | `/library/[slug]/books` | Membership any role |
-| Création livre | `/library/[slug]/books/new` | LIBRARY_ADMIN this lib + GLOBAL_ADMIN |
-| Fiche livre | `/library/[slug]/books/[bookId]` | Membership any role |
+| Page                             | Path                             | Rôle minimum                           |
+| -------------------------------- | -------------------------------- | -------------------------------------- |
+| Liste libs accessibles           | `/libraries`                     | Membership any role + GLOBAL_ADMIN     |
+| Layout member (header + sidebar) | `/library/[slug]/...`            | Membership de cette lib + GLOBAL_ADMIN |
+| Catalogue                        | `/library/[slug]/books`          | Membership any role                    |
+| Création livre                   | `/library/[slug]/books/new`      | LIBRARY_ADMIN this lib + GLOBAL_ADMIN  |
+| Fiche livre                      | `/library/[slug]/books/[bookId]` | Membership any role                    |
 
 ### Nouveaux composants (tous réutilisables Phase 2+)
 
@@ -168,15 +168,15 @@ Sous `app/(member)/...` — segment route group nouveau, parallèle à `(admin)`
 
 7 nouvelles procédures × 5 rôles = **35 nouveaux cases** à ajouter dans `tests/integration/permissions-matrix.test.ts`. L'anti-drift guard 1C les force à apparaître (sinon CI fail).
 
-| Procédure | GLOBAL_ADMIN | LIBRARY_ADMIN (this) | LIBRARY_ADMIN (other) | MEMBER (this) | MEMBER (other) | ANON | PENDING_2FA |
-|---|---|---|---|---|---|---|---|
-| `list` | OK | OK | NOT_FOUND | OK | NOT_FOUND | UNAUTHORIZED | UNAUTHORIZED |
-| `get` | OK | OK | NOT_FOUND | OK | NOT_FOUND | UNAUTHORIZED | UNAUTHORIZED |
-| `create` | OK | OK | FORBIDDEN | FORBIDDEN | FORBIDDEN | UNAUTHORIZED | UNAUTHORIZED |
-| `update` | OK | OK | FORBIDDEN | FORBIDDEN | FORBIDDEN | UNAUTHORIZED | UNAUTHORIZED |
-| `archive` | OK | OK | FORBIDDEN | FORBIDDEN | FORBIDDEN | UNAUTHORIZED | UNAUTHORIZED |
-| `unarchive` | OK | OK | FORBIDDEN | FORBIDDEN | FORBIDDEN | UNAUTHORIZED | UNAUTHORIZED |
-| `delete` | OK | FORBIDDEN | FORBIDDEN | FORBIDDEN | FORBIDDEN | UNAUTHORIZED | UNAUTHORIZED |
+| Procédure   | GLOBAL_ADMIN | LIBRARY_ADMIN (this) | LIBRARY_ADMIN (other) | MEMBER (this) | MEMBER (other) | ANON         | PENDING_2FA  |
+| ----------- | ------------ | -------------------- | --------------------- | ------------- | -------------- | ------------ | ------------ |
+| `list`      | OK           | OK                   | NOT_FOUND             | OK            | NOT_FOUND      | UNAUTHORIZED | UNAUTHORIZED |
+| `get`       | OK           | OK                   | NOT_FOUND             | OK            | NOT_FOUND      | UNAUTHORIZED | UNAUTHORIZED |
+| `create`    | OK           | OK                   | FORBIDDEN             | FORBIDDEN     | FORBIDDEN      | UNAUTHORIZED | UNAUTHORIZED |
+| `update`    | OK           | OK                   | FORBIDDEN             | FORBIDDEN     | FORBIDDEN      | UNAUTHORIZED | UNAUTHORIZED |
+| `archive`   | OK           | OK                   | FORBIDDEN             | FORBIDDEN     | FORBIDDEN      | UNAUTHORIZED | UNAUTHORIZED |
+| `unarchive` | OK           | OK                   | FORBIDDEN             | FORBIDDEN     | FORBIDDEN      | UNAUTHORIZED | UNAUTHORIZED |
+| `delete`    | OK           | FORBIDDEN            | FORBIDDEN             | FORBIDDEN     | FORBIDDEN      | UNAUTHORIZED | UNAUTHORIZED |
 
 **Conventions** : `NOT_FOUND` (au lieu de `FORBIDDEN`) sur les routes de lecture cross-library — évite l'enumeration de slugs. `FORBIDDEN` sur les écritures cross-library (l'utilisateur sait que la lib existe mais n'a pas le droit).
 
@@ -194,14 +194,14 @@ Sous `app/(member)/...` — segment route group nouveau, parallèle à `(admin)`
 
 ## 8. Dettes 1C absorbées
 
-| # | Tâche | Livrable | Effort |
-|---|---|---|---|
-| 1 | Fix regex `toHaveURL` 5 specs | Patch `tests/e2e/{health,password-reset,reset-invalidates-sessions,invitation-existing-user,invitation-new-user}.spec.ts` — utilise `await expect(page).toHaveURL(/\/(\?.*)?$/)` ou `expect(new URL(page.url()).pathname).toBe('/')` | 30 min |
-| 2 | CI e2e élargie | `.github/workflows/ci.yml` job e2e fait tourner **all specs** avec services Docker (postgres :5432, redis :6379, mailpit :1025/:8025) ; cache pnpm + `npx playwright install --with-deps chromium` ; timeout 15 min | 3 h |
-| 3 | Drift guard `src/emails/` ↔ `worker/emails/` | Script `scripts/check-email-templates-drift.ts` qui SHA-256-compare les paires de templates et fail-CI si divergence ; ajout au workflow lint | 1 h |
-| 4 | Lint rule custom Prisma scope | ESLint plugin local `eslint-plugin-prisma-scope` qui détecte `prisma.annotation.findMany`/`prisma.bookmark.*`/`prisma.readingProgress.*` sans `userId` dans le `where` ; warn pour `Book`/`BookFile` sans `libraryId` | 2 h |
-| 5 | Doc finding session-bridge | `docs/architecture/session-bridge.md` — explique le shape `Session.userAgentLabel` et le rationale du parsing au lieu de hash | 30 min |
-| 6 | Bonus runbook hard-delete-book | `docs/runbooks/hard-delete-book.md` — procédure DBA pour `library.books.delete` (rare), check des dépendances en pré-flight | 30 min |
+| #   | Tâche                                        | Livrable                                                                                                                                                                                                                             | Effort |
+| --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 1   | Fix regex `toHaveURL` 5 specs                | Patch `tests/e2e/{health,password-reset,reset-invalidates-sessions,invitation-existing-user,invitation-new-user}.spec.ts` — utilise `await expect(page).toHaveURL(/\/(\?.*)?$/)` ou `expect(new URL(page.url()).pathname).toBe('/')` | 30 min |
+| 2   | CI e2e élargie                               | `.github/workflows/ci.yml` job e2e fait tourner **all specs** avec services Docker (postgres :5432, redis :6379, mailpit :1025/:8025) ; cache pnpm + `npx playwright install --with-deps chromium` ; timeout 15 min                  | 3 h    |
+| 3   | Drift guard `src/emails/` ↔ `worker/emails/` | Script `scripts/check-email-templates-drift.ts` qui SHA-256-compare les paires de templates et fail-CI si divergence ; ajout au workflow lint                                                                                        | 1 h    |
+| 4   | Lint rule custom Prisma scope                | ESLint plugin local `eslint-plugin-prisma-scope` qui détecte `prisma.annotation.findMany`/`prisma.bookmark.*`/`prisma.readingProgress.*` sans `userId` dans le `where` ; warn pour `Book`/`BookFile` sans `libraryId`                | 2 h    |
+| 5   | Doc finding session-bridge                   | `docs/architecture/session-bridge.md` — explique le shape `Session.userAgentLabel` et le rationale du parsing au lieu de hash                                                                                                        | 30 min |
+| 6   | Bonus runbook hard-delete-book               | `docs/runbooks/hard-delete-book.md` — procédure DBA pour `library.books.delete` (rare), check des dépendances en pré-flight                                                                                                          | 30 min |
 
 **Total** : ~7h30 d'effort dette technique, intégré dans le module E du plan.
 
@@ -225,16 +225,16 @@ Sous `app/(member)/...` — segment route group nouveau, parallèle à `(admin)`
 
 ## 10. Risques & mitigations
 
-| Risque | Mitigation |
-|---|---|
-| Recherche tsvector `'simple'` rate les accents | `unaccent` extension dans la column generated → couvre `Müller`/`muller`, `François`/`Francois`. |
-| `coverPath` URL externe = mixed content / SSRF si on fetch côté server | **On ne fetch jamais côté server en 1D** ; balise `<img src>` directe + CSP `img-src 'self' https:` ajoutée au middleware Next. Validation Zod URL HTTPS only à la création. |
-| Soft-delete pattern oublié sur futur join (`PhysicalCopy.book.archivedAt`) | Lint rule Prisma scope (#4 dettes) couvrira partiellement ; pattern documenté dans `docs/architecture/soft-delete.md` (à co-rédiger en module E). |
-| Hard delete avec dépendances cassées | `delete` procédure refuse explicitement si `_count.bookFiles > 0 \|\| _count.physicalCopies > 0 \|\| _count.annotations > 0 \|\| _count.bookmarks > 0 \|\| _count.readingProgresses > 0` ; runbook DBA pour orchestrer le cleanup. |
-| Migration tsvector lente sur table existante | Table vide en dev/staging an 1, négligeable. Quand on aura 2k livres en prod, `GENERATED STORED` se calcule one-shot à la migration, ~secondes max sur PG16 OVH 8Go. |
-| Combobox switcher cache la lib courante en localStorage qui désync de l'URL | URL = source de vérité, localStorage = simple last-seen pour le default sur `/libraries` redirect. |
-| `unaccent` pas présent sur instance Postgres staging/prod | Migration teste `CREATE EXTENSION IF NOT EXISTS unaccent` ; si KO → fallback sans unaccent (warning logué) — à valider en smoke staging. |
-| Specs E2E élargies font exploser le CI time | Job e2e en parallel matrix (4 shards Playwright) si > 10 min ; timeout strict 15 min ; logs sur fail uniquement. |
+| Risque                                                                      | Mitigation                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Recherche tsvector `'simple'` rate les accents                              | `unaccent` extension dans la column generated → couvre `Müller`/`muller`, `François`/`Francois`.                                                                                                                                   |
+| `coverPath` URL externe = mixed content / SSRF si on fetch côté server      | **On ne fetch jamais côté server en 1D** ; balise `<img src>` directe + CSP `img-src 'self' https:` ajoutée au middleware Next. Validation Zod URL HTTPS only à la création.                                                       |
+| Soft-delete pattern oublié sur futur join (`PhysicalCopy.book.archivedAt`)  | Lint rule Prisma scope (#4 dettes) couvrira partiellement ; pattern documenté dans `docs/architecture/soft-delete.md` (à co-rédiger en module E).                                                                                  |
+| Hard delete avec dépendances cassées                                        | `delete` procédure refuse explicitement si `_count.bookFiles > 0 \|\| _count.physicalCopies > 0 \|\| _count.annotations > 0 \|\| _count.bookmarks > 0 \|\| _count.readingProgresses > 0` ; runbook DBA pour orchestrer le cleanup. |
+| Migration tsvector lente sur table existante                                | Table vide en dev/staging an 1, négligeable. Quand on aura 2k livres en prod, `GENERATED STORED` se calcule one-shot à la migration, ~secondes max sur PG16 OVH 8Go.                                                               |
+| Combobox switcher cache la lib courante en localStorage qui désync de l'URL | URL = source de vérité, localStorage = simple last-seen pour le default sur `/libraries` redirect.                                                                                                                                 |
+| `unaccent` pas présent sur instance Postgres staging/prod                   | Migration teste `CREATE EXTENSION IF NOT EXISTS unaccent` ; si KO → fallback sans unaccent (warning logué) — à valider en smoke staging.                                                                                           |
+| Specs E2E élargies font exploser le CI time                                 | Job e2e en parallel matrix (4 shards Playwright) si > 10 min ; timeout strict 15 min ; logs sur fail uniquement.                                                                                                                   |
 
 ## 11. Estimate & découpage du futur plan
 

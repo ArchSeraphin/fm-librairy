@@ -34,7 +34,8 @@ export function ArchiveBookDialog({
       router.refresh();
       onClose();
     },
-    onError: (err) => toast({ title: t('errorToast'), description: err.message, variant: 'destructive' }),
+    onError: (err) =>
+      toast({ title: t('errorToast'), description: err.message, variant: 'destructive' }),
   });
 
   return (

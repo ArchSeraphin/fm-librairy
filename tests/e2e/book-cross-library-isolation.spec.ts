@@ -37,7 +37,9 @@ test.afterAll(async () => {
   await disconnect();
 });
 
-test('member of A is redirected away from library B and gets 404 for B book via A slug', async ({ page }) => {
+test('member of A is redirected away from library B and gets 404 for B book via A slug', async ({
+  page,
+}) => {
   // Seed
   const admin = await prisma.user.create({
     data: {

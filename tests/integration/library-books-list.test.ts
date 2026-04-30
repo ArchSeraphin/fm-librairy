@@ -63,9 +63,7 @@ describe('library.books.list', () => {
     const ctx: TrpcContext = { session, user, ip: '203.0.113.1' };
     const caller = appRouter.createCaller(ctx);
 
-    await expect(
-      caller.library.books.list({ slug: lib.slug, limit: 1000 }),
-    ).rejects.toThrow();
+    await expect(caller.library.books.list({ slug: lib.slug, limit: 1000 })).rejects.toThrow();
   });
 
   // 3) language filter narrows results (fr only → 3 books: indices 0,2,4)
@@ -121,9 +119,9 @@ describe('library.books.list', () => {
     const ctx: TrpcContext = { session, user, ip: '203.0.113.1' };
     const caller = appRouter.createCaller(ctx);
 
-    await expect(
-      caller.library.books.list({ slug: foreignLib.slug }),
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(caller.library.books.list({ slug: foreignLib.slug })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
   });
 
   // 7) ANON throws UNAUTHORIZED
@@ -131,9 +129,9 @@ describe('library.books.list', () => {
     const ctx: TrpcContext = { session: null, user: null, ip: '203.0.113.1' };
     const caller = appRouter.createCaller(ctx);
 
-    await expect(
-      caller.library.books.list({ slug: 'any-slug' }),
-    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(caller.library.books.list({ slug: 'any-slug' })).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
   });
 
   // 8) includeArchived=true is silently coerced to false for MEMBER

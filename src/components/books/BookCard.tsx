@@ -51,9 +51,7 @@ export function BookCard({ slug, book }: { slug: string; book: BookCardData }) {
         </div>
         <CardContent className="space-y-1.5 p-3">
           <h3 className="line-clamp-2 font-medium leading-tight">{book.title}</h3>
-          <p className="line-clamp-1 text-xs text-muted-foreground">
-            {book.authors.join(', ')}
-          </p>
+          <p className="line-clamp-1 text-xs text-muted-foreground">{book.authors.join(', ')}</p>
           <div className="flex gap-1.5 pt-1">
             {book.hasDigital && (
               <Badge variant="secondary" className="text-xs">

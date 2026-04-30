@@ -34,7 +34,8 @@ export function UnarchiveBookDialog({
       router.refresh();
       onClose();
     },
-    onError: (err) => toast({ title: t('errorToast'), description: err.message, variant: 'destructive' }),
+    onError: (err) =>
+      toast({ title: t('errorToast'), description: err.message, variant: 'destructive' }),
   });
 
   return (
@@ -48,7 +49,10 @@ export function UnarchiveBookDialog({
           <Button variant="ghost" onClick={onClose} disabled={unarchive.isPending}>
             {t('cancel')}
           </Button>
-          <Button onClick={() => unarchive.mutate({ slug, id: bookId })} disabled={unarchive.isPending}>
+          <Button
+            onClick={() => unarchive.mutate({ slug, id: bookId })}
+            disabled={unarchive.isPending}
+          >
             {t('confirm')}
           </Button>
         </DialogFooter>

@@ -33,7 +33,9 @@ test.afterAll(async () => {
   await disconnect();
 });
 
-test('admin archives a book; member cannot see it; admin unarchives it; member sees it again', async ({ browser }) => {
+test('admin archives a book; member cannot see it; admin unarchives it; member sees it again', async ({
+  browser,
+}) => {
   // -------------------------------------------------------------------------
   // Seed
   // -------------------------------------------------------------------------
@@ -97,7 +99,9 @@ test('admin archives a book; member cannot see it; admin unarchives it; member s
   await archiveDialog.getByRole('button', { name: 'Archiver', exact: true }).click();
 
   // Expect success toast (use exact match to avoid aria-live duplicate)
-  await expect(adminPage.getByText('Livre archivé', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+  await expect(adminPage.getByText('Livre archivé', { exact: true }).first()).toBeVisible({
+    timeout: 10_000,
+  });
 
   // Verify in DB: archivedAt is set
   const archivedBook = await prisma.book.findUnique({ where: { id: book.id } });
@@ -147,7 +151,9 @@ test('admin archives a book; member cannot see it; admin unarchives it; member s
   await unarchiveDialog.getByRole('button', { name: 'Désarchiver', exact: true }).click();
 
   // Expect success toast (use exact match to avoid aria-live duplicate)
-  await expect(adminPage.getByText('Livre désarchivé', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+  await expect(adminPage.getByText('Livre désarchivé', { exact: true }).first()).toBeVisible({
+    timeout: 10_000,
+  });
 
   await adminContext.close();
 

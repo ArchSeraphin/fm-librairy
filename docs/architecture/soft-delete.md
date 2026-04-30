@@ -8,10 +8,10 @@ deletion is reserved for GLOBAL_ADMIN with a runbook.
 
 ## Entities using the pattern
 
-| Entity   | `archivedAt` since |
-|----------|---------------------|
-| Library  | Phase 1C            |
-| Book     | Phase 1D            |
+| Entity                                           | `archivedAt` since |
+| ------------------------------------------------ | ------------------ |
+| Library                                          | Phase 1C           |
+| Book                                             | Phase 1D           |
 | (BookFile, PhysicalCopy: TBD when Phase 2 lands) |
 
 ## Invariants

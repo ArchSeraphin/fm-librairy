@@ -12,8 +12,8 @@ normalization indicates real, unintended divergence:
 
 1. **DUPLICATED header** — every `worker/emails/*.tsx` file starts with a
    two-line comment block (`// DUPLICATED from src/emails/... — keep in sync.
-   Phase 1B / chose duplication over a shared workspace package; revisit in
-   Phase 2+.`). This is documentation; it is stripped before hashing.
+Phase 1B / chose duplication over a shared workspace package; revisit in
+Phase 2+.`). This is documentation; it is stripped before hashing.
 
 2. **`.js` import suffix** — `worker/emails/*.tsx` files use `from './_layout.js'`
    instead of `from './_layout'`. This is required by the worker's
