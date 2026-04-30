@@ -64,6 +64,12 @@ export async function consumePasswordReset(
           passwordHash,
           failedLoginAttempts: 0,
           lockedUntil: null,
+          // Watermark for the session bridge: any JWT issued before this
+          // timestamp is revoked, even if its cookie is still cryptographically
+          // valid. Without this, a stolen NextAuth cookie would re-establish a
+          // session via the bridge's find-or-create path immediately after
+          // the session row purge below.
+          revokedSessionsAt: new Date(),
         },
       });
       // invalide TOUTES les sessions actives du user (force re-login partout)

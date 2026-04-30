@@ -15,6 +15,21 @@ export async function getCurrentSessionAndUser(): Promise<{ session: Session; us
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user || user.status !== 'ACTIVE') return null;
 
+  // JWT revocation gate. NextAuth's default `iat` claim (in seconds) is
+  // compared against `user.revokedSessionsAt` (set by password-reset and any
+  // future force-logout flow). A JWT issued before the watermark is treated as
+  // invalid even if cryptographically intact — the user must re-login. Without
+  // this, the find-or-create below would resurrect a session for a cookie that
+  // was just supposed to be invalidated.
+  const iatSec = (jwt as { iat?: number }).iat;
+  if (
+    user.revokedSessionsAt &&
+    typeof iatSec === 'number' &&
+    iatSec * 1000 < user.revokedSessionsAt.getTime()
+  ) {
+    return null;
+  }
+
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '0.0.0.0';
   const ua = h.get('user-agent') ?? '';
