@@ -97,13 +97,11 @@ test('Invitation flow — existing user joins library via emailed link', async (
   await page.goto('/admin/users/invite');
   await page.fill('input[name="email"]', 'existing@e2e.test');
   await page.selectOption('select[name="libraryId"]', lib.id);
-  const inviteResponse = page.waitForResponse(
-    (r) => r.url().includes('/api/trpc/invitation.create') && r.request().method() === 'POST',
-    { timeout: 10_000 },
-  );
+  // The invite form is wired to a server action that calls
+  // caller.invitation.create server-to-server — no client-side
+  // /api/trpc/invitation.create POST is emitted.
   await page.click('button[type="submit"]');
-  await inviteResponse;
-  await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 15_000 });
 
   // Mailpit — subject FR mode "join" (`X vous invite à rejoindre <libname>`)
   const msg = await waitForEmail(

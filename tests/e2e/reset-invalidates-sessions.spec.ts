@@ -70,12 +70,11 @@ test('Password reset invalidates all active sessions across browser contexts', a
   const pageB = await ctxB.newPage();
   await pageB.goto('/password/forgot');
   await pageB.fill('input[name="email"]', 'multisession@e2e.test');
-  const reqResponse = pageB.waitForResponse(
-    (r) => r.url().includes('/api/trpc/password.requestReset') && r.request().method() === 'POST',
-    { timeout: 10_000 },
-  );
+  // The form is wired to a server action; no /api/trpc/password.requestReset
+  // POST is emitted by the browser. Wait for the in-page success message
+  // instead.
   await pageB.click('button[type="submit"]');
-  await reqResponse;
+  await expect(pageB.getByText(/lien de réinitialisation/i)).toBeVisible({ timeout: 15_000 });
 
   const msg = await waitForEmail('multisession@e2e.test', (m) =>
     m.Subject.toLowerCase().includes('réinitialisation'),

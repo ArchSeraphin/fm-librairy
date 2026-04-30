@@ -69,13 +69,9 @@ test('Invitation flow — new user signs up via emailed link', async ({ page }) 
   await page.goto('/admin/users/invite');
   await page.fill('input[name="email"]', 'newbie@e2e.test');
 
-  const inviteResponse = page.waitForResponse(
-    (r) => r.url().includes('/api/trpc/invitation.create') && r.request().method() === 'POST',
-    { timeout: 10_000 },
-  );
+  // Server-action wiring — no client-side /api/trpc/invitation.create POST.
   await page.click('button[type="submit"]');
-  await inviteResponse;
-  await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 15_000 });
 
   // Mailpit reçoit le mail (subject FR sans library = "Vous êtes invité·e sur BiblioShare")
   const msg = await waitForEmail(
