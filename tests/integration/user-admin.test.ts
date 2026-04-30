@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TRPCError } from '@trpc/server';
-import { assertNotLastGlobalAdmin, revokeAllSessionsForUser } from '@/lib/user-admin';
+import {
+  assertNotLastGlobalAdmin,
+  purgeAllUserSessionsAndJwts,
+  revokeAllSessionsForUser,
+} from '@/lib/user-admin';
 import { getTestPrisma, truncateAll } from './setup/prisma';
 
 const prisma = getTestPrisma();
@@ -140,5 +144,88 @@ describe('revokeAllSessionsForUser', () => {
     });
     await revokeAllSessionsForUser(a.id);
     expect(await prisma.session.count({ where: { userId: b.id } })).toBe(1);
+  });
+});
+
+describe('purgeAllUserSessionsAndJwts', () => {
+  beforeEach(truncateAll);
+
+  it('sets revokedSessionsAt and deletes all sessions atomically', async () => {
+    const u = await createUser({ email: 'p1@e2e.test' });
+    expect(u.revokedSessionsAt).toBeNull();
+    await prisma.session.createMany({
+      data: [
+        {
+          sessionToken: 'p1',
+          userId: u.id,
+          expiresAt: new Date(Date.now() + 60_000),
+          ipHash: HASH_64,
+          userAgentHash: HASH_64,
+        },
+        {
+          sessionToken: 'p2',
+          userId: u.id,
+          expiresAt: new Date(Date.now() + 60_000),
+          ipHash: HASH_64,
+          userAgentHash: HASH_64,
+        },
+      ],
+    });
+
+    const before = Date.now();
+    const count = await purgeAllUserSessionsAndJwts(u.id);
+    const after = Date.now();
+
+    expect(count).toBe(2);
+    expect(await prisma.session.count({ where: { userId: u.id } })).toBe(0);
+
+    const fresh = await prisma.user.findUniqueOrThrow({ where: { id: u.id } });
+    expect(fresh.revokedSessionsAt).toBeInstanceOf(Date);
+    const ts = fresh.revokedSessionsAt!.getTime();
+    expect(ts).toBeGreaterThanOrEqual(before);
+    expect(ts).toBeLessThanOrEqual(after);
+  });
+
+  it('does not affect other users sessions or watermark', async () => {
+    const a = await createUser({ email: 'pa@e2e.test' });
+    const b = await createUser({ email: 'pb@e2e.test' });
+    await prisma.session.create({
+      data: {
+        sessionToken: 'sa',
+        userId: a.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
+    });
+    await prisma.session.create({
+      data: {
+        sessionToken: 'sb',
+        userId: b.id,
+        expiresAt: new Date(Date.now() + 60_000),
+        ipHash: HASH_64,
+        userAgentHash: HASH_64,
+      },
+    });
+
+    await purgeAllUserSessionsAndJwts(a.id);
+
+    expect(await prisma.session.count({ where: { userId: b.id } })).toBe(1);
+    const freshB = await prisma.user.findUniqueOrThrow({ where: { id: b.id } });
+    expect(freshB.revokedSessionsAt).toBeNull();
+  });
+
+  it('moves watermark forward on repeated calls', async () => {
+    const u = await createUser({ email: 'pm@e2e.test' });
+    await purgeAllUserSessionsAndJwts(u.id);
+    const first = await prisma.user.findUniqueOrThrow({ where: { id: u.id } });
+    const t1 = first.revokedSessionsAt!.getTime();
+
+    await new Promise((r) => setTimeout(r, 5));
+    await purgeAllUserSessionsAndJwts(u.id);
+    const second = await prisma.user.findUniqueOrThrow({ where: { id: u.id } });
+    const t2 = second.revokedSessionsAt!.getTime();
+
+    expect(t2).toBeGreaterThan(t1);
   });
 });
