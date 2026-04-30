@@ -137,9 +137,8 @@ jobs:
       EMAIL_TRANSPORT: smtp
       SMTP_HOST: localhost
       LOG_LEVEL: warn
-      # Phase 2A' upload pipeline writes staging/final files under this root.
-      # The default `/data` is not writable on GH runners.
-      STORAGE_ROOT: ${{ runner.temp }}/biblioshare-storage
+      # STORAGE_ROOT is set at runtime via $GITHUB_ENV (uses $RUNNER_TEMP, which
+      # is only available as an env var, not in the `runner` context here).
 
     steps:
       - uses: actions/checkout@v6
@@ -160,7 +159,10 @@ jobs:
       - run: pnpm dlx playwright install --with-deps chromium
 
       - name: Prepare upload storage root
-        run: mkdir -p "$STORAGE_ROOT/staging" "$STORAGE_ROOT/library"
+        run: |
+          STORAGE_ROOT="$RUNNER_TEMP/biblioshare-storage"
+          mkdir -p "$STORAGE_ROOT/staging" "$STORAGE_ROOT/library"
+          echo "STORAGE_ROOT=$STORAGE_ROOT" >> "$GITHUB_ENV"
 
       - name: Wait for ClamAV virus DB to load
         run: |
