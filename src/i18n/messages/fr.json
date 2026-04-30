@@ -420,6 +420,30 @@
     "paginator": {
       "prev": "Précédent",
       "next": "Suivant"
+    },
+    "search": {
+      "label": "Rechercher un livre",
+      "placeholder": "Titre, auteur, ISBN…"
+    },
+    "filters": {
+      "title": "Filtres",
+      "hasDigital": "Disponible en numérique",
+      "hasPhysical": "Disponible en physique",
+      "languageLabel": "Langue",
+      "languageAny": "Toutes les langues",
+      "languages": {
+        "fr": "Français",
+        "en": "Anglais",
+        "es": "Espagnol",
+        "de": "Allemand",
+        "it": "Italien",
+        "pt": "Portugais"
+      }
+    },
+    "sort": {
+      "createdAt_desc": "Plus récents",
+      "createdAt_asc": "Plus anciens",
+      "title_asc": "Titre (A→Z)"
     }
   },
   "password": {
