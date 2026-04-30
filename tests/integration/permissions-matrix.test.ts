@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { TRPCError } from '@trpc/server';
 import { appRouter } from '@/server/trpc/routers/_app';
-import { truncateAll } from './setup/prisma';
+import { truncateAll, getTestPrisma } from './setup/prisma';
 import { makeCtxForRole, type RoleKey, type RoleCtx } from './_helpers/auth-ctx';
 
 type Outcome = 'allow' | 'deny';
@@ -29,10 +29,29 @@ const AUTHED_ONLY: Record<RoleKey, Outcome> = {
   LIBRARY_ADMIN: 'allow',
   MEMBER: 'allow',
 };
+const ADMIN_ONLY: Record<RoleKey, Outcome> = {
+  ...ANY_DENY,
+  GLOBAL_ADMIN: 'allow',
+  LIBRARY_ADMIN: 'allow',
+};
 
 // Stub cuid (length 25) used as input where the procedure expects a cuid.
 // Allow path will surface NOT_FOUND/BAD_REQUEST/CONFLICT, which is silenced.
 const STUB_CUID = 'cabcdefghijklmnopqrstuvwx';
+
+const prisma = getTestPrisma();
+
+async function resolveSlugFromCtx(ctx: RoleCtx): Promise<string> {
+  // For roles that have a seeded library (LIBRARY_ADMIN, MEMBER), look up its slug
+  // so the membership middleware passes. For roles without a library (GA, ANON,
+  // PENDING_2FA), any non-empty slug passes Zod — those roles fail at the auth
+  // gate (or, for GA, hit a procedure-body NOT_FOUND which the harness silences).
+  if (ctx.libraryId) {
+    const lib = await prisma.library.findUnique({ where: { id: ctx.libraryId } });
+    if (lib) return lib.slug;
+  }
+  return 'placeholder-slug';
+}
 
 const matrix: MatrixCase[] = [
   // -------- admin.users -- global admin only --------
@@ -253,6 +272,76 @@ const matrix: MatrixCase[] = [
     byRole: { ...AUTHED_ONLY, GLOBAL_ADMIN: 'deny' },
     call: (c) => c.account.security.startReEnrollWithBackup({ backupCode: 'ABCD-EFGH' }),
   },
+
+  // -------- library.books × 5 roles -- read = AUTHED_ONLY, mutations = ADMIN_ONLY, delete = GLOBAL_ONLY --------
+  {
+    router: 'library.books',
+    procedure: 'list',
+    byRole: AUTHED_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.list({ slug, limit: 24 });
+    },
+  },
+  {
+    router: 'library.books',
+    procedure: 'get',
+    byRole: AUTHED_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.get({ slug, id: STUB_CUID });
+    },
+  },
+  {
+    router: 'library.books',
+    procedure: 'create',
+    byRole: ADMIN_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.create({ slug, title: 'matrix probe', authors: ['X'] });
+    },
+  },
+  {
+    router: 'library.books',
+    procedure: 'update',
+    byRole: ADMIN_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.update({
+        slug,
+        id: STUB_CUID,
+        expectedUpdatedAt: new Date(),
+        patch: { title: 'matrix probe updated' },
+      });
+    },
+  },
+  {
+    router: 'library.books',
+    procedure: 'archive',
+    byRole: ADMIN_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.archive({ slug, id: STUB_CUID });
+    },
+  },
+  {
+    router: 'library.books',
+    procedure: 'unarchive',
+    byRole: ADMIN_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.unarchive({ slug, id: STUB_CUID });
+    },
+  },
+  {
+    router: 'library.books',
+    procedure: 'delete',
+    byRole: GLOBAL_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.delete({ slug, id: STUB_CUID });
+    },
+  },
 ];
 
 const ALL_ROLES: RoleKey[] = ['GLOBAL_ADMIN', 'LIBRARY_ADMIN', 'MEMBER', 'ANON', 'PENDING_2FA'];
@@ -297,11 +386,12 @@ describe('permissions matrix', () => {
 
   // --- Anti-drift guard ----------------------------------------------------
   // tRPC v11 stores every procedure in `appRouter._def.procedures` keyed by its
-  // dotted path (e.g. "admin.users.list"). We restrict coverage to the admin.*
-  // and account.* sub-trees — the auth/invitation/password routers expose flows
-  // covered elsewhere (signup, password-reset, enrol-2FA) and intentionally use
-  // a mix of public/pending/authed gates that this matrix does not model.
-  test('matrix covers every protected procedure under admin.* and account.*', () => {
+  // dotted path (e.g. "admin.users.list"). We restrict coverage to the admin.*,
+  // account.*, and library.* sub-trees — the auth/invitation/password routers
+  // expose flows covered elsewhere (signup, password-reset, enrol-2FA) and
+  // intentionally use a mix of public/pending/authed gates that this matrix does
+  // not model.
+  test('matrix covers every protected procedure under admin.*, account.*, and library.*', () => {
     const procedures = listProtectedProcedures(appRouter);
     const covered = new Set(matrix.map((m) => `${m.router}.${m.procedure}`));
     const missing = procedures.filter((p) => !covered.has(p));
@@ -316,6 +406,9 @@ function listProtectedProcedures(router: typeof appRouter): string[] {
   const def = (router as unknown as { _def?: { procedures?: Record<string, unknown> } })._def;
   const procedures = def?.procedures ?? {};
   return Object.keys(procedures).filter(
-    (name) => name.startsWith('admin.') || name.startsWith('account.'),
+    (name) =>
+      name.startsWith('admin.') ||
+      name.startsWith('account.') ||
+      name.startsWith('library.'),
   );
 }
