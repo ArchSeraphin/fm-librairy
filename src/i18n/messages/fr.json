@@ -407,6 +407,21 @@
       }
     }
   },
+  "books": {
+    "card": {
+      "coverAlt": "Couverture de {title}",
+      "archived": "Archivé",
+      "digital": "Numérique",
+      "physical": "Physique"
+    },
+    "list": {
+      "empty": "Aucun livre dans cette bibliothèque pour le moment."
+    },
+    "paginator": {
+      "prev": "Précédent",
+      "next": "Suivant"
+    }
+  },
   "password": {
     "forgot": {
       "title": "Mot de passe oublié",
