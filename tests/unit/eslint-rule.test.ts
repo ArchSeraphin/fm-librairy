@@ -13,22 +13,22 @@ describe('no-unscoped-prisma', () => {
     tester.run('no-unscoped-prisma', rule, {
       valid: [
         { code: 'db.book.findMany({ where: { libraryId: x } })' },
-        { code: 'db.book.findFirst({ where: { id }, include: { tags: true } })' },
+        { code: 'db.book.findFirst({ where: { id, libraryId }, include: { tags: true } })' },
         { code: 'db.book.create({ data: { title: "x" } })' },
         { code: 'db.book.findUnique({ where: { id } })' },
       ],
       invalid: [
         {
           code: 'db.book.findMany()',
-          errors: [{ messageId: 'missingWhere' }],
+          errors: [{ messageId: 'missingWhere' }, { messageId: 'missingLibraryScope' }],
         },
         {
           code: 'db.book.findMany({ orderBy: { title: "asc" } })',
-          errors: [{ messageId: 'missingWhere' }],
+          errors: [{ messageId: 'missingWhere' }, { messageId: 'missingLibraryScope' }],
         },
         {
           code: 'db.book.findFirst({})',
-          errors: [{ messageId: 'missingWhere' }],
+          errors: [{ messageId: 'missingWhere' }, { messageId: 'missingLibraryScope' }],
         },
       ],
     });
