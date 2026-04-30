@@ -25,6 +25,7 @@ describe('BookCard', () => {
     expect(screen.getByText(/saint-exupéry/i)).toBeInTheDocument();
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/library/mon-salon/books/cl1');
+    expect(screen.getByText(/numérique/i)).toBeInTheDocument();
   });
 
   test('shows archive badge when archivedAt is set', () => {
