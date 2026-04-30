@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { BookOpen, Package, Archive } from 'lucide-react';
+import type { ScanStatus } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScanStatusBadge } from './ScanStatusBadge';
 
 export interface BookCardData {
   id: string;
@@ -15,9 +17,19 @@ export interface BookCardData {
   hasDigital: boolean;
   hasPhysical: boolean;
   archivedAt: Date | null;
+  /** scanStatus of the earliest file for this book, or null/undefined if none. */
+  firstFileScanStatus?: ScanStatus | null;
 }
 
-export function BookCard({ slug, book }: { slug: string; book: BookCardData }) {
+export function BookCard({
+  slug,
+  book,
+  scanStatus = null,
+}: {
+  slug: string;
+  book: BookCardData;
+  scanStatus?: ScanStatus | null;
+}) {
   const t = useTranslations('books.card');
   return (
     <Link href={`/library/${slug}/books/${book.id}`} className="block focus:outline-none">
@@ -52,7 +64,7 @@ export function BookCard({ slug, book }: { slug: string; book: BookCardData }) {
         <CardContent className="space-y-1.5 p-3">
           <h3 className="line-clamp-2 font-medium leading-tight">{book.title}</h3>
           <p className="line-clamp-1 text-xs text-muted-foreground">{book.authors.join(', ')}</p>
-          <div className="flex gap-1.5 pt-1">
+          <div className="flex flex-wrap gap-1.5 pt-1">
             {book.hasDigital && (
               <Badge variant="secondary" className="text-xs">
                 <BookOpen className="mr-1 h-3 w-3" aria-hidden />
@@ -65,6 +77,7 @@ export function BookCard({ slug, book }: { slug: string; book: BookCardData }) {
                 {t('physical')}
               </Badge>
             )}
+            {scanStatus !== null && <ScanStatusBadge status={scanStatus} size="sm" />}
           </div>
         </CardContent>
       </Card>

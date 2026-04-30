@@ -21,5 +21,23 @@ export default async function BookDetailPage({
   });
   if (!book || book.libraryId !== library.id) notFound();
   if (!isAdmin && book.archivedAt !== null) notFound();
-  return <BookDetail slug={slug} book={book} isAdmin={isAdmin} isGlobalAdmin={isGlobalAdmin} />;
+
+  const files = await db.bookFile.findMany({
+    where: { bookId: book.id, libraryId: book.libraryId },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  // GLOBAL_ADMIN can always upload even without an explicit membership row.
+  const canUpload = membership?.canUpload === true || user.role === 'GLOBAL_ADMIN';
+
+  return (
+    <BookDetail
+      slug={slug}
+      book={book}
+      isAdmin={isAdmin}
+      isGlobalAdmin={isGlobalAdmin}
+      files={files}
+      canUpload={canUpload}
+    />
+  );
 }

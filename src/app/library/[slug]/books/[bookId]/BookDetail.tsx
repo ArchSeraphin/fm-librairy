@@ -5,18 +5,24 @@ import { BookOpen, Package, Archive } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookActionsMenu } from './BookActionsMenu';
-import type { Book } from '@prisma/client';
+import { BookFileUpload } from '@/components/books/BookFileUpload';
+import { ScanStatusBadge } from '@/components/books/ScanStatusBadge';
+import type { Book, BookFile } from '@prisma/client';
 
 export function BookDetail({
   slug,
   book,
   isAdmin,
   isGlobalAdmin,
+  files,
+  canUpload,
 }: {
   slug: string;
   book: Book;
   isAdmin: boolean;
   isGlobalAdmin: boolean;
+  files: BookFile[];
+  canUpload: boolean;
 }) {
   const t = useTranslations('books.detail');
   return (
@@ -81,6 +87,30 @@ export function BookDetail({
             <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{book.description}</p>
           </section>
         )}
+        <section className="mt-8 space-y-3">
+          <h2 className="text-lg font-semibold">Fichier</h2>
+          {files.length === 0 ? (
+            canUpload ? (
+              <BookFileUpload slug={slug} bookId={book.id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun fichier disponible.</p>
+            )
+          ) : (
+            files.map((f) => (
+              <div
+                key={f.id}
+                className="flex items-center justify-between rounded-md border p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <ScanStatusBadge status={f.scanStatus} />
+                  <span className="text-sm">
+                    {f.format} · {(Number(f.fileSizeBytes) / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </section>
       </div>
     </article>
   );

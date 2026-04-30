@@ -33,7 +33,7 @@ export function BookListGrid({
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       {books.map((b) => (
-        <BookCard key={b.id} slug={slug} book={b} />
+        <BookCard key={b.id} slug={slug} book={b} scanStatus={b.firstFileScanStatus ?? null} />
       ))}
     </div>
   );
