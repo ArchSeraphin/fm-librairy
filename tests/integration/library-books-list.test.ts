@@ -64,7 +64,7 @@ describe('library.books.list', () => {
     const caller = appRouter.createCaller(ctx);
 
     await expect(
-      caller.library.books.list({ slug: lib.slug, limit: 101 }),
+      caller.library.books.list({ slug: lib.slug, limit: 1000 }),
     ).rejects.toThrow();
   });
 

@@ -5,7 +5,13 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 /** HTTPS URL, max 2048 chars, optional + nullable. */
-export const coverUrl = z.string().url().max(2048).startsWith('https://').optional().nullable();
+export const coverUrl = z
+  .string()
+  .url()
+  .startsWith('https://', { message: 'cover URL must be HTTPS' })
+  .max(2048)
+  .optional()
+  .nullable();
 
 // ---------------------------------------------------------------------------
 // List / Search
