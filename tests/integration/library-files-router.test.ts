@@ -89,8 +89,9 @@ describe('library.files.get', () => {
     const caller = callerFor(userRow, session);
     const r = await caller.library.files.get({ slug: library.slug, bookId: book.id });
     expect(r).toHaveLength(1);
-    expect(r[0].id).toBe(bf.id);
-    expect(r[0].scanStatus).toBe('CLEAN');
+    const first = r[0]!;
+    expect(first.id).toBe(bf.id);
+    expect(first.scanStatus).toBe('CLEAN');
   });
 });
 
