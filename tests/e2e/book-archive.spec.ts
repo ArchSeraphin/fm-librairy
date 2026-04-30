@@ -9,9 +9,6 @@ import {
 } from './helpers/db';
 import { submitLogin } from './helpers/auth';
 import { hashPassword } from '../../src/lib/password';
-// Static import ensures crypto.ts is compiled by Playwright's esbuild and
-// cached in Node's module registry before cleanupTestData() dynamic-imports it.
-import '../../src/lib/crypto';
 
 const PASSWORD = 'TestPass-123!';
 const LIBRARY_SLUG = 'e2e-1d-archive';
