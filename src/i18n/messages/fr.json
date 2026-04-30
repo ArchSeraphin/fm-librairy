@@ -396,6 +396,15 @@
       "placeholder": "Choisir une bibliothèque",
       "searchPlaceholder": "Rechercher une bibliothèque…",
       "noResults": "Aucune bibliothèque trouvée"
+    },
+    "libraries": {
+      "pageTitle": "Mes bibliothèques",
+      "subtitle": "Sélectionnez une bibliothèque pour parcourir son catalogue.",
+      "empty": "Vous n'avez accès à aucune bibliothèque pour le moment.",
+      "errors": {
+        "notAMember": "Vous n'avez pas accès à cette bibliothèque.",
+        "notFound": "Cette bibliothèque est introuvable ou a été archivée."
+      }
     }
   },
   "password": {
