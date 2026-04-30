@@ -49,10 +49,7 @@ async function submitLogin(page: Page, email: string, password: string): Promise
   await page.waitForURL((url) => url.pathname !== '/login', { timeout: 15_000 });
 }
 
-// TODO(#21): re-enable once the useActionState / revalidatePath race in
-// /admin/users/invite is resolved — see issue #21 for hypothesis + retained
-// integration coverage.
-test.skip('Invitation flow — existing user joins library via emailed link', async ({ page }) => {
+test('Invitation flow — existing user joins library via emailed link', async ({ page }) => {
   // Library
   const lib = await prisma.library.create({
     data: { name: 'Bibliothèque E2E', slug: LIB_SLUG },
@@ -100,10 +97,11 @@ test.skip('Invitation flow — existing user joins library via emailed link', as
   await page.goto('/admin/users/invite');
   await page.fill('input[name="email"]', 'existing@e2e.test');
   await page.selectOption('select[name="libraryId"]', lib.id);
-  // The invite form is wired to a server action that calls
-  // caller.invitation.create server-to-server — no client-side
-  // /api/trpc/invitation.create POST is emitted.
-  await page.click('button[type="submit"]');
+  // Target the form's submit button by name. A bare `button[type="submit"]`
+  // selector also matches the LogoutButton inside AdminHeader (rendered
+  // earlier in the DOM), which would POST /logout instead of submitting the
+  // invite form.
+  await page.getByRole('button', { name: "Envoyer l'invitation", exact: true }).click();
   await expect(page.getByText(/Invitation envoyée/i)).toBeVisible({ timeout: 15_000 });
 
   // Mailpit — subject FR mode "join" (`X vous invite à rejoindre <libname>`)
