@@ -1,12 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import { t } from '../../trpc';
 import { libraryMemberProcedure, libraryAdminProcedure } from '../../procedures-library';
-import { libraryBookListLimiter, libraryBookCreateLimiter, libraryBookUpdateLimiter } from '@/lib/rate-limit';
+import { globalAdminProcedure } from '../../procedures';
+import { libraryBookListLimiter, libraryBookCreateLimiter, libraryBookUpdateLimiter, libraryBookDeleteLimiter } from '@/lib/rate-limit';
 import { buildSearchQuery } from '@/lib/book-search';
 import { db } from '@/lib/db';
-import { listBooksInput, getBookInput, createBookInput, updateBookInput, archiveBookInput, unarchiveBookInput } from '../../schemas/book';
+import { listBooksInput, getBookInput, createBookInput, updateBookInput, archiveBookInput, unarchiveBookInput, deleteBookInput } from '../../schemas/book';
 import { recordAudit } from '@/lib/audit-log';
-import { assertBookInLibrary, assertNotArchived } from '@/lib/book-admin';
+import { assertBookInLibrary, assertNotArchived, assertNoBookDependencies } from '@/lib/book-admin';
 
 export const libraryBooksRouter = t.router({
   list: libraryMemberProcedure
@@ -249,5 +250,42 @@ export const libraryBooksRouter = t.router({
       });
 
       return updated;
+    }),
+
+  delete: globalAdminProcedure
+    .input(deleteBookInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await libraryBookDeleteLimiter.consume(ctx.user.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      // Validate slug → library (GA bypasses membership middleware so must resolve manually)
+      const lib = await db.library.findUnique({ where: { slug: input.slug } });
+      if (!lib) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+
+      // Throws NOT_FOUND on cross-library id-guess
+      const book = await assertBookInLibrary(input.id, lib.id);
+
+      // Throws BAD_REQUEST listing dependency field names if any dependent rows exist
+      await assertNoBookDependencies(book.id);
+
+      // Snapshot before delete (legal hold)
+      const snapshot = { ...book };
+
+      await db.book.delete({ where: { id: book.id } });
+
+      await recordAudit({
+        action: 'library.book.deleted',
+        actor: { id: ctx.user.id },
+        target: { type: 'BOOK', id: book.id },
+        metadata: { libraryId: lib.id, snapshot },
+        req: { ip: ctx.ip },
+      });
+
+      return { ok: true };
     }),
 });
