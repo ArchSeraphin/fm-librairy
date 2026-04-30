@@ -1,5 +1,5 @@
 // src/lib/upload/staging-io.ts
-import { mkdir, rename, unlink, rm, readFile } from 'node:fs/promises';
+import { mkdir, rename, rm, readFile } from 'node:fs/promises';
 import { createWriteStream } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
