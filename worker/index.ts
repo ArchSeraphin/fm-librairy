@@ -41,6 +41,8 @@ const parsed = z
     IP_HASH_SALT: z.string().min(16),
     UA_HASH_SALT: z.string().min(16),
     CRYPTO_MASTER_KEY: z.string().min(32),
+    // Stockage fichiers (Phase 2A' — volume partagé app + worker)
+    STORAGE_ROOT: z.string().min(1).default('/data'),
   })
   .superRefine((v, ctx) => {
     if (v.EMAIL_TRANSPORT === 'resend' && !v.RESEND_API_KEY) {

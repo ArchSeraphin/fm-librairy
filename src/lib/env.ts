@@ -46,6 +46,9 @@ const EnvSchema = z
     // APIs métadonnées (Phase 2+)
     GOOGLE_BOOKS_API_KEY: z.string().optional(),
     ISBNDB_API_KEY: z.string().optional(),
+
+    // Stockage fichiers (Phase 2A' — volume partagé app + worker)
+    STORAGE_ROOT: z.string().min(1).default('/data'),
   })
   .superRefine((v, ctx) => {
     if (v.EMAIL_TRANSPORT === 'resend' && !v.RESEND_API_KEY) {
