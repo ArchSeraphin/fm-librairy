@@ -41,7 +41,8 @@ describe('library.books.archive + unarchive', () => {
 
     const result = await caller.library.books.archive({ slug: lib.slug, id: book.id });
 
-    expect(result).toEqual({ ok: true });
+    expect(result.id).toBe(book.id);
+    expect(result.archivedAt).not.toBeNull();
 
     const updated = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
     expect(updated.archivedAt).not.toBeNull();
@@ -102,7 +103,8 @@ describe('library.books.archive + unarchive', () => {
     // Then unarchive
     const result = await caller.library.books.unarchive({ slug: lib.slug, id: book.id });
 
-    expect(result).toEqual({ ok: true });
+    expect(result.id).toBe(book.id);
+    expect(result.archivedAt).toBeNull();
 
     const updated = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
     expect(updated.archivedAt).toBeNull();
@@ -141,5 +143,23 @@ describe('library.books.archive + unarchive', () => {
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
     expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  // 7) archive of nonexistent book id → NOT_FOUND
+  it('archive of nonexistent book id throws NOT_FOUND', async () => {
+    const seeded = await seedAdminAndBook();
+    const caller = appRouter.createCaller(seeded.ctx);
+    await expect(
+      caller.library.books.archive({ slug: seeded.lib.slug, id: 'cmnonexistentcuid000000000' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  // 8) unarchive of nonexistent book id → NOT_FOUND
+  it('unarchive of nonexistent book id throws NOT_FOUND', async () => {
+    const seeded = await seedAdminAndBook();
+    const caller = appRouter.createCaller(seeded.ctx);
+    await expect(
+      caller.library.books.unarchive({ slug: seeded.lib.slug, id: 'cmnonexistentcuid000000000' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

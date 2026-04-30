@@ -178,7 +178,7 @@ export const libraryBooksRouter = t.router({
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
       }
 
-      // Atomic state-machine guard: only archive if currently not archived
+      // Atomic: PG row-lock on UPDATE WHERE rechecks the guard predicate; concurrent writers see count=0.
       const result = await db.book.updateMany({
         where: {
           id: input.id,
@@ -198,15 +198,17 @@ export const libraryBooksRouter = t.router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'already archived' });
       }
 
+      const updated = await db.book.findUniqueOrThrow({ where: { id: input.id } });
+
       await recordAudit({
         action: 'library.book.archived',
         actor: { id: ctx.user.id },
-        target: { type: 'BOOK', id: input.id },
+        target: { type: 'BOOK', id: updated.id },
         metadata: { libraryId: ctx.library.id },
         req: { ip: ctx.ip },
       });
 
-      return { ok: true };
+      return updated;
     }),
 
   unarchive: libraryAdminProcedure
@@ -218,7 +220,7 @@ export const libraryBooksRouter = t.router({
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
       }
 
-      // Atomic state-machine guard: only unarchive if currently archived
+      // Atomic: PG row-lock on UPDATE WHERE rechecks the guard predicate; concurrent writers see count=0.
       const result = await db.book.updateMany({
         where: {
           id: input.id,
@@ -236,14 +238,16 @@ export const libraryBooksRouter = t.router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'not archived' });
       }
 
+      const updated = await db.book.findUniqueOrThrow({ where: { id: input.id } });
+
       await recordAudit({
         action: 'library.book.unarchived',
         actor: { id: ctx.user.id },
-        target: { type: 'BOOK', id: input.id },
+        target: { type: 'BOOK', id: updated.id },
         metadata: { libraryId: ctx.library.id },
         req: { ip: ctx.ip },
       });
 
-      return { ok: true };
+      return updated;
     }),
 });
