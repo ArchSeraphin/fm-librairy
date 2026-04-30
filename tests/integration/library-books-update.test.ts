@@ -194,4 +194,41 @@ describe('library.books.update', () => {
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
+
+  // 6) Atomic concurrency — two concurrent updates with same expectedUpdatedAt; exactly one wins
+  it('two concurrent updates with the same expectedUpdatedAt — exactly one wins (atomic)', async () => {
+    const { session, user, libraryId } = await makeCtxForRole('LIBRARY_ADMIN');
+    const lib = await prisma.library.findUniqueOrThrow({ where: { id: libraryId } });
+
+    const book = await prisma.book.create({
+      data: {
+        title: 'Race Book',
+        authors: ['Author'],
+        libraryId: lib.id,
+        uploadedById: user!.id,
+      },
+    });
+
+    const ctx: TrpcContext = { session, user, ip: '203.0.113.1' };
+    const caller = appRouter.createCaller(ctx);
+
+    const baseInput = (title: string) => ({
+      slug: lib.slug,
+      id: book.id,
+      expectedUpdatedAt: book.updatedAt,
+      patch: { title },
+    });
+
+    const [a, b] = await Promise.allSettled([
+      caller.library.books.update(baseInput('Concurrent A')),
+      caller.library.books.update(baseInput('Concurrent B')),
+    ]);
+
+    const fulfilled = [a, b].filter((r) => r.status === 'fulfilled');
+    const rejected = [a, b].filter((r) => r.status === 'rejected');
+
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ code: 'CONFLICT' });
+  });
 });

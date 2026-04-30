@@ -114,21 +114,41 @@ export const libraryBooksRouter = t.router({
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
       }
 
+      // Read existing for diff computation (acceptable read; concurrency check is below)
       const existing = await assertBookInLibrary(input.id, ctx.library.id);
 
       assertNotArchived(existing);
 
-      if (existing.updatedAt.getTime() !== input.expectedUpdatedAt.getTime()) {
+      // Atomic optimistic concurrency: the WHERE clause includes updatedAt so a concurrent
+      // writer that has already changed the row will see updateMany.count === 0.
+      // archivedAt: null is also in WHERE to close the archive-between-check-and-update window.
+      const result = await db.book.updateMany({
+        where: {
+          id: input.id,
+          libraryId: ctx.library.id,
+          archivedAt: null,
+          updatedAt: input.expectedUpdatedAt,
+        },
+        data: input.patch,
+      });
+
+      if (result.count === 0) {
+        // Disambiguate WHY the row didn't match — single re-read.
+        const current = await db.book.findUnique({ where: { id: input.id } });
+        if (!current || current.libraryId !== ctx.library.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+        if (current.archivedAt) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'book is archived' });
+        }
         throw new TRPCError({
           code: 'CONFLICT',
           message: 'book was modified by someone else; reload and retry',
         });
       }
 
-      const updated = await db.book.update({
-        where: { id: input.id },
-        data: input.patch,
-      });
+      // updateMany doesn't return the row; re-read for the response and audit
+      const updated = await db.book.findUniqueOrThrow({ where: { id: input.id } });
 
       // Compute field-level diff
       const changes: Record<string, { from: unknown; to: unknown }> = {};
