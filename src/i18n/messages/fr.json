@@ -464,6 +464,13 @@
       "coverUrl": "URL de la couverture",
       "coverHelp": "Lien HTTPS direct vers une image (jpg/png/webp).",
       "description": "Description"
+    },
+    "new": {
+      "pageTitle": "Ajouter un livre",
+      "subtitle": "Créez manuellement une fiche livre dans cette bibliothèque.",
+      "submit": "Créer le livre",
+      "successToast": "Livre ajouté",
+      "errorToast": "Échec de la création"
     }
   },
   "password": {
