@@ -5,6 +5,7 @@ import { BookOpen, Package, Archive } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookActionsMenu } from './BookActionsMenu';
+import type { Book } from '@prisma/client';
 
 export function BookDetail({
   slug,
@@ -13,7 +14,7 @@ export function BookDetail({
   isGlobalAdmin,
 }: {
   slug: string;
-  book: any;
+  book: Book;
   isAdmin: boolean;
   isGlobalAdmin: boolean;
 }) {

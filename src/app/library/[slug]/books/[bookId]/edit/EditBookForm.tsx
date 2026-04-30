@@ -5,8 +5,9 @@ import { useTranslations } from 'next-intl';
 import { trpc } from '@/lib/trpc/client';
 import { useToast } from '@/hooks/use-toast';
 import { BookForm, type BookFormPayload } from '@/components/books/BookForm';
+import type { Book } from '@prisma/client';
 
-export function EditBookForm({ slug, book }: { slug: string; book: any }) {
+export function EditBookForm({ slug, book }: { slug: string; book: Book }) {
   const t = useTranslations('books.edit');
   const router = useRouter();
   const { toast } = useToast();

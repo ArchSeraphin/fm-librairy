@@ -15,6 +15,7 @@ import {
 import { ArchiveBookDialog } from '@/components/books/ArchiveBookDialog';
 import { UnarchiveBookDialog } from '@/components/books/UnarchiveBookDialog';
 import { DeleteBookDialog } from '@/components/books/DeleteBookDialog';
+import type { Book } from '@prisma/client';
 
 export function BookActionsMenu({
   slug,
@@ -22,7 +23,7 @@ export function BookActionsMenu({
   isGlobalAdmin,
 }: {
   slug: string;
-  book: any;
+  book: Pick<Book, 'id' | 'archivedAt'>;
   isGlobalAdmin: boolean;
 }) {
   const t = useTranslations('books.actions');
