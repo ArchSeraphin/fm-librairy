@@ -472,6 +472,31 @@
       "successToast": "Livre ajouté",
       "errorToast": "Échec de la création"
     },
+    "detail": {
+      "coverAlt": "Couverture de {title}",
+      "archived": "Archivé",
+      "digital": "Numérique",
+      "physical": "Physique",
+      "publisher": "Éditeur",
+      "year": "Année",
+      "language": "Langue",
+      "descriptionLabel": "Description"
+    },
+    "actions": {
+      "open": "Ouvrir le menu d'actions",
+      "edit": "Modifier",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "delete": "Supprimer définitivement"
+    },
+    "edit": {
+      "pageTitle": "Modifier le livre",
+      "submit": "Enregistrer les modifications",
+      "successToast": "Modifications enregistrées",
+      "errorToast": "Échec de la mise à jour",
+      "conflictTitle": "Conflit de modification",
+      "conflictDescription": "Une autre personne a modifié ce livre depuis votre dernière lecture. Rafraîchissez la page pour voir la version actuelle."
+    },
     "dialogs": {
       "archive": {
         "title": "Archiver ce livre ?",
