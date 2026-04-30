@@ -471,6 +471,34 @@
       "submit": "Créer le livre",
       "successToast": "Livre ajouté",
       "errorToast": "Échec de la création"
+    },
+    "dialogs": {
+      "archive": {
+        "title": "Archiver ce livre ?",
+        "description": "Le livre ne sera plus visible dans le catalogue mais ses données et ses copies sont conservées.",
+        "confirm": "Archiver",
+        "cancel": "Annuler",
+        "successToast": "Livre archivé",
+        "errorToast": "Échec de l'archivage"
+      },
+      "unarchive": {
+        "title": "Désarchiver ce livre ?",
+        "description": "Le livre redeviendra visible dans le catalogue.",
+        "confirm": "Désarchiver",
+        "cancel": "Annuler",
+        "successToast": "Livre désarchivé",
+        "errorToast": "Échec du désarchivage"
+      },
+      "delete": {
+        "title": "Supprimer définitivement ?",
+        "description": "Cette action est irréversible. Toutes les données du livre seront perdues.",
+        "warning": "Cette suppression est définitive et inscrite dans les journaux d'audit.",
+        "confirm": "Supprimer définitivement",
+        "cancel": "Annuler",
+        "successToast": "Livre supprimé",
+        "errorToast": "Échec de la suppression",
+        "depsTitle": "Suppression bloquée — dépendances présentes"
+      }
     }
   },
   "password": {
