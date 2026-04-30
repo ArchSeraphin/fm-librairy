@@ -117,7 +117,9 @@ test('Invitation flow — existing user joins library via emailed link', async (
   await page.context().clearCookies();
   await submitLogin(page, 'existing@e2e.test', PASSWORD);
   // USER role lands on `/` (admin layout would redirect non-admins).
-  await expect(page).toHaveURL(/^\/(\?.*)?$/, { timeout: 10_000 });
+  await expect(async () => {
+    expect(new URL(page.url()).pathname).toBe('/');
+  }).toPass({ timeout: 10_000 });
 
   // Open invitation link → JoinForm CTA
   await page.goto(link);

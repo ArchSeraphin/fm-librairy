@@ -55,7 +55,9 @@ test('Password reset invalidates all active sessions across browser contexts', a
   const pageA = await ctxA.newPage();
   await submitLogin(pageA, 'multisession@e2e.test', PASSWORD);
   // USER role lands on `/` after login.
-  await expect(pageA).toHaveURL(/^\/(\?.*)?$/, { timeout: 10_000 });
+  await expect(async () => {
+    expect(new URL(pageA.url()).pathname).toBe('/');
+  }).toPass({ timeout: 10_000 });
 
   // Sanity: a session row exists for this user.
   const userRow = await prisma.user.findUniqueOrThrow({

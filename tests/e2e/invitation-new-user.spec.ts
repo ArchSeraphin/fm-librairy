@@ -96,7 +96,10 @@ test('Invitation flow — new user signs up via emailed link', async ({ page }) 
   await page.fill('input[name="confirmPassword"]', NEW_PASSWORD);
 
   await Promise.all([
-    page.waitForURL(/^\/(\?.*)?$/, { timeout: 15_000 }),
+    page.waitForURL(
+      (url) => url.pathname === '/',
+      { timeout: 15_000 },
+    ),
     page.click('button[type="submit"]'),
   ]);
 

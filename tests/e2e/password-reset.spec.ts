@@ -79,5 +79,7 @@ test('Password reset flow — request, consume, login with new password', async 
   // Re-login avec le nouveau mot de passe
   await submitLogin(page, 'reset@e2e.test', NEW_PASSWORD);
   // USER → /
-  await expect(page).toHaveURL(/^\/(\?.*)?$/, { timeout: 10_000 });
+  await expect(async () => {
+    expect(new URL(page.url()).pathname).toBe('/');
+  }).toPass({ timeout: 10_000 });
 });
