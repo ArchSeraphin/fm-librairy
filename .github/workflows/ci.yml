@@ -43,6 +43,8 @@ jobs:
 
       - run: pnpm format:check
       - run: pnpm lint
+      - name: Check email templates drift
+        run: pnpm check:emails-drift
       - run: pnpm typecheck
       - run: pnpm test
 
