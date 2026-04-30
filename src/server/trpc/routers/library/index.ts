@@ -2,9 +2,11 @@ import { t } from '../../trpc';
 import { authedProcedure } from '../../procedures';
 import { db } from '@/lib/db';
 import { libraryBooksRouter } from './books';
+import { filesRouter } from './files';
 
 export const libraryRouter = t.router({
   books: libraryBooksRouter,
+  files: filesRouter,
   libraries: t.router({
     listAccessible: authedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role === 'GLOBAL_ADMIN') {
