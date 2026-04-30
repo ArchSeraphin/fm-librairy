@@ -5,8 +5,7 @@ import type { PrismaClient } from '@prisma/client';
 import { rm, mkdir, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { scanFile } from '../lib/clamav.js';
-import { finalPath, assertUnderRoot } from '../../src/lib/upload/storage-paths.js';
-import { recordAudit } from '../../src/lib/audit-log.js';
+import { finalPath, assertUnderRoot } from '../lib/storage-paths.js';
 
 export interface ScanFileDeps {
   prisma: PrismaClient;
@@ -60,16 +59,28 @@ export async function handleScanFile(
       where: { id: bookFileId },
       data: { scanStatus: 'INFECTED', scannedAt: new Date() },
     });
-    await recordAudit({
-      action: 'library.book_file.infected',
-      target: { type: 'BOOK_FILE', id: bookFileId },
-      metadata: {
-        virusName: scan.virusName ?? null,
-        sha256: bf.sha256,
-        libraryId: bf.libraryId,
-        bookId: bf.bookId,
-      },
-    });
+    // Write audit log directly via Prisma to keep the worker self-contained
+    // (vendored from src/lib/audit-log.ts: same shape, non-blocking on failure).
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: 'library.book_file.infected',
+          actorId: null,
+          targetType: 'BOOK_FILE',
+          targetId: bookFileId,
+          metadata: {
+            virusName: scan.virusName ?? null,
+            sha256: bf.sha256,
+            libraryId: bf.libraryId,
+            bookId: bf.bookId,
+          },
+          ipHash: null,
+          userAgent: null,
+        },
+      });
+    } catch (err) {
+      logger.error({ err, bookFileId }, 'audit log write failed (non-blocking)');
+    }
     logger.warn(
       { bookFileId, virus: scan.virusName, sha256: bf.sha256 },
       'scan-file: INFECTED quarantined',
