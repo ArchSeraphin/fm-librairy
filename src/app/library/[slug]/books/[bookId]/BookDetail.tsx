@@ -97,10 +97,7 @@ export function BookDetail({
             )
           ) : (
             files.map((f) => (
-              <div
-                key={f.id}
-                className="flex items-center justify-between rounded-md border p-3"
-              >
+              <div key={f.id} className="flex items-center justify-between rounded-md border p-3">
                 <div className="flex items-center gap-3">
                   <ScanStatusBadge status={f.scanStatus} />
                   <span className="text-sm">

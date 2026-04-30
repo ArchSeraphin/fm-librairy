@@ -8,8 +8,7 @@ import { scanFile, ScanVerdict } from '../../worker/lib/clamav';
 const HOST = process.env.CLAMAV_HOST ?? 'localhost';
 const PORT = Number(process.env.CLAMAV_PORT ?? 3310);
 
-const EICAR =
-  'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+const EICAR = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
 
 let cleanFile: string;
 let infectedFile: string;

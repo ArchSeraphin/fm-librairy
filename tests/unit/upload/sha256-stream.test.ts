@@ -11,9 +11,7 @@ describe('createSha256Hasher', () => {
     });
     const r = hasher.result();
     expect(r.bytesWritten).toBe(0);
-    expect(r.sha256).toBe(
-      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    );
+    expect(r.sha256).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
   });
 
   it('hashes "hello" correctly and counts bytes', async () => {
@@ -23,9 +21,7 @@ describe('createSha256Hasher', () => {
     });
     const r = hasher.result();
     expect(r.bytesWritten).toBe(5);
-    expect(r.sha256).toBe(
-      '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824',
-    );
+    expect(r.sha256).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
   });
 
   it('throws when result() called before stream end', () => {

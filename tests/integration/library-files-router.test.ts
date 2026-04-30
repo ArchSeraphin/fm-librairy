@@ -115,8 +115,8 @@ describe('library.files.delete', () => {
     });
     const refreshedUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     const caller = callerFor(refreshedUser, session);
-    await expect(
-      caller.library.files.delete({ slug: library.slug, id: bf.id }),
-    ).rejects.toThrow(/FORBIDDEN/);
+    await expect(caller.library.files.delete({ slug: library.slug, id: bf.id })).rejects.toThrow(
+      /FORBIDDEN/,
+    );
   });
 });

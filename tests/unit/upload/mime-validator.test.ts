@@ -4,8 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { validateMime } from '@/lib/upload/mime-validator';
 
-const fixture = (name: string) =>
-  path.join(process.cwd(), 'tests/fixtures/upload', name);
+const fixture = (name: string) => path.join(process.cwd(), 'tests/fixtures/upload', name);
 
 describe('validateMime', () => {
   it('accepts EPUB → BookFormat.EPUB', async () => {

@@ -23,8 +23,7 @@ const ERROR_MSG: Record<NonNullable<Extract<UploadResult, { ok: false }>['error'
   INVALID_MIME: 'Format non supporté. Acceptés : EPUB, PDF, TXT, DOCX.',
   OVERSIZE: 'Fichier trop volumineux (max 100 Mo).',
   DUPLICATE: 'Ce fichier existe déjà dans cette bibliothèque.',
-  FORMAT_TAKEN:
-    'Ce livre a déjà un fichier de ce format. Demandez à un admin de le supprimer.',
+  FORMAT_TAKEN: 'Ce livre a déjà un fichier de ce format. Demandez à un admin de le supprimer.',
   RATE_LIMITED: 'Trop d’uploads récents. Réessayez dans une minute.',
   INTERNAL_ERROR: 'Erreur serveur. Réessayez ou contactez un admin.',
 };

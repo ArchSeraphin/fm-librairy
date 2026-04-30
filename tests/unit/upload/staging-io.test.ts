@@ -17,9 +17,7 @@ afterEach(() => {
 describe('writeToStaging', () => {
   it('writes EPUB to staging path keyed by SHA, returns metadata', async () => {
     const fs = await import('node:fs/promises');
-    const buf = await fs.readFile(
-      path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'),
-    );
+    const buf = await fs.readFile(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const stream = Readable.from(buf);
 
     const result = await writeToStaging({ root: tmpRoot, stream, filename: 'tiny.epub' });
@@ -28,23 +26,19 @@ describe('writeToStaging', () => {
     expect(result.mimeType).toBe('application/epub+zip');
     expect(result.bytesWritten).toBe(buf.length);
     expect(result.sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(result.stagingPath).toBe(
-      path.join(tmpRoot, 'staging', `${result.sha256}.epub`),
-    );
+    expect(result.stagingPath).toBe(path.join(tmpRoot, 'staging', `${result.sha256}.epub`));
     expect(existsSync(result.stagingPath)).toBe(true);
     expect(readFileSync(result.stagingPath)).toEqual(buf);
   });
 
   it('throws and removes staging file on INVALID_MIME', async () => {
     const fs = await import('node:fs/promises');
-    const buf = await fs.readFile(
-      path.join(process.cwd(), 'tests/fixtures/upload/fake.pdf'),
-    );
+    const buf = await fs.readFile(path.join(process.cwd(), 'tests/fixtures/upload/fake.pdf'));
     const stream = Readable.from(buf);
 
-    await expect(
-      writeToStaging({ root: tmpRoot, stream, filename: 'fake.pdf' }),
-    ).rejects.toThrow(/INVALID_MIME/);
+    await expect(writeToStaging({ root: tmpRoot, stream, filename: 'fake.pdf' })).rejects.toThrow(
+      /INVALID_MIME/,
+    );
 
     const fsSync = await import('node:fs');
     const stagingDir = path.join(tmpRoot, 'staging');

@@ -53,10 +53,12 @@ describe('handleScanFile', () => {
       },
     });
 
-    await handleScanFile(
-      { id: 'job1', data: { bookFileId: bf.id, storageRoot } } as any,
-      { prisma, logger, clamavHost: HOST, clamavPort: PORT },
-    );
+    await handleScanFile({ id: 'job1', data: { bookFileId: bf.id, storageRoot } } as any, {
+      prisma,
+      logger,
+      clamavHost: HOST,
+      clamavPort: PORT,
+    });
 
     const updated = await prisma.bookFile.findUniqueOrThrow({ where: { id: bf.id } });
     expect(updated.scanStatus).toBe('CLEAN');
@@ -69,8 +71,7 @@ describe('handleScanFile', () => {
   });
 
   it('INFECTED: removes staging, sets scanStatus=INFECTED, writes AuditLog', async () => {
-    const EICAR =
-      'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+    const EICAR = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
     const stagingPath = path.join(storageRoot, 'staging', 'evil.epub');
     writeFileSync(stagingPath, EICAR);
     const bf = await prisma.bookFile.create({
@@ -87,10 +88,12 @@ describe('handleScanFile', () => {
       },
     });
 
-    await handleScanFile(
-      { id: 'job2', data: { bookFileId: bf.id, storageRoot } } as any,
-      { prisma, logger, clamavHost: HOST, clamavPort: PORT },
-    );
+    await handleScanFile({ id: 'job2', data: { bookFileId: bf.id, storageRoot } } as any, {
+      prisma,
+      logger,
+      clamavHost: HOST,
+      clamavPort: PORT,
+    });
 
     const updated = await prisma.bookFile.findUniqueOrThrow({ where: { id: bf.id } });
     expect(updated.scanStatus).toBe('INFECTED');
@@ -119,10 +122,12 @@ describe('handleScanFile', () => {
     });
 
     await expect(
-      handleScanFile(
-        { id: 'job3', data: { bookFileId: bf.id, storageRoot } } as any,
-        { prisma, logger, clamavHost: HOST, clamavPort: PORT },
-      ),
+      handleScanFile({ id: 'job3', data: { bookFileId: bf.id, storageRoot } } as any, {
+        prisma,
+        logger,
+        clamavHost: HOST,
+        clamavPort: PORT,
+      }),
     ).rejects.toThrow();
 
     const updated = await prisma.bookFile.findUniqueOrThrow({ where: { id: bf.id } });

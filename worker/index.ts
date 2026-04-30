@@ -220,9 +220,7 @@ const scanWorker = new Worker(
   { connection: redis },
 );
 
-scanWorker.on('failed', (job, err) =>
-  logger.error({ jobId: job?.id, err }, 'scan job failed'),
-);
+scanWorker.on('failed', (job, err) => logger.error({ jobId: job?.id, err }, 'scan job failed'));
 
 export { scanQueue };
 

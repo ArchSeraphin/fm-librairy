@@ -37,11 +37,7 @@ export async function handleScanFile(
 
   let scan;
   try {
-    scan = await scanFile(
-      bf.storagePath,
-      { host: clamavHost, port: clamavPort },
-      logger,
-    );
+    scan = await scanFile(bf.storagePath, { host: clamavHost, port: clamavPort }, logger);
   } catch (err) {
     await prisma.bookFile.update({
       where: { id: bookFileId },

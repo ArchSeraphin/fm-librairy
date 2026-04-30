@@ -1,17 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import {
-  stagingPath,
-  finalPath,
-  assertUnderRoot,
-} from '@/lib/upload/storage-paths';
+import { stagingPath, finalPath, assertUnderRoot } from '@/lib/upload/storage-paths';
 
 const ROOT = '/tmp/biblio-test';
 
 describe('stagingPath', () => {
   it('returns /tmp/biblio-test/staging/<sha>.<ext>', () => {
-    expect(stagingPath(ROOT, 'abc123', 'epub')).toBe(
-      '/tmp/biblio-test/staging/abc123.epub',
-    );
+    expect(stagingPath(ROOT, 'abc123', 'epub')).toBe('/tmp/biblio-test/staging/abc123.epub');
   });
 });
 

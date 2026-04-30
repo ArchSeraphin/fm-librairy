@@ -17,6 +17,7 @@
 Worktree convention from Phase 1D: each module merges back to a single feature branch `feat/phase-2a-upload`, then one final non-squash merge to `main` at module 2A'.4 close.
 
 Before starting work :
+
 - Branch is `feat/phase-2a-upload-design` (currently holds the spec). Either rename to `feat/phase-2a-upload` or branch off it. Final PR title : `feat(phase-2a): upload pipeline + ClamAV + dedup`.
 - Clamav 1.4 + Redis 7 must be running locally for integration/E2E tests : `docker compose up -d clamav redis pg`.
 
@@ -72,6 +73,7 @@ docs/permissions-matrix.md        # extend matrix
 ### Task 0.1 — Add shared `library_data` Docker volume
 
 **Files:**
+
 - Modify: `docker-compose.yml`
 
 - [ ] **Step 1: Add volume declaration**
@@ -81,15 +83,17 @@ In the `volumes:` block at bottom of `docker-compose.yml`, add `library_data:` a
 - [ ] **Step 2: Mount on `app` service**
 
 Find the `app:` service block. Under its `volumes:` section, add :
+
 ```yaml
-      - library_data:/data
+- library_data:/data
 ```
 
 - [ ] **Step 3: Mount on `worker` service**
 
 Find the `worker:` service block. Under its `volumes:` section (create if missing), add the same line :
+
 ```yaml
-      - library_data:/data
+- library_data:/data
 ```
 
 - [ ] **Step 4: Verify config**
@@ -98,6 +102,7 @@ Run: `docker compose config --quiet`
 Expected: no errors. Run `docker compose config | grep -A 2 library_data` and verify the volume appears under both services.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add docker-compose.yml
 git commit -m "infra(phase-2a): add shared library_data volume between app and worker"
@@ -106,6 +111,7 @@ git commit -m "infra(phase-2a): add shared library_data volume between app and w
 ### Task 0.2 — Add `STORAGE_ROOT` env var
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `src/lib/env.ts` (add to schema)
 - Modify: `worker/index.ts` (add to worker env schema)
@@ -113,6 +119,7 @@ git commit -m "infra(phase-2a): add shared library_data volume between app and w
 - [ ] **Step 1: Update `.env.example`**
 
 Add at the bottom :
+
 ```
 # Phase 2A' — Library file storage (shared volume on app + worker)
 STORAGE_ROOT=/data
@@ -121,6 +128,7 @@ STORAGE_ROOT=/data
 - [ ] **Step 2: Add to app env schema (`src/lib/env.ts`)**
 
 Find the Zod schema and add :
+
 ```ts
 STORAGE_ROOT: z.string().min(1).default('/data'),
 ```
@@ -130,12 +138,15 @@ STORAGE_ROOT: z.string().min(1).default('/data'),
 In the `z.object({...})` at top, add the same line as step 2.
 
 - [ ] **Step 4: Verify**
+
 ```bash
 pnpm typecheck
 ```
+
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add .env.example src/lib/env.ts worker/index.ts
 git commit -m "feat(phase-2a): add STORAGE_ROOT env var to app and worker"
@@ -144,6 +155,7 @@ git commit -m "feat(phase-2a): add STORAGE_ROOT env var to app and worker"
 ### Task 0.3 — Prisma migration: BookFile.libraryId + unique constraint
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 - Create: `prisma/migrations/<timestamp>_phase_2a_book_file_library_unique/migration.sql`
 
@@ -178,6 +190,7 @@ model BookFile {
 ```
 
 In the `Library` model, add the back-relation alongside existing ones :
+
 ```prisma
   books       Book[]
   bookFiles   BookFile[]   // NEW
@@ -186,6 +199,7 @@ In the `Library` model, add the back-relation alongside existing ones :
 - [ ] **Step 2: Generate migration**
 
 Run :
+
 ```bash
 pnpm prisma migrate dev --name phase_2a_book_file_library_unique --create-only
 ```
@@ -218,13 +232,16 @@ CREATE INDEX "BookFile_libraryId_idx" ON "BookFile"("libraryId");
 ```
 
 - [ ] **Step 4: Apply migration**
+
 ```bash
 pnpm prisma migrate dev
 pnpm prisma generate
 ```
+
 Expected : both succeed. Verify with `pnpm typecheck`.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add prisma/schema.prisma prisma/migrations/
 git commit -m "feat(phase-2a): BookFile.libraryId + per-library sha256 unique constraint"
@@ -237,6 +254,7 @@ git commit -m "feat(phase-2a): BookFile.libraryId + per-library sha256 unique co
 `AuditLog.action` is a `String` column gated by a TypeScript union in `src/lib/audit-log.ts` — no Prisma migration needed, just type extension. Same for `AuditTargetType`.
 
 **Files:**
+
 - Modify: `src/lib/audit-log.ts`
 
 - [ ] **Step 1: Add `BOOK_FILE` to `AuditTargetType`**
@@ -251,12 +269,13 @@ export type AuditTargetType =
   | 'AUTH'
   | 'MEMBER'
   | 'BOOK'
-  | 'BOOK_FILE';   // NEW
+  | 'BOOK_FILE'; // NEW
 ```
 
 - [ ] **Step 2: Add three actions to `AuditAction` union**
 
 In the same file, append :
+
 ```ts
   // 2A' — book file lifecycle
   | 'library.book_file.uploaded'
@@ -265,11 +284,13 @@ In the same file, append :
 ```
 
 - [ ] **Step 3: Verify**
+
 ```bash
 pnpm typecheck
 ```
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add src/lib/audit-log.ts
 git commit -m "feat(phase-2a): extend AuditAction + AuditTargetType for BookFile lifecycle"
@@ -282,6 +303,7 @@ git commit -m "feat(phase-2a): extend AuditAction + AuditTargetType for BookFile
 ### Task 1.1 — `storage-paths.ts` (paths + traversal protection)
 
 **Files:**
+
 - Create: `src/lib/upload/storage-paths.ts`
 - Test: `tests/unit/upload/storage-paths.test.ts`
 
@@ -290,19 +312,13 @@ git commit -m "feat(phase-2a): extend AuditAction + AuditTargetType for BookFile
 ```ts
 // tests/unit/upload/storage-paths.test.ts
 import { describe, it, expect } from 'vitest';
-import {
-  stagingPath,
-  finalPath,
-  assertUnderRoot,
-} from '@/lib/upload/storage-paths';
+import { stagingPath, finalPath, assertUnderRoot } from '@/lib/upload/storage-paths';
 
 const ROOT = '/tmp/biblio-test';
 
 describe('stagingPath', () => {
   it('returns /tmp/biblio-test/staging/<sha>.<ext>', () => {
-    expect(stagingPath(ROOT, 'abc123', 'epub')).toBe(
-      '/tmp/biblio-test/staging/abc123.epub',
-    );
+    expect(stagingPath(ROOT, 'abc123', 'epub')).toBe('/tmp/biblio-test/staging/abc123.epub');
   });
 });
 
@@ -328,9 +344,11 @@ describe('assertUnderRoot', () => {
 ```
 
 - [ ] **Step 2: Run tests, confirm fail**
+
 ```bash
 pnpm vitest run tests/unit/upload/storage-paths.test.ts
 ```
+
 Expected : FAIL with `Cannot find module '@/lib/upload/storage-paths'`.
 
 - [ ] **Step 3: Implement minimal**
@@ -363,12 +381,15 @@ export function assertUnderRoot(root: string, candidate: string): void {
 ```
 
 - [ ] **Step 4: Run tests, confirm pass**
+
 ```bash
 pnpm vitest run tests/unit/upload/storage-paths.test.ts
 ```
+
 Expected : 4/4 PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/lib/upload/storage-paths.ts tests/unit/upload/storage-paths.test.ts
 git commit -m "feat(phase-2a): storage-paths with traversal-proof assertUnderRoot"
@@ -377,6 +398,7 @@ git commit -m "feat(phase-2a): storage-paths with traversal-proof assertUnderRoo
 ### Task 1.2 — `sha256-stream.ts` (Transform stream)
 
 **Files:**
+
 - Create: `src/lib/upload/sha256-stream.ts`
 - Test: `tests/unit/upload/sha256-stream.test.ts`
 
@@ -396,9 +418,7 @@ describe('createSha256Hasher', () => {
     });
     const r = hasher.result();
     expect(r.bytesWritten).toBe(0);
-    expect(r.sha256).toBe(
-      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    );
+    expect(r.sha256).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
   });
 
   it('hashes "hello" correctly and counts bytes', async () => {
@@ -408,9 +428,7 @@ describe('createSha256Hasher', () => {
     });
     const r = hasher.result();
     expect(r.bytesWritten).toBe(5);
-    expect(r.sha256).toBe(
-      '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824',
-    );
+    expect(r.sha256).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
   });
 
   it('throws when result() called before stream end', () => {
@@ -421,9 +439,11 @@ describe('createSha256Hasher', () => {
 ```
 
 - [ ] **Step 2: Run tests, confirm fail**
+
 ```bash
 pnpm vitest run tests/unit/upload/sha256-stream.test.ts
 ```
+
 Expected : FAIL.
 
 - [ ] **Step 3: Implement minimal**
@@ -471,12 +491,15 @@ export function createSha256Hasher(): Sha256Hasher {
 ```
 
 - [ ] **Step 4: Run tests, confirm pass**
+
 ```bash
 pnpm vitest run tests/unit/upload/sha256-stream.test.ts
 ```
+
 Expected : 3/3 PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/lib/upload/sha256-stream.ts tests/unit/upload/sha256-stream.test.ts
 git commit -m "feat(phase-2a): streaming SHA-256 hasher with byte counter"
@@ -485,6 +508,7 @@ git commit -m "feat(phase-2a): streaming SHA-256 hasher with byte counter"
 ### Task 1.3 — `mime-validator.ts` (`file-type` wrapper)
 
 **Files:**
+
 - Create: `src/lib/upload/mime-validator.ts`
 - Test: `tests/unit/upload/mime-validator.test.ts`
 - Create test fixtures: `tests/fixtures/upload/{tiny.epub,tiny.pdf,tiny.txt,tiny.docx,fake.pdf}`
@@ -540,9 +564,11 @@ printf '\x4d\x5a\x90\x00\x03\x00\x00\x00\x04\x00' > tests/fixtures/upload/fake.p
 ```
 
 Verify they exist :
+
 ```bash
 ls -la tests/fixtures/upload/
 ```
+
 Expected : tiny.epub, tiny.pdf, tiny.txt, tiny.docx, fake.pdf all present (non-zero size).
 
 - [ ] **Step 3: Write failing tests**
@@ -554,8 +580,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { validateMime } from '@/lib/upload/mime-validator';
 
-const fixture = (name: string) =>
-  path.join(process.cwd(), 'tests/fixtures/upload', name);
+const fixture = (name: string) => path.join(process.cwd(), 'tests/fixtures/upload', name);
 
 describe('validateMime', () => {
   it('accepts EPUB → BookFormat.EPUB', async () => {
@@ -595,9 +620,11 @@ describe('validateMime', () => {
 ```
 
 - [ ] **Step 4: Run tests, confirm fail**
+
 ```bash
 pnpm vitest run tests/unit/upload/mime-validator.test.ts
 ```
+
 Expected : FAIL.
 
 - [ ] **Step 5: Implement**
@@ -653,12 +680,15 @@ export async function validateMime(buf: Buffer, filename: string): Promise<MimeR
 ```
 
 - [ ] **Step 6: Run tests, confirm pass**
+
 ```bash
 pnpm vitest run tests/unit/upload/mime-validator.test.ts
 ```
+
 Expected : 6/6 PASS.
 
 - [ ] **Step 7: Commit**
+
 ```bash
 git add src/lib/upload/mime-validator.ts tests/unit/upload/mime-validator.test.ts tests/fixtures/upload/ package.json pnpm-lock.yaml
 git commit -m "feat(phase-2a): magic-byte MIME validator with whitelist (EPUB/PDF/TXT/DOCX)"
@@ -667,6 +697,7 @@ git commit -m "feat(phase-2a): magic-byte MIME validator with whitelist (EPUB/PD
 ### Task 1.4 — `staging-io.ts` (orchestrator)
 
 **Files:**
+
 - Create: `src/lib/upload/staging-io.ts`
 - Test: `tests/unit/upload/staging-io.test.ts`
 
@@ -693,9 +724,7 @@ describe('writeToStaging', () => {
   it('writes EPUB to staging path keyed by SHA, returns metadata', async () => {
     // Prepare a real EPUB fixture buffer (use tiny.epub from fixtures)
     const fs = await import('node:fs/promises');
-    const buf = await fs.readFile(
-      path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'),
-    );
+    const buf = await fs.readFile(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const stream = Readable.from(buf);
 
     const result = await writeToStaging({ root: tmpRoot, stream, filename: 'tiny.epub' });
@@ -704,23 +733,19 @@ describe('writeToStaging', () => {
     expect(result.mimeType).toBe('application/epub+zip');
     expect(result.bytesWritten).toBe(buf.length);
     expect(result.sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(result.stagingPath).toBe(
-      path.join(tmpRoot, 'staging', `${result.sha256}.epub`),
-    );
+    expect(result.stagingPath).toBe(path.join(tmpRoot, 'staging', `${result.sha256}.epub`));
     expect(existsSync(result.stagingPath)).toBe(true);
     expect(readFileSync(result.stagingPath)).toEqual(buf);
   });
 
   it('throws and removes staging file on INVALID_MIME', async () => {
     const fs = await import('node:fs/promises');
-    const buf = await fs.readFile(
-      path.join(process.cwd(), 'tests/fixtures/upload/fake.pdf'),
-    );
+    const buf = await fs.readFile(path.join(process.cwd(), 'tests/fixtures/upload/fake.pdf'));
     const stream = Readable.from(buf);
 
-    await expect(
-      writeToStaging({ root: tmpRoot, stream, filename: 'fake.pdf' }),
-    ).rejects.toThrow(/INVALID_MIME/);
+    await expect(writeToStaging({ root: tmpRoot, stream, filename: 'fake.pdf' })).rejects.toThrow(
+      /INVALID_MIME/,
+    );
 
     // staging dir should be empty (file cleaned up)
     const fsSync = await import('node:fs');
@@ -741,9 +766,11 @@ describe('writeToStaging', () => {
 ```
 
 - [ ] **Step 2: Run tests, confirm fail**
+
 ```bash
 pnpm vitest run tests/unit/upload/staging-io.test.ts
 ```
+
 Expected : FAIL.
 
 - [ ] **Step 3: Implement**
@@ -851,18 +878,23 @@ export async function writeToStaging(args: WriteToStagingArgs): Promise<StagingR
 ```
 
 - [ ] **Step 4: Run tests, confirm pass**
+
 ```bash
 pnpm vitest run tests/unit/upload/staging-io.test.ts
 ```
+
 Expected : 3/3 PASS.
 
 - [ ] **Step 5: Run all upload unit tests together**
+
 ```bash
 pnpm vitest run tests/unit/upload/
 ```
+
 Expected : all green.
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add src/lib/upload/staging-io.ts tests/unit/upload/staging-io.test.ts
 git commit -m "feat(phase-2a): staging-io orchestrator with size cap and cleanup-on-error"
@@ -875,6 +907,7 @@ git commit -m "feat(phase-2a): staging-io orchestrator with size cap and cleanup
 ### Task 2.1 — ClamAV INSTREAM client wrapper
 
 **Files:**
+
 - Create: `worker/lib/clamav.ts`
 - Test: `tests/integration/clamav-client.test.ts` (real ClamAV daemon — needs `docker compose up -d clamav`)
 
@@ -891,8 +924,7 @@ import { scanFile, ScanVerdict } from '../../worker/lib/clamav';
 const HOST = process.env.CLAMAV_HOST ?? 'localhost';
 const PORT = Number(process.env.CLAMAV_PORT ?? 3310);
 
-const EICAR =
-  'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+const EICAR = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
 
 let cleanFile: string;
 let infectedFile: string;
@@ -921,11 +953,13 @@ describe('scanFile', () => {
 ```
 
 - [ ] **Step 2: Run tests, confirm fail**
+
 ```bash
 docker compose up -d clamav  # if not already running
 # wait ~30s for ClamAV to load DB on first start (check `docker compose logs clamav`)
 pnpm vitest run --config vitest.integration.config.ts tests/integration/clamav-client.test.ts
 ```
+
 Expected : FAIL (module not found).
 
 - [ ] **Step 3: Implement**
@@ -981,12 +1015,15 @@ export async function scanFile(
 ```
 
 - [ ] **Step 4: Run tests, confirm pass**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/clamav-client.test.ts
 ```
+
 Expected : 2/2 PASS. (If "ClamAV connection refused", wait longer for daemon to load DB.)
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add worker/lib/clamav.ts tests/integration/clamav-client.test.ts
 git commit -m "feat(phase-2a): ClamAV INSTREAM scanner wrapper using clamscan package"
@@ -995,6 +1032,7 @@ git commit -m "feat(phase-2a): ClamAV INSTREAM scanner wrapper using clamscan pa
 ### Task 2.2 — `scan-file` BullMQ job handler
 
 **Files:**
+
 - Create: `worker/jobs/scan-file.ts`
 - Test: `tests/integration/scan-file-job.test.ts`
 
@@ -1056,10 +1094,12 @@ describe('handleScanFile', () => {
       },
     });
 
-    await handleScanFile(
-      { id: 'job1', data: { bookFileId: bf.id, storageRoot } } as any,
-      { prisma, logger, clamavHost: HOST, clamavPort: PORT },
-    );
+    await handleScanFile({ id: 'job1', data: { bookFileId: bf.id, storageRoot } } as any, {
+      prisma,
+      logger,
+      clamavHost: HOST,
+      clamavPort: PORT,
+    });
 
     const updated = await prisma.bookFile.findUniqueOrThrow({ where: { id: bf.id } });
     expect(updated.scanStatus).toBe('CLEAN');
@@ -1072,8 +1112,7 @@ describe('handleScanFile', () => {
   });
 
   it('INFECTED: removes staging, sets scanStatus=INFECTED, writes AuditLog', async () => {
-    const EICAR =
-      'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+    const EICAR = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
     const stagingPath = path.join(storageRoot, 'staging', 'evil.epub');
     writeFileSync(stagingPath, EICAR);
     const bf = await prisma.bookFile.create({
@@ -1090,10 +1129,12 @@ describe('handleScanFile', () => {
       },
     });
 
-    await handleScanFile(
-      { id: 'job2', data: { bookFileId: bf.id, storageRoot } } as any,
-      { prisma, logger, clamavHost: HOST, clamavPort: PORT },
-    );
+    await handleScanFile({ id: 'job2', data: { bookFileId: bf.id, storageRoot } } as any, {
+      prisma,
+      logger,
+      clamavHost: HOST,
+      clamavPort: PORT,
+    });
 
     const updated = await prisma.bookFile.findUniqueOrThrow({ where: { id: bf.id } });
     expect(updated.scanStatus).toBe('INFECTED');
@@ -1122,10 +1163,12 @@ describe('handleScanFile', () => {
     });
 
     await expect(
-      handleScanFile(
-        { id: 'job3', data: { bookFileId: bf.id, storageRoot } } as any,
-        { prisma, logger, clamavHost: HOST, clamavPort: PORT },
-      ),
+      handleScanFile({ id: 'job3', data: { bookFileId: bf.id, storageRoot } } as any, {
+        prisma,
+        logger,
+        clamavHost: HOST,
+        clamavPort: PORT,
+      }),
     ).rejects.toThrow();
 
     const updated = await prisma.bookFile.findUniqueOrThrow({ where: { id: bf.id } });
@@ -1135,10 +1178,12 @@ describe('handleScanFile', () => {
 ```
 
 - [ ] **Step 2: Run tests, confirm fail**
+
 ```bash
 docker compose up -d clamav redis pg
 pnpm vitest run --config vitest.integration.config.ts tests/integration/scan-file-job.test.ts
 ```
+
 Expected : FAIL.
 
 - [ ] **Step 3: Implement scan-file job**
@@ -1185,11 +1230,7 @@ export async function handleScanFile(
 
   let scan;
   try {
-    scan = await scanFile(
-      bf.storagePath,
-      { host: clamavHost, port: clamavPort },
-      logger,
-    );
+    scan = await scanFile(bf.storagePath, { host: clamavHost, port: clamavPort }, logger);
   } catch (err) {
     await prisma.bookFile.update({
       where: { id: bookFileId },
@@ -1249,12 +1290,15 @@ export async function handleScanFile(
 ```
 
 - [ ] **Step 4: Run tests, confirm pass**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/scan-file-job.test.ts
 ```
+
 Expected : 3/3 PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add worker/jobs/scan-file.ts tests/integration/scan-file-job.test.ts
 git commit -m "feat(phase-2a): scan-file BullMQ handler with CLEAN/INFECTED/ERROR transitions + AuditLog"
@@ -1263,11 +1307,13 @@ git commit -m "feat(phase-2a): scan-file BullMQ handler with CLEAN/INFECTED/ERRO
 ### Task 2.3 — Register scan queue + job in `worker/index.ts`
 
 **Files:**
+
 - Modify: `worker/index.ts`
 
 - [ ] **Step 1: Add CLAMAV_HOST + CLAMAV_PORT + STORAGE_ROOT to worker env schema**
 
 (STORAGE_ROOT was added in Task 0.2.) Add :
+
 ```ts
 CLAMAV_HOST: z.string().default('clamav'),
 CLAMAV_PORT: z.coerce.number().int().positive().default(3310),
@@ -1309,12 +1355,11 @@ const scanWorker = new Worker(
   { connection: redis },
 );
 
-scanWorker.on('failed', (job, err) =>
-  logger.error({ jobId: job?.id, err }, 'scan job failed'),
-);
+scanWorker.on('failed', (job, err) => logger.error({ jobId: job?.id, err }, 'scan job failed'));
 ```
 
 Export the queue so the Server Action can enqueue :
+
 ```ts
 export { scanQueue };
 ```
@@ -1322,14 +1367,17 @@ export { scanQueue };
 (Note : actual import in app code uses `import { Queue } from 'bullmq'` directly — see Task 3.1. The export here is for shared lib use only if needed.)
 
 - [ ] **Step 3: Verify worker boots**
+
 ```bash
 pnpm tsx worker/index.ts &
 sleep 3
 kill %1 2>/dev/null
 ```
+
 Expected : starts without crash, logs "redis connected" and registers scan queue.
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add worker/index.ts
 git commit -m "feat(phase-2a): register scan queue + scan-file worker with retry policy"
@@ -1342,6 +1390,7 @@ git commit -m "feat(phase-2a): register scan queue + scan-file worker with retry
 ### Task 3.1 — Add upload + delete rate limiters
 
 **Files:**
+
 - Modify: `src/lib/rate-limit.ts`
 
 - [ ] **Step 1: Append two new limiters**
@@ -1368,11 +1417,13 @@ export const libraryFileDeleteLimiter = new RateLimiterRedis({
 ```
 
 - [ ] **Step 2: Verify**
+
 ```bash
 pnpm typecheck
 ```
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add src/lib/rate-limit.ts
 git commit -m "feat(phase-2a): rate limiters for library file upload (3/min) and delete (5/min)"
@@ -1381,6 +1432,7 @@ git commit -m "feat(phase-2a): rate limiters for library file upload (3/min) and
 ### Task 3.2 — Server Action `uploadBookFile`
 
 **Files:**
+
 - Create: `src/app/library/[slug]/books/[bookId]/upload/actions.ts`
 - Test: `tests/integration/upload-action.test.ts`
 
@@ -1404,7 +1456,10 @@ const enqueued: Array<{ name: string; data: any }> = [];
 vi.mock('bullmq', async () => {
   const actual = await vi.importActual<typeof import('bullmq')>('bullmq');
   class MockQueue {
-    constructor(public name: string, public _opts: unknown) {}
+    constructor(
+      public name: string,
+      public _opts: unknown,
+    ) {}
     add(name: string, data: any) {
       enqueued.push({ name, data });
       return Promise.resolve({ id: 'mock-job-id' });
@@ -1490,9 +1545,11 @@ describe('uploadBookFile (happy path)', () => {
 If `tests/integration/helpers/auth-context.ts` does not exist, check the existing pattern in `tests/integration/library-books-archive.test.ts` for how Phase 1D mocks the session, and replicate. (It typically wraps `next-auth` `auth()` via `vi.mock` — copy the recipe.)
 
 - [ ] **Step 2: Run, confirm fail**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/upload-action.test.ts
 ```
+
 Expected : FAIL.
 
 - [ ] **Step 3: Implement action**
@@ -1649,12 +1706,15 @@ export async function uploadBookFile(formData: FormData): Promise<UploadResult> 
 (Audit action already added in Task 0.4.)
 
 - [ ] **Step 4: Run, confirm pass**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/upload-action.test.ts
 ```
+
 Expected : 1/1 PASS.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add src/app/library tests/integration/upload-action.test.ts prisma/
 git commit -m "feat(phase-2a): uploadBookFile Server Action with stage + dedup + scan enqueue"
@@ -1663,6 +1723,7 @@ git commit -m "feat(phase-2a): uploadBookFile Server Action with stage + dedup +
 ### Task 3.3 — Attack tests for the Server Action
 
 **Files:**
+
 - Test: `tests/integration/upload-action-attacks.test.ts`
 
 - [ ] **Step 1: Write the test file**
@@ -1702,7 +1763,8 @@ describe('uploadBookFile (attacks + edges)', () => {
   it('DUPLICATE: same SHA in same library', async () => {
     const buf = readFileSync(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const fd1 = new FormData();
-    fd1.set('slug', library.slug); fd1.set('bookId', book.id);
+    fd1.set('slug', library.slug);
+    fd1.set('bookId', book.id);
     fd1.set('file', new Blob([buf]), 'tiny.epub');
     const r1 = await withAuthedRequest(user.id, () => uploadBookFile(fd1));
     expect(r1.ok).toBe(true);
@@ -1712,7 +1774,8 @@ describe('uploadBookFile (attacks + edges)', () => {
       data: { libraryId: library.id, title: 'T2', authors: ['A'] },
     });
     const fd2 = new FormData();
-    fd2.set('slug', library.slug); fd2.set('bookId', book2.id);
+    fd2.set('slug', library.slug);
+    fd2.set('bookId', book2.id);
     fd2.set('file', new Blob([buf]), 'tiny.epub');
     const r2 = await withAuthedRequest(user.id, () => uploadBookFile(fd2));
     expect(r2.ok).toBe(false);
@@ -1726,7 +1789,8 @@ describe('uploadBookFile (attacks + edges)', () => {
     // Upload to library A
     const buf = readFileSync(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const fd1 = new FormData();
-    fd1.set('slug', library.slug); fd1.set('bookId', book.id);
+    fd1.set('slug', library.slug);
+    fd1.set('bookId', book.id);
     fd1.set('file', new Blob([buf]), 'tiny.epub');
     expect((await withAuthedRequest(user.id, () => uploadBookFile(fd1))).ok).toBe(true);
 
@@ -1741,7 +1805,8 @@ describe('uploadBookFile (attacks + edges)', () => {
       data: { libraryId: libB.id, title: 'B', authors: ['A'] },
     });
     const fd2 = new FormData();
-    fd2.set('slug', libB.slug); fd2.set('bookId', bookB.id);
+    fd2.set('slug', libB.slug);
+    fd2.set('bookId', bookB.id);
     fd2.set('file', new Blob([buf]), 'tiny.epub');
     const r2 = await withAuthedRequest(user.id, () => uploadBookFile(fd2));
     expect(r2.ok).toBe(true);
@@ -1755,14 +1820,16 @@ describe('uploadBookFile (attacks + edges)', () => {
   it('FORMAT_TAKEN: same book + same format', async () => {
     const buf = readFileSync(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const fd1 = new FormData();
-    fd1.set('slug', library.slug); fd1.set('bookId', book.id);
+    fd1.set('slug', library.slug);
+    fd1.set('bookId', book.id);
     fd1.set('file', new Blob([buf]), 'tiny.epub');
     expect((await withAuthedRequest(user.id, () => uploadBookFile(fd1))).ok).toBe(true);
 
     // Different file content (different SHA) but same EPUB format and same book
     const buf2 = Buffer.concat([buf, Buffer.from('\n')]);
     const fd2 = new FormData();
-    fd2.set('slug', library.slug); fd2.set('bookId', book.id);
+    fd2.set('slug', library.slug);
+    fd2.set('bookId', book.id);
     fd2.set('file', new Blob([buf2]), 'tiny2.epub');
     const r2 = await withAuthedRequest(user.id, () => uploadBookFile(fd2));
     expect(r2.ok).toBe(false);
@@ -1772,12 +1839,15 @@ describe('uploadBookFile (attacks + edges)', () => {
 ```
 
 - [ ] **Step 2: Run, confirm pass**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/upload-action-attacks.test.ts
 ```
+
 Expected : 5/5 PASS.
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add tests/integration/upload-action-attacks.test.ts
 git commit -m "test(phase-2a): upload action attacks (UNAUTHORIZED, INVALID_MIME, DUPLICATE, cross-lib, FORMAT_TAKEN)"
@@ -1786,6 +1856,7 @@ git commit -m "test(phase-2a): upload action attacks (UNAUTHORIZED, INVALID_MIME
 ### Task 3.4 — `library.files` tRPC router
 
 **Files:**
+
 - Create: `src/server/trpc/routers/library/files.ts`
 - Modify: `src/server/trpc/routers/library/index.ts`
 - Test: `tests/integration/library-files-router.test.ts`
@@ -1815,8 +1886,12 @@ beforeEach(async () => {
   // Setup user, library (admin role for delete tests), book, BookFile
   user = await prisma.user.create({
     data: {
-      email: `f-${Date.now()}@x.local`, displayName: 'F', passwordHash: 'x',
-      emailVerifiedAt: new Date(), role: 'USER', status: 'ACTIVE',
+      email: `f-${Date.now()}@x.local`,
+      displayName: 'F',
+      passwordHash: 'x',
+      emailVerifiedAt: new Date(),
+      role: 'USER',
+      status: 'ACTIVE',
     },
   });
   library = await prisma.library.create({
@@ -1834,9 +1909,16 @@ beforeEach(async () => {
   writeFileSync(filePath, 'content');
   bf = await prisma.bookFile.create({
     data: {
-      bookId: book.id, libraryId: library.id, format: 'EPUB', isOriginal: true,
-      storagePath: filePath, fileSizeBytes: BigInt(7), sha256: 'aaaa',
-      mimeType: 'application/epub+zip', scanStatus: 'CLEAN', scannedAt: new Date(),
+      bookId: book.id,
+      libraryId: library.id,
+      format: 'EPUB',
+      isOriginal: true,
+      storagePath: filePath,
+      fileSizeBytes: BigInt(7),
+      sha256: 'aaaa',
+      mimeType: 'application/epub+zip',
+      scanStatus: 'CLEAN',
+      scannedAt: new Date(),
     },
   });
 });
@@ -1879,9 +1961,9 @@ describe('library.files.delete', () => {
       data: { role: 'MEMBER' },
     });
     const caller = await createCallerForUser(user.id);
-    await expect(
-      caller.library.files.delete({ slug: library.slug, id: bf.id }),
-    ).rejects.toThrow(/FORBIDDEN/);
+    await expect(caller.library.files.delete({ slug: library.slug, id: bf.id })).rejects.toThrow(
+      /FORBIDDEN/,
+    );
   });
 });
 ```
@@ -1889,9 +1971,11 @@ describe('library.files.delete', () => {
 (`createCallerForUser` is the existing helper used in Phase 1D integration tests — `tests/integration/helpers/trpc-caller.ts`.)
 
 - [ ] **Step 2: Run, confirm fail**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/library-files-router.test.ts
 ```
+
 Expected : FAIL.
 
 - [ ] **Step 3: Implement router**
@@ -1957,23 +2041,26 @@ If `libraryAdminProcedure` does not exist in `procedures-library.ts`, define it 
 // src/server/trpc/routers/library/index.ts
 import { router } from '@/server/trpc/trpc';
 import { booksRouter } from './books';
-import { filesRouter } from './files';   // NEW
+import { filesRouter } from './files'; // NEW
 
 export const libraryRouter = router({
   books: booksRouter,
-  files: filesRouter,    // NEW
+  files: filesRouter, // NEW
 });
 ```
 
 (Audit action already added in Task 0.4.)
 
 - [ ] **Step 5: Run, confirm pass**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/library-files-router.test.ts
 ```
+
 Expected : 3/3 PASS.
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add src/server/trpc/routers/library/ tests/integration/library-files-router.test.ts prisma/
 git commit -m "feat(phase-2a): library.files tRPC router (get for members, delete for admins)"
@@ -1982,12 +2069,14 @@ git commit -m "feat(phase-2a): library.files tRPC router (get for members, delet
 ### Task 3.5 — Permissions matrix extension
 
 **Files:**
+
 - Modify: `tests/integration/permissions-matrix.test.ts`
 - Modify: `docs/permissions-matrix.md`
 
 - [ ] **Step 1: Add `library.files.*` rows to integration matrix test**
 
 Open `tests/integration/permissions-matrix.test.ts`. Find the existing `library.books.*` block and add an analogous block for `library.files`. Cover three procedures :
+
 - `library.files.get` : ✓ for LIBRARY_ADMIN, MEMBER ; ✗ for ANON, PENDING_2FA, GLOBAL_ADMIN-not-member
 - `library.files.delete` : ✓ for LIBRARY_ADMIN ; ✗ for the rest
 - `uploadBookFile` Server Action : tested in `upload-action-attacks.test.ts`, leave a comment in the matrix file noting where it's covered.
@@ -1999,12 +2088,15 @@ Use the same fixture-builder helpers Phase 1D added.
 Append a `## library.files` section to `docs/permissions-matrix.md` with the same 5-column table (GLOBAL_ADMIN / LIBRARY_ADMIN / MEMBER / ANON / PENDING_2FA), reflecting the spec section 7.1.
 
 - [ ] **Step 3: Run full matrix test**
+
 ```bash
 pnpm vitest run --config vitest.integration.config.ts tests/integration/permissions-matrix.test.ts
 ```
+
 Expected : all PASS.
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add tests/integration/permissions-matrix.test.ts docs/permissions-matrix.md
 git commit -m "test(phase-2a): extend permissions matrix to library.files.{get,delete}"
@@ -2017,6 +2109,7 @@ git commit -m "test(phase-2a): extend permissions matrix to library.files.{get,d
 ### Task 4.1 — `ScanStatusBadge` component
 
 **Files:**
+
 - Create: `src/components/books/ScanStatusBadge.tsx`
 
 - [ ] **Step 1: Implement (no test — purely presentational, covered by E2E)**
@@ -2035,9 +2128,9 @@ interface Props {
 
 const VARIANT: Record<ScanStatus, { label: string; cls: string; Icon: typeof Loader2 }> = {
   PENDING: { label: 'En analyse', cls: 'bg-slate-100 text-slate-700', Icon: Loader2 },
-  CLEAN:   { label: 'Disponible', cls: 'bg-green-100 text-green-800', Icon: ShieldCheck },
-  INFECTED:{ label: 'Bloqué', cls: 'bg-red-100 text-red-800', Icon: ShieldAlert },
-  ERROR:   { label: 'Erreur d’analyse', cls: 'bg-orange-100 text-orange-800', Icon: AlertTriangle },
+  CLEAN: { label: 'Disponible', cls: 'bg-green-100 text-green-800', Icon: ShieldCheck },
+  INFECTED: { label: 'Bloqué', cls: 'bg-red-100 text-red-800', Icon: ShieldAlert },
+  ERROR: { label: 'Erreur d’analyse', cls: 'bg-orange-100 text-orange-800', Icon: AlertTriangle },
 };
 
 export function ScanStatusBadge({ status, size = 'md', className }: Props) {
@@ -2047,7 +2140,12 @@ export function ScanStatusBadge({ status, size = 'md', className }: Props) {
   return (
     <span
       data-testid={`scan-status-${status.toLowerCase()}`}
-      className={cn('inline-flex items-center gap-1 rounded-full font-medium', v.cls, dim, className)}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full font-medium',
+        v.cls,
+        dim,
+        className,
+      )}
     >
       <v.Icon className={cn(size === 'sm' ? 'h-3 w-3' : 'h-4 w-4', animate)} />
       {v.label}
@@ -2057,11 +2155,13 @@ export function ScanStatusBadge({ status, size = 'md', className }: Props) {
 ```
 
 - [ ] **Step 2: Verify build**
+
 ```bash
 pnpm typecheck
 ```
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add src/components/books/ScanStatusBadge.tsx
 git commit -m "feat(phase-2a): ScanStatusBadge with PENDING/CLEAN/INFECTED/ERROR variants"
@@ -2070,6 +2170,7 @@ git commit -m "feat(phase-2a): ScanStatusBadge with PENDING/CLEAN/INFECTED/ERROR
 ### Task 4.2 — `BookFileUpload` form component
 
 **Files:**
+
 - Create: `src/components/books/BookFileUpload.tsx`
 
 - [ ] **Step 1: Implement client component**
@@ -2080,7 +2181,10 @@ git commit -m "feat(phase-2a): ScanStatusBadge with PENDING/CLEAN/INFECTED/ERROR
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { uploadBookFile, type UploadResult } from '@/app/library/[slug]/books/[bookId]/upload/actions';
+import {
+  uploadBookFile,
+  type UploadResult,
+} from '@/app/library/[slug]/books/[bookId]/upload/actions';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -2089,7 +2193,8 @@ interface Props {
   bookId: string;
 }
 
-const ACCEPT = '.epub,.pdf,.txt,.docx,application/epub+zip,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const ACCEPT =
+  '.epub,.pdf,.txt,.docx,application/epub+zip,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const ERROR_MSG: Record<NonNullable<Extract<UploadResult, { ok: false }>['error']>, string> = {
   UNAUTHORIZED: 'Vous n’avez pas le droit d’uploader dans cette bibliothèque.',
@@ -2141,7 +2246,9 @@ export function BookFileUpload({ slug, bookId }: Props) {
         />
       </label>
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{filename ?? 'EPUB / PDF / TXT / DOCX — 100 Mo max'}</span>
+        <span className="text-xs text-muted-foreground">
+          {filename ?? 'EPUB / PDF / TXT / DOCX — 100 Mo max'}
+        </span>
         <Button type="submit" disabled={pending || !filename}>
           {pending ? 'Envoi…' : 'Envoyer'}
         </Button>
@@ -2152,11 +2259,13 @@ export function BookFileUpload({ slug, bookId }: Props) {
 ```
 
 - [ ] **Step 2: Verify**
+
 ```bash
 pnpm typecheck
 ```
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add src/components/books/BookFileUpload.tsx
 git commit -m "feat(phase-2a): BookFileUpload client form with transition + toast feedback"
@@ -2165,6 +2274,7 @@ git commit -m "feat(phase-2a): BookFileUpload client form with transition + toas
 ### Task 4.3 — Patch book detail page + BookCard
 
 **Files:**
+
 - Modify: `src/app/library/[slug]/books/[bookId]/page.tsx`
 - Modify: `src/components/books/BookCard.tsx`
 
@@ -2199,13 +2309,15 @@ const files = await prisma.bookFile.findMany({
       <div key={f.id} className="flex items-center justify-between rounded-md border p-3">
         <div className="flex items-center gap-3">
           <ScanStatusBadge status={f.scanStatus} />
-          <span className="text-sm">{f.format} · {(Number(f.fileSizeBytes) / 1024 / 1024).toFixed(2)} MB</span>
+          <span className="text-sm">
+            {f.format} · {(Number(f.fileSizeBytes) / 1024 / 1024).toFixed(2)} MB
+          </span>
         </div>
         {/* Phase 5: download button. For now: empty. */}
       </div>
     ))
   )}
-</section>
+</section>;
 ```
 
 - [ ] **Step 2: Patch BookCard**
@@ -2213,11 +2325,13 @@ const files = await prisma.bookFile.findMany({
 In `src/components/books/BookCard.tsx`, accept an optional `scanStatus?: ScanStatus | null` prop, and render `<ScanStatusBadge status={scanStatus} size="sm" />` next to the title when non-null. Update the prop drilling in `BookListGrid.tsx` to pass `book.files[0]?.scanStatus ?? null`. (Adjust the `library.books.list` Prisma include to fetch `files: { select: { scanStatus: true }, take: 1 }`.)
 
 - [ ] **Step 3: Verify**
+
 ```bash
 pnpm typecheck && pnpm lint
 ```
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add src/app/library src/components/books src/server/trpc
 git commit -m "feat(phase-2a): book detail upload zone + ScanStatusBadge on cards"
@@ -2226,6 +2340,7 @@ git commit -m "feat(phase-2a): book detail upload zone + ScanStatusBadge on card
 ### Task 4.4 — E2E happy path
 
 **Files:**
+
 - Create: `tests/e2e/book-upload.spec.ts`
 
 - [ ] **Step 1: Write the spec**
@@ -2236,7 +2351,11 @@ import { test, expect } from '@playwright/test';
 import path from 'node:path';
 
 import {
-  getPrisma, cleanupTestData, cleanupE2ELibrary, flushRateLimit, disconnect,
+  getPrisma,
+  cleanupTestData,
+  cleanupE2ELibrary,
+  flushRateLimit,
+  disconnect,
 } from './helpers/db';
 import { submitLogin } from './helpers/auth';
 import { hashPassword } from '../../src/lib/password';
@@ -2253,14 +2372,20 @@ test.beforeEach(async () => {
   await flushRateLimit();
 });
 
-test.afterAll(async () => { await disconnect(); });
+test.afterAll(async () => {
+  await disconnect();
+});
 
 test('uploader sees PENDING then CLEAN after refresh', async ({ page }) => {
   const email = `uploader-${Date.now()}@e2e.local`;
   const user = await prisma.user.create({
     data: {
-      email, displayName: 'E2E Uploader', passwordHash: await hashPassword(PASSWORD),
-      emailVerifiedAt: new Date(), role: 'USER', status: 'ACTIVE',
+      email,
+      displayName: 'E2E Uploader',
+      passwordHash: await hashPassword(PASSWORD),
+      emailVerifiedAt: new Date(),
+      role: 'USER',
+      status: 'ACTIVE',
     },
   });
   const lib = await prisma.library.create({
@@ -2294,6 +2419,7 @@ test('uploader sees PENDING then CLEAN after refresh', async ({ page }) => {
 ```
 
 - [ ] **Step 2: Run locally with worker + clamav**
+
 ```bash
 docker compose up -d clamav redis pg
 pnpm tsx worker/index.ts &
@@ -2304,9 +2430,11 @@ sleep 5
 pnpm playwright test tests/e2e/book-upload.spec.ts
 kill $WORKER_PID $APP_PID
 ```
+
 Expected : 1/1 PASS.
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add tests/e2e/book-upload.spec.ts
 git commit -m "test(phase-2a): e2e happy path — upload → PENDING → CLEAN after worker scan"
@@ -2315,6 +2443,7 @@ git commit -m "test(phase-2a): e2e happy path — upload → PENDING → CLEAN a
 ### Task 4.5 — Attack tests (`tests/attacks/upload.test.ts`)
 
 **Files:**
+
 - Create: `tests/attacks/upload.test.ts`
 
 - [ ] **Step 1: Write the EICAR + traversal + spoof tests as integration-level (no Playwright)**
@@ -2368,7 +2497,7 @@ describe('upload pipeline — security attacks', () => {
     fd.set('file', new Blob([buf]), '../../../etc/passwd.epub');
 
     const r = await withAuthedRequest(user.id, () => uploadBookFile(fd));
-    expect(r.ok).toBe(true);  // upload accepted (filename is sanitized via SHA-derived path)
+    expect(r.ok).toBe(true); // upload accepted (filename is sanitized via SHA-derived path)
     if (!r.ok) return;
 
     const created = await prisma.bookFile.findUniqueOrThrow({ where: { id: r.bookFileId } });
@@ -2382,13 +2511,16 @@ describe('upload pipeline — security attacks', () => {
 (Spoofed PE binary is already covered by `upload-action-attacks.test.ts` Task 3.3. No need to duplicate.)
 
 - [ ] **Step 2: Run**
+
 ```bash
 docker compose up -d clamav redis pg
 pnpm vitest run --config vitest.integration.config.ts tests/attacks/upload.test.ts
 ```
+
 Expected : 2/2 PASS.
 
 - [ ] **Step 3: Commit**
+
 ```bash
 git add tests/attacks/upload.test.ts
 git commit -m "test(phase-2a): attack tests — EICAR via real ClamAV + path traversal containment"
@@ -2401,6 +2533,7 @@ git commit -m "test(phase-2a): attack tests — EICAR via real ClamAV + path tra
 ### Task 5.1 — Update memory + tag
 
 **Files:**
+
 - (memory) `~/.claude/projects/.../memory/phase-2a-completed.md` (created at the end of the run)
 - Tag : `phase-2a-complete` on the merge commit
 
@@ -2413,11 +2546,13 @@ pnpm test
 pnpm vitest run --config vitest.integration.config.ts
 pnpm playwright test
 ```
+
 All green required. If anything red, fix before proceeding.
 
 - [ ] **Step 2: Open PR**
 
 Already on `feat/phase-2a-upload`. Run :
+
 ```bash
 gh pr create --title "feat(phase-2a): upload pipeline + ClamAV + dedup" --body "$(cat <<'BODY'
 Implements [Phase 2A' design](docs/superpowers/specs/2026-04-30-phase-2a-upload-design.md).

@@ -103,7 +103,8 @@ describe('uploadBookFile (attacks + edges)', () => {
   it('DUPLICATE: same SHA in same library', async () => {
     const buf = readFileSync(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const fd1 = new FormData();
-    fd1.set('slug', library.slug); fd1.set('bookId', book.id);
+    fd1.set('slug', library.slug);
+    fd1.set('bookId', book.id);
     fd1.set('file', new Blob([buf]), 'tiny.epub');
     const r1 = await withAuthedRequest(user.id, () => uploadBookFile(fd1));
     expect(r1.ok).toBe(true);
@@ -113,7 +114,8 @@ describe('uploadBookFile (attacks + edges)', () => {
       data: { libraryId: library.id, title: 'T2', authors: ['A'] },
     });
     const fd2 = new FormData();
-    fd2.set('slug', library.slug); fd2.set('bookId', book2.id);
+    fd2.set('slug', library.slug);
+    fd2.set('bookId', book2.id);
     fd2.set('file', new Blob([buf]), 'tiny.epub');
     const r2 = await withAuthedRequest(user.id, () => uploadBookFile(fd2));
     expect(r2.ok).toBe(false);
@@ -127,7 +129,8 @@ describe('uploadBookFile (attacks + edges)', () => {
     // Upload to library A
     const buf = readFileSync(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const fd1 = new FormData();
-    fd1.set('slug', library.slug); fd1.set('bookId', book.id);
+    fd1.set('slug', library.slug);
+    fd1.set('bookId', book.id);
     fd1.set('file', new Blob([buf]), 'tiny.epub');
     expect((await withAuthedRequest(user.id, () => uploadBookFile(fd1))).ok).toBe(true);
 
@@ -142,7 +145,8 @@ describe('uploadBookFile (attacks + edges)', () => {
       data: { libraryId: libB.id, title: 'B', authors: ['A'] },
     });
     const fd2 = new FormData();
-    fd2.set('slug', libB.slug); fd2.set('bookId', bookB.id);
+    fd2.set('slug', libB.slug);
+    fd2.set('bookId', bookB.id);
     fd2.set('file', new Blob([buf]), 'tiny.epub');
     const r2 = await withAuthedRequest(user.id, () => uploadBookFile(fd2));
     expect(r2.ok).toBe(true);
@@ -157,14 +161,16 @@ describe('uploadBookFile (attacks + edges)', () => {
   it('FORMAT_TAKEN: same book + same format', async () => {
     const buf = readFileSync(path.join(process.cwd(), 'tests/fixtures/upload/tiny.epub'));
     const fd1 = new FormData();
-    fd1.set('slug', library.slug); fd1.set('bookId', book.id);
+    fd1.set('slug', library.slug);
+    fd1.set('bookId', book.id);
     fd1.set('file', new Blob([buf]), 'tiny.epub');
     expect((await withAuthedRequest(user.id, () => uploadBookFile(fd1))).ok).toBe(true);
 
     // Different file content (different SHA) but same EPUB format and same book
     const buf2 = Buffer.concat([buf, Buffer.from('\n')]);
     const fd2 = new FormData();
-    fd2.set('slug', library.slug); fd2.set('bookId', book.id);
+    fd2.set('slug', library.slug);
+    fd2.set('bookId', book.id);
     fd2.set('file', new Blob([buf2]), 'tiny2.epub');
     const r2 = await withAuthedRequest(user.id, () => uploadBookFile(fd2));
     expect(r2.ok).toBe(false);

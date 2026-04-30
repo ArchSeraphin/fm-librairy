@@ -147,20 +147,18 @@ CREATE UNIQUE INDEX "BookFile_libraryId_sha256_key"
 `src/app/library/[slug]/books/[bookId]/upload/actions.ts`
 
 ```ts
-export async function uploadBookFile(
-  formData: FormData
-): Promise<UploadResult>;
+export async function uploadBookFile(formData: FormData): Promise<UploadResult>;
 
 type UploadResult =
   | { ok: true; bookFileId: string; scanStatus: 'PENDING' }
   | {
       ok: false;
       error:
-        | 'UNAUTHORIZED'        // pas membre ou pas canUpload
-        | 'INVALID_MIME'         // file-type rejette
-        | 'OVERSIZE'             // > 100MB (théoriquement intercepté plus tôt)
-        | 'DUPLICATE'            // dedup hit dans cette biblio
-        | 'FORMAT_TAKEN'         // ce Book a déjà un BookFile au même format
+        | 'UNAUTHORIZED' // pas membre ou pas canUpload
+        | 'INVALID_MIME' // file-type rejette
+        | 'OVERSIZE' // > 100MB (théoriquement intercepté plus tôt)
+        | 'DUPLICATE' // dedup hit dans cette biblio
+        | 'FORMAT_TAKEN' // ce Book a déjà un BookFile au même format
         | 'INTERNAL_ERROR';
       details?: { existingBookId?: string };
     };
@@ -175,19 +173,15 @@ Nouveau router `src/server/trpc/routers/library/files.ts` :
 ```ts
 export const filesRouter = libraryRouter({
   // Lecture pour l'UI (badge statut sur fiche livre)
-  get: memberProcedure
-    .input(z.object({ bookId: cuid }))
-    .query(async ({ ctx, input }) => {
-      // returns BookFile[] for the book, scoped to current library
-    }),
+  get: memberProcedure.input(z.object({ bookId: cuid })).query(async ({ ctx, input }) => {
+    // returns BookFile[] for the book, scoped to current library
+  }),
 
   // Suppression admin (nettoyer INFECTED ou stale PENDING)
-  delete: memberProcedure
-    .input(z.object({ id: cuid }))
-    .mutation(async ({ ctx, input }) => {
-      // requires assertMembership(slug, 'ADMIN')
-      // delete from disk + DB row + AuditLog
-    }),
+  delete: memberProcedure.input(z.object({ id: cuid })).mutation(async ({ ctx, input }) => {
+    // requires assertMembership(slug, 'ADMIN')
+    // delete from disk + DB row + AuditLog
+  }),
 });
 ```
 
@@ -231,6 +225,7 @@ L'upload passe **uniquement** par la Server Action (binaire FormData mal support
 ### 6.4 Erreurs côté UI
 
 Toast mappings :
+
 - INVALID_MIME → "Format de fichier non supporté. Formats acceptés : EPUB, PDF, TXT, DOCX."
 - OVERSIZE → "Fichier trop volumineux (max 100 MB)."
 - DUPLICATE → "Ce fichier existe déjà dans cette bibliothèque." + lien vers `existingBookId`
@@ -246,20 +241,21 @@ Toast mappings :
 
 Conforme à `docs/permissions-matrix.md` (5 colonnes officielles, 1 ligne par procédure ou action) :
 
-| Action | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
-|--------|--------------|---------------|--------|------|-------------|
-| `library.files.upload` (Server Action) | ✗ (sauf membre actuel de la biblio + canUpload) | ✓ (7) | ✓ (7) | ✗ | ✗ |
-| `library.files.get` | ✗ (sauf membre) | ✓ | ✓ | ✗ | ✗ |
-| `library.files.delete` | ✗ (sauf LIBRARY_ADMIN) | ✓ (8) | ✗ | ✗ | ✗ |
+| Action                                 | GLOBAL_ADMIN                                    | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
+| -------------------------------------- | ----------------------------------------------- | ------------- | ------ | ---- | ----------- |
+| `library.files.upload` (Server Action) | ✗ (sauf membre actuel de la biblio + canUpload) | ✓ (7)         | ✓ (7)  | ✗    | ✗           |
+| `library.files.get`                    | ✗ (sauf membre)                                 | ✓             | ✓      | ✗    | ✗           |
+| `library.files.delete`                 | ✗ (sauf LIBRARY_ADMIN)                          | ✓ (8)         | ✗      | ✗    | ✗           |
 
 (7) Exige `LibraryMember.canUpload = true` pour cet `userId` × `libraryId`. Le flag est orthogonal au rôle (un MEMBER peut être promu uploader, un LIBRARY_ADMIN peut avoir canUpload=false bien que ce soit inhabituel).
 (8) Refuse si library archived (`archivedAt != null`).
 
-**Note importante** : `GLOBAL_ADMIN` *en tant que tel* n'a PAS le droit d'uploader dans une biblio dont il n'est pas membre. La logique est library-scoped via `assertMembership`. Un GLOBAL_ADMIN qui veut uploader doit s'ajouter comme membre via `admin.libraries.members.add`.
+**Note importante** : `GLOBAL_ADMIN` _en tant que tel_ n'a PAS le droit d'uploader dans une biblio dont il n'est pas membre. La logique est library-scoped via `assertMembership`. Un GLOBAL_ADMIN qui veut uploader doit s'ajouter comme membre via `admin.libraries.members.add`.
 
 ### 7.2 Implementation
 
 Server Action `uploadBookFile` :
+
 ```ts
 const member = await assertMembership(slug); // throw 403 si pas membre
 if (!member.canUpload) throw new Error('UNAUTHORIZED');
@@ -309,17 +305,17 @@ Pas de nouvelle rule. `local/no-unscoped-prisma` couvre déjà les queries `Book
 
 ## 9. Risques & mitigations
 
-| Risque | Mitigation MVP | Renvoyé à |
-|--------|----------------|-----------|
-| MIME spoofing | `file-type` magic bytes, test attack | — |
-| Path traversal filename | `storage-paths` validation `path.resolve` sous STORAGE_ROOT, test attack | — |
-| DoS upload concurrent | Cap 100 MB body, **rate-limit upload** 3/min/user via Redis (pattern existant cf. password reset) | Ajouté au scope 2A'.3 |
-| Disque plein | Aucune mitigation auto MVP, log warning au démarrage worker | Phase 8 |
-| ClamAV down | Job retry 3× exp backoff, puis scanStatus=ERROR + DLQ. Admin peut delete manuellement. | — |
-| ClamAV bypass / fichier malformé | INSTREAM timeout → ERROR. App n'ouvre jamais le fichier. | — |
-| Stale PENDING (worker mort) | Admin hard-delete manuel via tRPC `library.files.delete` | Phase 8 cron cleanup |
-| Race condition dedup | DB-level `@@unique([libraryId, sha256])` (pas check applicatif seul) | — |
-| Replacement de fichier | Pas de remplacement direct ; admin delete + nouveau upload | Post-MVP feature |
+| Risque                           | Mitigation MVP                                                                                    | Renvoyé à             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------- |
+| MIME spoofing                    | `file-type` magic bytes, test attack                                                              | —                     |
+| Path traversal filename          | `storage-paths` validation `path.resolve` sous STORAGE_ROOT, test attack                          | —                     |
+| DoS upload concurrent            | Cap 100 MB body, **rate-limit upload** 3/min/user via Redis (pattern existant cf. password reset) | Ajouté au scope 2A'.3 |
+| Disque plein                     | Aucune mitigation auto MVP, log warning au démarrage worker                                       | Phase 8               |
+| ClamAV down                      | Job retry 3× exp backoff, puis scanStatus=ERROR + DLQ. Admin peut delete manuellement.            | —                     |
+| ClamAV bypass / fichier malformé | INSTREAM timeout → ERROR. App n'ouvre jamais le fichier.                                          | —                     |
+| Stale PENDING (worker mort)      | Admin hard-delete manuel via tRPC `library.files.delete`                                          | Phase 8 cron cleanup  |
+| Race condition dedup             | DB-level `@@unique([libraryId, sha256])` (pas check applicatif seul)                              | —                     |
+| Replacement de fichier           | Pas de remplacement direct ; admin delete + nouveau upload                                        | Post-MVP feature      |
 
 ---
 
@@ -327,13 +323,13 @@ Pas de nouvelle rule. `local/no-unscoped-prisma` couvre déjà les queries `Book
 
 Pattern Phase 1D (modules A→F mergés en non-squash). Ici 5 modules :
 
-| Mod | Titre | Livrables principaux | Dépend |
-|-----|-------|----------------------|--------|
-| **2A'.0** | Infra + schema | Migration `book_file_library_unique` ; volume Docker `library_data` partagé app+worker ; var env `STORAGE_ROOT=/data` ; mise à jour `.env.example` + `docker-compose.yml` | — |
-| **2A'.1** | Libs upload (pure) | `src/lib/upload/{mime-validator,sha256-stream,storage-paths,staging-io}.ts` + tests unit. Aucune intégration DB ou worker. | 2A'.0 |
-| **2A'.2** | Worker scan job | `worker/lib/clamav.ts` (INSTREAM), `worker/jobs/scan-file.ts`, register dans `worker/index.ts` avec retry policy ; tests integration avec ClamAV mocké | 2A'.1 |
-| **2A'.3** | Server Action + tRPC + rate-limit | `uploadBookFile` action ; router `library.files.{get,delete}` ; rate-limit 3/min/user (Redis token bucket pattern existant) ; tests integration + permissions matrix | 2A'.1, 2A'.2 |
-| **2A'.4** | UI + tests E2E + attacks | `BookFileUpload`, `ScanStatusBadge`, patches `BookCard` + page détail ; specs E2E happy path + attaques (`tests/attacks/upload.test.ts`) | 2A'.3 |
+| Mod       | Titre                             | Livrables principaux                                                                                                                                                      | Dépend       |
+| --------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **2A'.0** | Infra + schema                    | Migration `book_file_library_unique` ; volume Docker `library_data` partagé app+worker ; var env `STORAGE_ROOT=/data` ; mise à jour `.env.example` + `docker-compose.yml` | —            |
+| **2A'.1** | Libs upload (pure)                | `src/lib/upload/{mime-validator,sha256-stream,storage-paths,staging-io}.ts` + tests unit. Aucune intégration DB ou worker.                                                | 2A'.0        |
+| **2A'.2** | Worker scan job                   | `worker/lib/clamav.ts` (INSTREAM), `worker/jobs/scan-file.ts`, register dans `worker/index.ts` avec retry policy ; tests integration avec ClamAV mocké                    | 2A'.1        |
+| **2A'.3** | Server Action + tRPC + rate-limit | `uploadBookFile` action ; router `library.files.{get,delete}` ; rate-limit 3/min/user (Redis token bucket pattern existant) ; tests integration + permissions matrix      | 2A'.1, 2A'.2 |
+| **2A'.4** | UI + tests E2E + attacks          | `BookFileUpload`, `ScanStatusBadge`, patches `BookCard` + page détail ; specs E2E happy path + attaques (`tests/attacks/upload.test.ts`)                                  | 2A'.3        |
 
 Dépendances strictes : 2A'.0 → 2A'.1 → 2A'.2 → 2A'.3 → 2A'.4. Pas de parallélisme propre (chaque module bloque le suivant).
 
@@ -342,6 +338,7 @@ Dépendances strictes : 2A'.0 → 2A'.1 → 2A'.2 → 2A'.3 → 2A'.4. Pas de pa
 ## 11. Pattern d'exécution
 
 Comme Phase 1D :
+
 - Branche unique `feat/phase-2a-upload`
 - Un commit par module + sous-tâche, conventional commits
 - Reviewer pattern : `superpowers:subagent-driven-development` avec implementer → spec-reviewer per task
@@ -364,6 +361,7 @@ Encadré d'un wrapper EPUB minimal pour passer le `file-type` check (ou bien tes
 ### 12.2 Protocole INSTREAM ClamAV
 
 Format binaire simple sur TCP :
+
 - Client envoie `zINSTREAM\0`
 - Puis chunks `<size:4-byte-BE><data>`
 - Termine avec `<size: 0:4-byte-BE>`
