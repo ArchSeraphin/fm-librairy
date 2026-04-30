@@ -59,6 +59,10 @@ export const authConfig: NextAuthConfig = {
         (session as { userId?: string }).userId = token.uid as string;
         (session as { pending2fa?: boolean }).pending2fa = !!token.pending2fa;
         (session as { sid?: string }).sid = (token.sid as string) ?? undefined;
+        // Propagate the JWT `iat` (issued-at, seconds) so the session bridge
+        // can compare it to `User.revokedSessionsAt` and reject cookies issued
+        // before a password reset / force-logout watermark.
+        (session as { iat?: number }).iat = (token as { iat?: number }).iat;
       }
       return session;
     },

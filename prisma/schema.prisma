@@ -39,6 +39,12 @@ model User {
   lastLoginAt      DateTime?
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
+  // Watermark for JWT revocation. Any JWT with `iat * 1000 < revokedSessionsAt`
+  // must be treated as invalid by the session bridge. Set by flows that purge
+  // all DB sessions for the user (password reset, admin force-logout) so that
+  // an attacker still holding a stolen NextAuth cookie cannot re-establish a
+  // session by triggering the bridge's find-or-create path.
+  revokedSessionsAt   DateTime?
 
   twoFactorSecret    TwoFactorSecret?
   invitationsCreated Invitation[]      @relation("InvitedBy")
