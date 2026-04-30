@@ -1,10 +1,11 @@
 import { TRPCError } from '@trpc/server';
 import { t } from '../../trpc';
-import { libraryMemberProcedure } from '../../procedures-library';
-import { libraryBookListLimiter } from '@/lib/rate-limit';
+import { libraryMemberProcedure, libraryAdminProcedure } from '../../procedures-library';
+import { libraryBookListLimiter, libraryBookCreateLimiter } from '@/lib/rate-limit';
 import { buildSearchQuery } from '@/lib/book-search';
 import { db } from '@/lib/db';
-import { listBooksInput, getBookInput } from '../../schemas/book';
+import { listBooksInput, getBookInput, createBookInput } from '../../schemas/book';
+import { recordAudit } from '@/lib/audit-log';
 
 export const libraryBooksRouter = t.router({
   list: libraryMemberProcedure
@@ -62,6 +63,43 @@ export const libraryBooksRouter = t.router({
       if (!isAdmin && book.archivedAt !== null) {
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
+
+      return book;
+    }),
+
+  create: libraryAdminProcedure
+    .input(createBookInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await libraryBookCreateLimiter.consume(ctx.user.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      // slug is consumed by the middleware to resolve ctx.library; not stored on the book
+      const book = await db.book.create({
+        data: {
+          title: input.title,
+          authors: input.authors,
+          isbn10: input.isbn10,
+          isbn13: input.isbn13,
+          publisher: input.publisher,
+          publishedYear: input.publishedYear,
+          language: input.language,
+          description: input.description,
+          coverPath: input.coverPath,
+          libraryId: ctx.library.id,
+          uploadedById: ctx.user.id,
+        },
+      });
+
+      await recordAudit({
+        action: 'library.book.created',
+        actor: { id: ctx.user.id },
+        target: { type: 'BOOK', id: book.id },
+        metadata: { libraryId: ctx.library.id, title: book.title },
+        req: { ip: ctx.ip },
+      });
 
       return book;
     }),
