@@ -4,7 +4,7 @@ import { libraryMemberProcedure, libraryAdminProcedure } from '../../procedures-
 import { libraryBookListLimiter, libraryBookCreateLimiter, libraryBookUpdateLimiter } from '@/lib/rate-limit';
 import { buildSearchQuery } from '@/lib/book-search';
 import { db } from '@/lib/db';
-import { listBooksInput, getBookInput, createBookInput, updateBookInput } from '../../schemas/book';
+import { listBooksInput, getBookInput, createBookInput, updateBookInput, archiveBookInput, unarchiveBookInput } from '../../schemas/book';
 import { recordAudit } from '@/lib/audit-log';
 import { assertBookInLibrary, assertNotArchived } from '@/lib/book-admin';
 
@@ -167,5 +167,83 @@ export const libraryBooksRouter = t.router({
       });
 
       return updated;
+    }),
+
+  archive: libraryAdminProcedure
+    .input(archiveBookInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await libraryBookUpdateLimiter.consume(ctx.user.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      // Atomic state-machine guard: only archive if currently not archived
+      const result = await db.book.updateMany({
+        where: {
+          id: input.id,
+          libraryId: ctx.library.id,
+          archivedAt: null,           // only update if currently not archived
+        },
+        data: { archivedAt: new Date() },
+      });
+
+      if (result.count === 0) {
+        // Single re-read to disambiguate NOT_FOUND vs already-archived
+        const current = await db.book.findUnique({ where: { id: input.id } });
+        if (!current || current.libraryId !== ctx.library.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+        // current.archivedAt is non-null (otherwise updateMany would have matched)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'already archived' });
+      }
+
+      await recordAudit({
+        action: 'library.book.archived',
+        actor: { id: ctx.user.id },
+        target: { type: 'BOOK', id: input.id },
+        metadata: { libraryId: ctx.library.id },
+        req: { ip: ctx.ip },
+      });
+
+      return { ok: true };
+    }),
+
+  unarchive: libraryAdminProcedure
+    .input(unarchiveBookInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await libraryBookUpdateLimiter.consume(ctx.user.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      // Atomic state-machine guard: only unarchive if currently archived
+      const result = await db.book.updateMany({
+        where: {
+          id: input.id,
+          libraryId: ctx.library.id,
+          archivedAt: { not: null },  // only update if currently archived
+        },
+        data: { archivedAt: null },
+      });
+
+      if (result.count === 0) {
+        const current = await db.book.findUnique({ where: { id: input.id } });
+        if (!current || current.libraryId !== ctx.library.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'not archived' });
+      }
+
+      await recordAudit({
+        action: 'library.book.unarchived',
+        actor: { id: ctx.user.id },
+        target: { type: 'BOOK', id: input.id },
+        metadata: { libraryId: ctx.library.id },
+        req: { ip: ctx.ip },
+      });
+
+      return { ok: true };
     }),
 });
