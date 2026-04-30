@@ -124,3 +124,20 @@ export const libraryBookDeleteLimiter = new RateLimiterRedis({
   duration: 60 * 60,
   insuranceLimiter: memInsurance(1, 60 * 60),
 });
+
+export const libraryFileUploadLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:lib_file_upload',
+  points: 3,
+  duration: 60,
+  blockDuration: 5 * 60,
+  insuranceLimiter: memInsurance(3, 60),
+});
+
+export const libraryFileDeleteLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:lib_file_delete',
+  points: 5,
+  duration: 60,
+  insuranceLimiter: memInsurance(5, 60),
+});
