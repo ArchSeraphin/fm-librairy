@@ -444,6 +444,13 @@
       "createdAt_desc": "Plus récents",
       "createdAt_asc": "Plus anciens",
       "title_asc": "Titre (A→Z)"
+    },
+    "page": {
+      "subtitle": "Catalogue de la bibliothèque",
+      "createCta": "Ajouter un livre"
+    },
+    "catalog": {
+      "showArchived": "Inclure les livres archivés"
     }
   },
   "password": {
