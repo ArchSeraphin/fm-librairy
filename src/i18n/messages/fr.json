@@ -378,6 +378,19 @@
       "body": "Cette invitation ne vous est pas adressée. Connectez-vous avec le compte concerné ou demandez une nouvelle invitation."
     }
   },
+  "member": {
+    "header": {
+      "openMenu": "Ouvrir le menu",
+      "menuTitle": "Menu",
+      "phase": "Membre"
+    },
+    "nav": {
+      "myLibraries": "Mes bibliothèques",
+      "catalog": "Catalogue",
+      "loans": "Mes prêts",
+      "loansComingSoon": "Phase 2"
+    }
+  },
   "password": {
     "forgot": {
       "title": "Mot de passe oublié",
