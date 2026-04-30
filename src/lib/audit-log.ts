@@ -60,7 +60,11 @@ export type AuditAction =
   | 'library.book.updated'
   | 'library.book.archived'
   | 'library.book.unarchived'
-  | 'library.book.deleted';
+  | 'library.book.deleted'
+  // 2A' — book file lifecycle
+  | 'library.book_file.uploaded'
+  | 'library.book_file.infected'
+  | 'library.book_file.deleted';
 
 export type AuditTargetType =
   | 'USER'
@@ -70,7 +74,8 @@ export type AuditTargetType =
   | 'EMAIL'
   | 'AUTH'
   | 'MEMBER'
-  | 'BOOK';
+  | 'BOOK'
+  | 'BOOK_FILE';
 
 const SENSITIVE_KEYS = new Set([
   'password',

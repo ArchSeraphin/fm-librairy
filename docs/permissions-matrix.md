@@ -70,3 +70,14 @@ Légende : ✓ allow · ✗ deny · `(*)` voir contraintes au bas de table.
 ## Hors-1C
 
 Routers `auth.*`, `invitation.*`, `password.*` couverts par leurs propres tests Phase 1A/1B (déjà inclus dans la matrice via le test anti-drift).
+
+## library.files (members + admins)
+
+| Procedure | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
+| --------- | ------------ | ------------- | ------ | ---- | ----------- |
+| get       | ✓            | ✓             | ✓      | ✗    | ✗           |
+| delete    | ✓            | ✓             | ✗      | ✗    | ✗           |
+
+`delete` est soumis au rate-limiter `libraryFileDeleteLimiter` (5 req/min par user×library) ; un dépassement renvoie `TOO_MANY_REQUESTS` avant la suppression physique du fichier. La suppression nettoie également le fichier de staging côté serveur (`rm --force`).
+
+`uploadBookFile` est une Server Action (non-tRPC) — couvert par `tests/integration/upload-action-attacks.test.ts`.

@@ -1,0 +1,24 @@
+# Dev compose override - Phase 2A'
+# Etend docker-compose.yml en exposant ClamAV sur le port 3310 de l'hote
+# pour que les tests d'integration (clamav-client.test.ts, scan-file-job.test.ts)
+# puissent se connecter au daemon. Postgres et Redis sont geres par testcontainers
+# au niveau du runner Vitest, donc pas de mapping ici.
+#
+# Usage : `docker compose -p phase-2a -f docker-compose.phase-2a.dev.yml up -d clamav`
+# (pg/redis spawnent automatiquement via @testcontainers lors du test run)
+
+include:
+  - path: docker-compose.yml
+
+services:
+  clamav:
+    ports:
+      - '127.0.0.1:3310:3310'
+
+  pg:
+    ports:
+      - '127.0.0.1:5432:5432'
+
+  redis:
+    ports:
+      - '127.0.0.1:6379:6379'

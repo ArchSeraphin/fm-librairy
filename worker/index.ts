@@ -41,6 +41,10 @@ const parsed = z
     IP_HASH_SALT: z.string().min(16),
     UA_HASH_SALT: z.string().min(16),
     CRYPTO_MASTER_KEY: z.string().min(32),
+    // Stockage fichiers (Phase 2A' — volume partagé app + worker)
+    STORAGE_ROOT: z.string().min(1).default('/data'),
+    CLAMAV_HOST: z.string().default('clamav'),
+    CLAMAV_PORT: z.coerce.number().int().positive().default(3310),
   })
   .superRefine((v, ctx) => {
     if (v.EMAIL_TRANSPORT === 'resend' && !v.RESEND_API_KEY) {
@@ -185,6 +189,41 @@ mailWorker.on('failed', (job, err) => {
   }
 });
 
+// =========================================================================
+// Scan queue (Phase 2A')
+// =========================================================================
+const SCAN_QUEUE = 'scan';
+const scanQueue = new Queue(SCAN_QUEUE, {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 5_000 },
+    removeOnComplete: { count: 1000, age: 24 * 3600 },
+    removeOnFail: { count: 5000 },
+  },
+});
+
+const scanWorker = new Worker(
+  SCAN_QUEUE,
+  async (job) => {
+    if (job.name === 'scan-file') {
+      const { handleScanFile } = await import('./jobs/scan-file.js');
+      return handleScanFile(job, {
+        prisma,
+        logger,
+        clamavHost: env.CLAMAV_HOST,
+        clamavPort: env.CLAMAV_PORT,
+      });
+    }
+    logger.warn({ name: job.name }, 'unknown scan job');
+  },
+  { connection: redis },
+);
+
+scanWorker.on('failed', (job, err) => logger.error({ jobId: job?.id, err }, 'scan job failed'));
+
+export { scanQueue };
+
 async function scheduleCleanup(): Promise<void> {
   await queue.upsertJobScheduler(
     'cleanup-sessions-hourly',
@@ -212,8 +251,10 @@ const shutdown = async (): Promise<void> => {
   logger.info('shutting down');
   await worker.close();
   await mailWorker.close();
+  await scanWorker.close();
   await queue.close();
   await mailQueue.close();
+  await scanQueue.close();
   await prisma.$disconnect();
   await redis.quit();
   process.exit(0);

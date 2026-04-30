@@ -342,6 +342,28 @@ const matrix: MatrixCase[] = [
       return c.library.books.delete({ slug, id: STUB_CUID });
     },
   },
+
+  // -------- library.files -- read = AUTHED_ONLY, delete = ADMIN_ONLY --------
+  // uploadBookFile (server action) — covered by tests/integration/upload-action-attacks.test.ts
+  {
+    router: 'library.files',
+    procedure: 'get',
+    byRole: AUTHED_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.files.get({ slug, bookId: STUB_CUID });
+    },
+  },
+  {
+    router: 'library.files',
+    procedure: 'delete',
+    byRole: ADMIN_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.files.delete({ slug, id: STUB_CUID });
+    },
+  },
+
   {
     router: 'library.libraries',
     procedure: 'listAccessible',
