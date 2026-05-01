@@ -206,6 +206,13 @@ enum ScanStatus {
   ERROR
 }
 
+enum MetadataFetchStatus {
+  PENDING
+  FETCHED
+  NOT_FOUND
+  ERROR
+}
+
 model Book {
   id              String          @id @default(cuid())
   libraryId       String
@@ -219,7 +226,10 @@ model Book {
   language        String?
   description     String?
   coverPath       String?
-  metadataSource  MetadataSource? @default(MANUAL)
+  metadataSource       MetadataSource?     @default(MANUAL)
+  metadataFetchStatus  MetadataFetchStatus?
+  metadataFetchedAt    DateTime?
+  metadataAttemptCount Int                  @default(0)
   hasDigital      Boolean         @default(false)
   hasPhysical     Boolean         @default(false)
   uploadedById    String?
