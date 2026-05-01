@@ -9,6 +9,7 @@ import { BookActionsMenu } from './BookActionsMenu';
 import { BookFileUpload } from '@/components/books/BookFileUpload';
 import { ScanStatusBadge } from '@/components/books/ScanStatusBadge';
 import { MetadataSourceBadge } from '@/components/books/MetadataSourceBadge';
+import { MetadataFetchStatusBadge } from '@/components/books/MetadataFetchStatusBadge';
 import type { Book, BookFile } from '@prisma/client';
 
 export function BookDetail({
@@ -71,6 +72,9 @@ export function BookDetail({
               <Package className="mr-1 h-3 w-3" aria-hidden />
               {t('physical')}
             </Badge>
+          )}
+          {book.metadataFetchStatus === 'PENDING' && (
+            <MetadataFetchStatusBadge status="PENDING" />
           )}
         </div>
         <Card>
