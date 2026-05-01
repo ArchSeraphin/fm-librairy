@@ -46,6 +46,7 @@ jobs:
       - name: Check email templates drift
         run: pnpm check:emails-drift
       - run: pnpm typecheck
+      - run: pnpm check:worker-isolation
       - run: pnpm test
 
   e2e:

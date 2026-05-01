@@ -28,6 +28,7 @@
     "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
     "email:dev": "email dev --port 3001 --dir src/emails",
     "check:emails-drift": "tsx scripts/check-email-templates-drift.ts",
+    "check:worker-isolation": "tsx scripts/check-worker-isolation.ts",
     "test:eslint-rules": "node eslint-rules/tests/no-unscoped-prisma.test.js"
   },
   "dependencies": {
