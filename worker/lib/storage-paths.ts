@@ -20,3 +20,16 @@ export function assertUnderRoot(root: string, candidate: string): void {
     throw new Error(`PATH_TRAVERSAL: ${candidate} escapes ${root}`);
   }
 }
+
+export function coverPath(bookId: string): string {
+  if (!/^[a-z0-9]+$/.test(bookId)) {
+    throw new Error(`invalid bookId for path: ${bookId}`);
+  }
+  const root = process.env.STORAGE_ROOT;
+  if (!root) throw new Error('STORAGE_ROOT not set');
+  return `${root}/covers/${bookId}.jpg`;
+}
+
+export function coverRelPath(bookId: string): string {
+  return `covers/${bookId}.jpg`;
+}
