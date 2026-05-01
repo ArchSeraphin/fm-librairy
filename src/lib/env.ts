@@ -44,7 +44,13 @@ const EnvSchema = z
     EMAIL_LOG_SALT: z.string().min(32),
 
     // APIs métadonnées (Phase 2+)
-    GOOGLE_BOOKS_API_KEY: z.string().optional(),
+    GOOGLE_BOOKS_API_KEY: z.string().min(1).optional(),
+    OPEN_LIBRARY_USER_AGENT: z
+      .string()
+      .min(10)
+      .default('BiblioShare/2B (admin@biblio.test)'),
+    METADATA_FETCH_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60_000).default(10_000),
+    COVER_MAX_BYTES: z.coerce.number().int().min(102_400).max(20_971_520).default(5_242_880),
     ISBNDB_API_KEY: z.string().optional(),
 
     // Stockage fichiers (Phase 2A' — volume partagé app + worker)
