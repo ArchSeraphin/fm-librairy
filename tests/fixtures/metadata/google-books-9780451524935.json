@@ -1,0 +1,355 @@
+{
+  "kind": "books#volumes",
+  "totalItems": 5,
+  "items": [
+    {
+      "kind": "books#volume",
+      "id": "-iJbAAAAMAAJ",
+      "etag": "GwTQkbBTZxw",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/-iJbAAAAMAAJ",
+      "volumeInfo": {
+        "title": "Nineteen Eighty-four",
+        "subtitle": "A Novel",
+        "authors": [
+          "George Orwell"
+        ],
+        "publishedDate": "1949",
+        "description": "Eternal warfare is the price of bleak prosperity in this satire of totalitarian barbarism.",
+        "industryIdentifiers": [
+          {
+            "type": "OTHER",
+            "identifier": "UOM:39015046412311"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 326,
+        "printType": "BOOK",
+        "categories": [
+          "London (England)"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "0.6.2.0.preview.0",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "language": "en",
+        "previewLink": "http://books.google.fr/books?id=-iJbAAAAMAAJ&dq=isbn:9780451524935&hl=&cd=1&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=-iJbAAAAMAAJ&dq=isbn:9780451524935&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/Nineteen_Eighty_four.html?hl=&id=-iJbAAAAMAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=-iJbAAAAMAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Eternal warfare is the price of bleak prosperity in this satire of totalitarian barbarism."
+      }
+    },
+    {
+      "kind": "books#volume",
+      "id": "Dd9N0AEACAAJ",
+      "etag": "M2MkArCzrzs",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/Dd9N0AEACAAJ",
+      "volumeInfo": {
+        "title": "1984",
+        "authors": [
+          "George Orwell"
+        ],
+        "publisher": "Signet",
+        "publishedDate": "1950-07-01",
+        "description": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future. And while 1984 has come and gone, his dystopian vision of a government that will do anything to control the narrative is timelier than ever... • Nominated as one of America’s best-loved novels by PBS’s The Great American Read • “The Party told you to reject the evidence of your eyes and ears. It was their final, most essential command.” Winston Smith toes the Party line, rewriting history to satisfy the demands of the Ministry of Truth. With each lie he writes, Winston grows to hate the Party that seeks power for its own sake and persecutes those who dare to commit thoughtcrimes. But as he starts to think for himself, Winston can’t escape the fact that Big Brother is always watching... A startling and haunting novel, 1984 creates an imaginary world that is completely convincing from start to finish. No one can deny the novel’s hold on the imaginations of whole generations, or the power of its admonitions—a power that seems to grow, not lessen, with the passage of time.",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_10",
+            "identifier": "0451524934"
+          },
+          {
+            "type": "ISBN_13",
+            "identifier": "9780451524935"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 0,
+        "printType": "BOOK",
+        "categories": [
+          "Fiction"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "preview-1.0.0",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=Dd9N0AEACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=Dd9N0AEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+        },
+        "language": "en",
+        "previewLink": "http://books.google.fr/books?id=Dd9N0AEACAAJ&dq=isbn:9780451524935&hl=&cd=2&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=Dd9N0AEACAAJ&dq=isbn:9780451524935&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/1984.html?hl=&id=Dd9N0AEACAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=Dd9N0AEACAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future."
+      }
+    },
+    {
+      "kind": "books#volume",
+      "id": "YqvezwEACAAJ",
+      "etag": "XhMrShUMjeE",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/YqvezwEACAAJ",
+      "volumeInfo": {
+        "title": "1984",
+        "authors": [
+          "George Orwell"
+        ],
+        "publisher": "Signet",
+        "publishedDate": "1950-07-01",
+        "description": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future. And while 1984 has come and gone, his dystopian vision of a government that will do anything to control the narrative is timelier than ever... • Nominated as one of America’s best-loved novels by PBS’s The Great American Read • “The Party told you to reject the evidence of your eyes and ears. It was their final, most essential command.” Winston Smith toes the Party line, rewriting history to satisfy the demands of the Ministry of Truth. With each lie he writes, Winston grows to hate the Party that seeks power for its own sake and persecutes those who dare to commit thoughtcrimes. But as he starts to think for himself, Winston can’t escape the fact that Big Brother is always watching... A startling and haunting novel, 1984 creates an imaginary world that is completely convincing from start to finish. No one can deny the novel’s hold on the imaginations of whole generations, or the power of its admonitions—a power that seems to grow, not lessen, with the passage of time.",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_10",
+            "identifier": "0451524934"
+          },
+          {
+            "type": "ISBN_13",
+            "identifier": "9780451524935"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 0,
+        "printType": "BOOK",
+        "categories": [
+          "Fiction"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "preview-1.0.0",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=YqvezwEACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=YqvezwEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+        },
+        "language": "en",
+        "previewLink": "http://books.google.fr/books?id=YqvezwEACAAJ&dq=isbn:9780451524935&hl=&cd=3&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=YqvezwEACAAJ&dq=isbn:9780451524935&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/1984.html?hl=&id=YqvezwEACAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=YqvezwEACAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future."
+      }
+    },
+    {
+      "kind": "books#volume",
+      "id": "uJOOzwEACAAJ",
+      "etag": "h+ZoH1rktSo",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/uJOOzwEACAAJ",
+      "volumeInfo": {
+        "title": "1984",
+        "authors": [
+          "George Orwell"
+        ],
+        "publisher": "Signet",
+        "publishedDate": "1950-07-01",
+        "description": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future. And while 1984 has come and gone, his dystopian vision of a government that will do anything to control the narrative is timelier than ever... • Nominated as one of America’s best-loved novels by PBS’s The Great American Read • “The Party told you to reject the evidence of your eyes and ears. It was their final, most essential command.” Winston Smith toes the Party line, rewriting history to satisfy the demands of the Ministry of Truth. With each lie he writes, Winston grows to hate the Party that seeks power for its own sake and persecutes those who dare to commit thoughtcrimes. But as he starts to think for himself, Winston can’t escape the fact that Big Brother is always watching... A startling and haunting novel, 1984 creates an imaginary world that is completely convincing from start to finish. No one can deny the novel’s hold on the imaginations of whole generations, or the power of its admonitions—a power that seems to grow, not lessen, with the passage of time.",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_10",
+            "identifier": "0451524934"
+          },
+          {
+            "type": "ISBN_13",
+            "identifier": "9780451524935"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 0,
+        "printType": "BOOK",
+        "categories": [
+          "Fiction"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "preview-1.0.0",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "language": "en",
+        "previewLink": "http://books.google.fr/books?id=uJOOzwEACAAJ&dq=isbn:9780451524935&hl=&cd=4&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=uJOOzwEACAAJ&dq=isbn:9780451524935&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/1984.html?hl=&id=uJOOzwEACAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=uJOOzwEACAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future."
+      }
+    },
+    {
+      "kind": "books#volume",
+      "id": "d3hA0AEACAAJ",
+      "etag": "/ckmyOCr9w0",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/d3hA0AEACAAJ",
+      "volumeInfo": {
+        "title": "1984",
+        "authors": [
+          "George Orwell"
+        ],
+        "publisher": "Signet",
+        "publishedDate": "1950-07-01",
+        "description": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future. And while 1984 has come and gone, his dystopian vision of a government that will do anything to control the narrative is timelier than ever... • Nominated as one of America’s best-loved novels by PBS’s The Great American Read • “The Party told you to reject the evidence of your eyes and ears. It was their final, most essential command.” Winston Smith toes the Party line, rewriting history to satisfy the demands of the Ministry of Truth. With each lie he writes, Winston grows to hate the Party that seeks power for its own sake and persecutes those who dare to commit thoughtcrimes. But as he starts to think for himself, Winston can’t escape the fact that Big Brother is always watching... A startling and haunting novel, 1984 creates an imaginary world that is completely convincing from start to finish. No one can deny the novel’s hold on the imaginations of whole generations, or the power of its admonitions—a power that seems to grow, not lessen, with the passage of time.",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_10",
+            "identifier": "0451524934"
+          },
+          {
+            "type": "ISBN_13",
+            "identifier": "9780451524935"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 0,
+        "printType": "BOOK",
+        "categories": [
+          "Fiction"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "preview-1.0.0",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "language": "en",
+        "previewLink": "http://books.google.fr/books?id=d3hA0AEACAAJ&dq=isbn:9780451524935&hl=&cd=5&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=d3hA0AEACAAJ&dq=isbn:9780451524935&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/1984.html?hl=&id=d3hA0AEACAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=d3hA0AEACAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Written more than 70 years ago, 1984 was George Orwell’s chilling prophecy about the future."
+      }
+    }
+  ]
+}

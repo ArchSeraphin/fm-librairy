@@ -1,0 +1,139 @@
+{
+  "kind": "books#volumes",
+  "totalItems": 2,
+  "items": [
+    {
+      "kind": "books#volume",
+      "id": "NFWzngEACAAJ",
+      "etag": "QP8zso0P5o0",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/NFWzngEACAAJ",
+      "volumeInfo": {
+        "title": "Le petit prince",
+        "authors": [
+          "Antoine de Saint-Exupéry"
+        ],
+        "publisher": "Gallimard Editions",
+        "publishedDate": "2007",
+        "description": "Le premier soir je me suis donc endormi sur le sable à mille milles de toute terre habitée. J'étais bien plus isolé qu'un naufragé sur un radeau au milieu de l'océan. Alors vous imaginez ma surprise, au lever du jour, quand une drôle de petite voix m'a réveillé. Elle disait : S'il vous plaît... dessine-moi un mouton ! Hein ! - Dessine-moi un mouton... J'ai sauté sur mes pieds comme si j'avais été frappé par la foudre. Le chef-d'œuvre universel de poésie, d'humanité et d'émotion...",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_10",
+            "identifier": "2070612759"
+          },
+          {
+            "type": "ISBN_13",
+            "identifier": "9782070612758"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 113,
+        "printType": "BOOK",
+        "categories": [
+          "Fiction"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "preview-1.0.0",
+        "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=NFWzngEACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=NFWzngEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+        },
+        "language": "fr",
+        "previewLink": "http://books.google.fr/books?id=NFWzngEACAAJ&dq=isbn:9782070612758&hl=&cd=1&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=NFWzngEACAAJ&dq=isbn:9782070612758&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/Le_petit_prince.html?hl=&id=NFWzngEACAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=NFWzngEACAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Le premier soir je me suis donc endormi sur le sable à mille milles de toute terre habitée. J&#39;étais bien plus isolé qu&#39;un naufragé sur un radeau au milieu de l&#39;océan."
+      }
+    },
+    {
+      "kind": "books#volume",
+      "id": "SujnuQEACAAJ",
+      "etag": "HYODgo5Q/Y8",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/SujnuQEACAAJ",
+      "volumeInfo": {
+        "title": "Le petit prince",
+        "authors": [
+          "Antoine Jean Baptiste Marie Roger Saint-Exupéry"
+        ],
+        "publishedDate": "2015",
+        "description": "Weemoedig-poëtisch sprookje waarin een prinsje van een andere planeet aan een piloot over zijn ervaringen vertelt.",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_10",
+            "identifier": "2070612759"
+          },
+          {
+            "type": "ISBN_13",
+            "identifier": "9782070612758"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "printType": "BOOK",
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "preview-1.0.0",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "language": "fr",
+        "previewLink": "http://books.google.fr/books?id=SujnuQEACAAJ&dq=isbn:9782070612758&hl=&cd=2&source=gbs_api",
+        "infoLink": "http://books.google.fr/books?id=SujnuQEACAAJ&dq=isbn:9782070612758&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/Le_petit_prince.html?hl=&id=SujnuQEACAAJ"
+      },
+      "saleInfo": {
+        "country": "FR",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "FR",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=SujnuQEACAAJ&hl=&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "Weemoedig-poëtisch sprookje waarin een prinsje van een andere planeet aan een piloot over zijn ervaringen vertelt."
+      }
+    }
+  ]
+}
