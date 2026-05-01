@@ -14,7 +14,13 @@ const merged: NormalizedPayload = {
 describe('applyPolicy(mode=manual)', () => {
   it('overwrites every non-null field even when current is set', () => {
     const patch = applyPolicy(
-      { description: 'Old.', publisher: 'Old Pub.', publishedYear: 1990, language: 'en', coverPath: null },
+      {
+        description: 'Old.',
+        publisher: 'Old Pub.',
+        publishedYear: 1990,
+        language: 'en',
+        coverPath: null,
+      },
       merged,
       'manual',
     );
@@ -29,7 +35,10 @@ describe('applyPolicy(mode=manual)', () => {
     const partial: NormalizedPayload = {
       source: 'GOOGLE_BOOKS',
       description: 'Only desc.',
-      publisher: null, publishedYear: null, language: null, coverUrl: null,
+      publisher: null,
+      publishedYear: null,
+      language: null,
+      coverUrl: null,
     };
     const patch = applyPolicy(
       { description: 'X', publisher: 'X', publishedYear: 1, language: 'x', coverPath: null },

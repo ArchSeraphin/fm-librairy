@@ -68,7 +68,9 @@ test.describe('@e2e.test book metadata', () => {
     await disconnect();
   });
 
-  test('admin creates book with ISBN → metadata badge shows PENDING immediately', async ({ page }) => {
+  test('admin creates book with ISBN → metadata badge shows PENDING immediately', async ({
+    page,
+  }) => {
     const { library } = await seedAdminWithLibrary();
 
     await page.goto('/login');
@@ -111,9 +113,9 @@ test.describe('@e2e.test book metadata', () => {
     await page.getByRole('button', { name: /Rafraîchir/ }).click();
     // Either the toast appears or the status badge swaps to PENDING — both are valid
     // UI feedback for the queued refresh.
-    await expect(
-      page.getByText(/Rafraîchissement demandé|Métadonnées en cours/),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/Rafraîchissement demandé|Métadonnées en cours/)).toBeVisible({
+      timeout: 5_000,
+    });
   });
 
   test('non-admin member does not see Rafraîchir button', async ({ page }) => {

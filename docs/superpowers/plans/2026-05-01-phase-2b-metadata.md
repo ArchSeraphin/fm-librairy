@@ -94,6 +94,7 @@ docs/permissions-matrix.md            # extend matrix
 ### Task 0.1 — Install sharp
 
 **Files:**
+
 - Modify: `package.json`, `pnpm-lock.yaml`
 
 - [ ] **Step 1: Install**
@@ -120,6 +121,7 @@ git commit -m "deps(phase-2b): add sharp for cover normalization"
 ### Task 0.2 — Add Prisma migration
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 - Create: `prisma/migrations/<ts>_phase_2b_metadata_fetch/migration.sql`
 
@@ -193,6 +195,7 @@ git commit -m "feat(phase-2b): add MetadataFetchStatus + Book metadata fetch fie
 ### Task 0.3 — Add env vars
 
 **Files:**
+
 - Modify: `src/lib/env.ts`
 - Modify: `.env.example`
 
@@ -241,6 +244,7 @@ git commit -m "feat(phase-2b): env vars for metadata fetch + cover normalization
 ### Task 0.4 — Add rate-limit buckets
 
 **Files:**
+
 - Modify: `src/lib/rate-limit.ts`
 - Test: `tests/unit/rate-limit.test.ts` (extend if exists, otherwise inline assertion in this task)
 
@@ -293,6 +297,7 @@ git commit -m "feat(phase-2b): rate-limit buckets for metadata refresh + API bud
 ### Task A.1 — Types
 
 **Files:**
+
 - Create: `worker/lib/metadata/types.ts`
 
 - [ ] **Step 1: Write types**
@@ -312,7 +317,10 @@ export interface NormalizedPayload {
 }
 
 export class ProviderTransientError extends Error {
-  constructor(message: string, public readonly status: number | null = null) {
+  constructor(
+    message: string,
+    public readonly status: number | null = null,
+  ) {
     super(message);
     this.name = 'ProviderTransientError';
   }
@@ -337,6 +345,7 @@ git commit -m "feat(phase-2b/A): metadata payload types"
 ### Task A.2 — Merge logic (TDD)
 
 **Files:**
+
 - Create: `worker/lib/metadata/merge.ts`
 - Test: `tests/unit/metadata/merge-fill-only.test.ts`, `merge-overwrite.test.ts`, `merge-per-field.test.ts`
 
@@ -376,16 +385,24 @@ describe('mergePayloads', () => {
 
   it('returns null payload when all sources are empty', () => {
     const empty: NormalizedPayload = {
-      source: 'GOOGLE_BOOKS', description: null, publisher: null,
-      publishedYear: null, language: null, coverUrl: null,
+      source: 'GOOGLE_BOOKS',
+      description: null,
+      publisher: null,
+      publishedYear: null,
+      language: null,
+      coverUrl: null,
     };
     expect(mergePayloads([empty])).toEqual(empty);
   });
 
   it('skips entirely-null sources for the source attribution', () => {
     const empty: NormalizedPayload = {
-      source: 'GOOGLE_BOOKS', description: null, publisher: null,
-      publishedYear: null, language: null, coverUrl: null,
+      source: 'GOOGLE_BOOKS',
+      description: null,
+      publisher: null,
+      publishedYear: null,
+      language: null,
+      coverUrl: null,
     };
     const merged = mergePayloads([empty, openLib]);
     expect(merged.source).toBe('OPEN_LIBRARY');
@@ -418,8 +435,11 @@ function isNonEmpty(p: NormalizedPayload): boolean {
 export function mergePayloads(payloads: NormalizedPayload[]): NormalizedPayload {
   const merged: NormalizedPayload = {
     source: payloads[0]?.source ?? 'GOOGLE_BOOKS',
-    description: null, publisher: null, publishedYear: null,
-    language: null, coverUrl: null,
+    description: null,
+    publisher: null,
+    publishedYear: null,
+    language: null,
+    coverUrl: null,
   };
   let attributedSource: MetadataSource | null = null;
 
@@ -464,7 +484,13 @@ const merged: NormalizedPayload = {
 describe('applyPolicy(mode=auto)', () => {
   it('writes only fields where current is null', () => {
     const patch = applyPolicy(
-      { description: null, publisher: 'Old Pub.', publishedYear: null, language: 'en', coverPath: null },
+      {
+        description: null,
+        publisher: 'Old Pub.',
+        publishedYear: null,
+        language: 'en',
+        coverPath: null,
+      },
       merged,
       'auto',
     );
@@ -533,17 +559,17 @@ export function applyPolicy(
 ): BookPatch {
   const patch: BookPatch = {};
   const writable: Array<keyof CurrentBookFields & keyof NormalizedPayload> = [
-    'description', 'publisher', 'publishedYear', 'language',
+    'description',
+    'publisher',
+    'publishedYear',
+    'language',
   ];
   let wroteAny = false;
 
   for (const f of writable) {
     const newVal = merged[f];
     if (newVal === null) continue;
-    const shouldWrite =
-      mode === 'manual'
-        ? true
-        : current[f] === null; // auto = fill-only on strictly null
+    const shouldWrite = mode === 'manual' ? true : current[f] === null; // auto = fill-only on strictly null
     if (shouldWrite) {
       // @ts-expect-error narrow per-field
       patch[f] = newVal;
@@ -577,7 +603,13 @@ const merged: NormalizedPayload = {
 describe('applyPolicy(mode=manual)', () => {
   it('overwrites every non-null field even when current is set', () => {
     const patch = applyPolicy(
-      { description: 'Old.', publisher: 'Old Pub.', publishedYear: 1990, language: 'en', coverPath: null },
+      {
+        description: 'Old.',
+        publisher: 'Old Pub.',
+        publishedYear: 1990,
+        language: 'en',
+        coverPath: null,
+      },
       merged,
       'manual',
     );
@@ -592,7 +624,10 @@ describe('applyPolicy(mode=manual)', () => {
     const partial: NormalizedPayload = {
       source: 'GOOGLE_BOOKS',
       description: 'Only desc.',
-      publisher: null, publishedYear: null, language: null, coverUrl: null,
+      publisher: null,
+      publishedYear: null,
+      language: null,
+      coverUrl: null,
     };
     const patch = applyPolicy(
       { description: 'X', publisher: 'X', publishedYear: 1, language: 'x', coverPath: null },
@@ -625,6 +660,7 @@ git commit -m "feat(phase-2b/A): metadata merge + apply-policy with fill-only/ov
 ### Task A.3 — Google Books client (TDD)
 
 **Files:**
+
 - Create: `worker/lib/metadata/google-books-client.ts`
 - Create: `tests/fixtures/metadata/google-books-9782070612758.json`, `google-books-9780451524935.json`, `google-books-9782226208620.json`
 - Test: `tests/integration/metadata/google-books-client.test.ts`
@@ -734,7 +770,7 @@ interface GBVolume {
     description?: string;
     publisher?: string;
     publishedDate?: string; // YYYY or YYYY-MM-DD
-    language?: string;      // ISO 639-1 (sometimes upper)
+    language?: string; // ISO 639-1 (sometimes upper)
     imageLinks?: { thumbnail?: string; smallThumbnail?: string };
   };
 }
@@ -808,6 +844,7 @@ git commit -m "feat(phase-2b/A): Google Books client + 3 ISBN fixtures"
 ### Task A.4 — Open Library client (TDD)
 
 **Files:**
+
 - Create: `worker/lib/metadata/open-library-client.ts`
 - Create: `tests/fixtures/metadata/open-library-{isbn}.json` × 3
 - Test: `tests/integration/metadata/open-library-client.test.ts`
@@ -912,7 +949,7 @@ const TIMEOUT_MS = Number(process.env.METADATA_FETCH_TIMEOUT_MS ?? 10_000);
 
 interface OLBook {
   publishers?: Array<{ name: string }>;
-  publish_date?: string;       // free-form
+  publish_date?: string; // free-form
   notes?: string | { value: string };
   excerpts?: Array<{ text: string }>;
   cover?: { large?: string; medium?: string; small?: string };
@@ -929,7 +966,15 @@ function langKeyToIso2(key?: string): string | null {
   if (!key) return null;
   const code = key.replace('/languages/', '').toLowerCase();
   // crude ISO 639-2 → 639-1 (cover the few we expect)
-  const map: Record<string, string> = { fre: 'fr', fra: 'fr', eng: 'en', spa: 'es', ger: 'de', deu: 'de', ita: 'it' };
+  const map: Record<string, string> = {
+    fre: 'fr',
+    fra: 'fr',
+    eng: 'en',
+    spa: 'es',
+    ger: 'de',
+    deu: 'de',
+    ita: 'it',
+  };
   return map[code] ?? (code.length === 2 ? code : null);
 }
 function asString(v: unknown): string | null {
@@ -999,6 +1044,7 @@ git commit -m "feat(phase-2b/A): Open Library client + fixtures"
 ### Task A.5 — Cover storage (TDD)
 
 **Files:**
+
 - Modify: `worker/lib/storage-paths.ts` (add `coverPath` helper)
 - Create: `worker/lib/metadata/cover-storage.ts`
 - Create: `tests/fixtures/metadata/cover-sample.jpg`, `cover-oversized.bin`, `cover-fake-pdf.jpg`
@@ -1067,9 +1113,12 @@ afterEach(async () => {
 describe('downloadAndNormalize — normalize', () => {
   it('downloads JPEG and writes JPEG under STORAGE_ROOT/covers/', async () => {
     const sample = await readFile('tests/fixtures/metadata/cover-sample.jpg');
-    agent.get('https://cover.example').intercept({ path: '/x.jpg' }).reply(200, sample, {
-      headers: { 'content-type': 'image/jpeg' },
-    });
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/x.jpg' })
+      .reply(200, sample, {
+        headers: { 'content-type': 'image/jpeg' },
+      });
     const result = await downloadAndNormalize('https://cover.example/x.jpg', 'ckabc123');
     expect(result).not.toBeNull();
     expect(result!.relPath).toBe('covers/ckabc123.jpg');
@@ -1079,9 +1128,13 @@ describe('downloadAndNormalize — normalize', () => {
 
   it('atomically replaces an existing cover', async () => {
     const sample = await readFile('tests/fixtures/metadata/cover-sample.jpg');
-    agent.get('https://cover.example').intercept({ path: '/x.jpg' }).reply(200, sample, {
-      headers: { 'content-type': 'image/jpeg' },
-    }).times(2);
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/x.jpg' })
+      .reply(200, sample, {
+        headers: { 'content-type': 'image/jpeg' },
+      })
+      .times(2);
     await downloadAndNormalize('https://cover.example/x.jpg', 'ckabc123');
     const result = await downloadAndNormalize('https://cover.example/x.jpg', 'ckabc123');
     expect(result).not.toBeNull();
@@ -1102,9 +1155,12 @@ describe('downloadAndNormalize — reject', () => {
 
   it('returns null when payload exceeds COVER_MAX_BYTES', async () => {
     const big = await readFile('tests/fixtures/metadata/cover-oversized.bin');
-    agent.get('https://cover.example').intercept({ path: '/big' }).reply(200, big, {
-      headers: { 'content-length': String(big.length) },
-    });
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/big' })
+      .reply(200, big, {
+        headers: { 'content-length': String(big.length) },
+      });
     expect(await downloadAndNormalize('https://cover.example/big', 'ckabc123')).toBeNull();
   });
 
@@ -1115,10 +1171,13 @@ describe('downloadAndNormalize — reject', () => {
 
   it('returns null on timeout', async () => {
     process.env.METADATA_FETCH_TIMEOUT_MS = '50';
-    agent.get('https://cover.example').intercept({ path: '/slow' }).reply(200, async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      return Buffer.from('x');
-    });
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/slow' })
+      .reply(200, async () => {
+        await new Promise((r) => setTimeout(r, 200));
+        return Buffer.from('x');
+      });
     expect(await downloadAndNormalize('https://cover.example/slow', 'ckabc123')).toBeNull();
   });
 });
@@ -1216,6 +1275,7 @@ git commit -m "feat(phase-2b/A): cover download + sharp normalize + atomic write
 ### Task B.1 — `fetch-metadata.ts` job handler (TDD)
 
 **Files:**
+
 - Create: `worker/jobs/fetch-metadata.ts`
 - Test: `tests/integration/worker-fetch-metadata.test.ts`
 
@@ -1284,7 +1344,10 @@ describe('fetchMetadataJob', () => {
     const gb = await readFile('tests/fixtures/metadata/google-books-9782070612758.json', 'utf-8');
     const ol = await readFile('tests/fixtures/metadata/open-library-9782070612758.json', 'utf-8');
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(200, gb);
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(200, ol);
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(200, ol);
 
     await fetchMetadataJob(mkJob(book.id, 'auto'));
 
@@ -1299,8 +1362,14 @@ describe('fetchMetadataJob', () => {
 
   it('NOT_FOUND when both providers return null', async () => {
     const { book } = await makeLibAndBook({ isbn13: '0000000000000' });
-    agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(200, { totalItems: 0 });
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(200, {});
+    agent
+      .get('https://www.googleapis.com')
+      .intercept({ path: /books/ })
+      .reply(200, { totalItems: 0 });
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(200, {});
 
     await fetchMetadataJob(mkJob(book.id, 'auto'));
 
@@ -1312,7 +1381,10 @@ describe('fetchMetadataJob', () => {
   it('throws on transient error so BullMQ retries (attempts not exhausted)', async () => {
     const { book } = await makeLibAndBook();
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(503, '');
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(503, '');
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(503, '');
 
     await expect(fetchMetadataJob(mkJob(book.id, 'auto', 1, 3))).rejects.toThrow();
 
@@ -1324,7 +1396,10 @@ describe('fetchMetadataJob', () => {
   it('marks ERROR + writes audit on the last failed attempt', async () => {
     const { book } = await makeLibAndBook();
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(503, '');
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(503, '');
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(503, '');
 
     await fetchMetadataJob(mkJob(book.id, 'auto', 3, 3));
 
@@ -1340,7 +1415,10 @@ describe('fetchMetadataJob', () => {
     const { book } = await makeLibAndBook({ description: 'Old description.' });
     const gb = await readFile('tests/fixtures/metadata/google-books-9782070612758.json', 'utf-8');
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(200, gb);
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(200, {});
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(200, {});
 
     await fetchMetadataJob(mkJob(book.id, 'manual'));
 
@@ -1369,7 +1447,11 @@ import { fetchByIsbn as fetchGoogle } from '../lib/metadata/google-books-client.
 import { fetchByIsbn as fetchOpenLibrary } from '../lib/metadata/open-library-client.js';
 import { mergePayloads, applyPolicy } from '../lib/metadata/merge.js';
 import { downloadAndNormalize } from '../lib/metadata/cover-storage.js';
-import { ProviderTransientError, type MetadataFetchMode, type NormalizedPayload } from '../lib/metadata/types.js';
+import {
+  ProviderTransientError,
+  type MetadataFetchMode,
+  type NormalizedPayload,
+} from '../lib/metadata/types.js';
 
 const prisma = new PrismaClient();
 
@@ -1521,6 +1603,7 @@ git commit -m "feat(phase-2b/B): fetch-metadata job (auto/manual modes, transien
 ### Task B.2 — Register queue + worker in `worker/index.ts`
 
 **Files:**
+
 - Modify: `worker/index.ts`
 
 - [ ] **Step 1: Add queue + Worker registration**
@@ -1572,6 +1655,7 @@ git commit -m "feat(phase-2b/B): register metadata queue + worker"
 ### Task B.3 — Worker isolation guard
 
 **Files:**
+
 - Create: `scripts/check-worker-isolation.ts`
 - Modify: `package.json` (add script if not present)
 
@@ -1644,6 +1728,7 @@ git commit -m "ci(phase-2b/B): enforce worker self-containment via static check"
 ### Task C.1 — Add `refreshMetadata` mutation
 
 **Files:**
+
 - Modify: `src/server/trpc/schemas/book.ts` (add input)
 - Modify: `src/server/trpc/routers/library/books.ts`
 - Modify: `src/lib/audit-log.ts` (add 2 actions)
@@ -1700,10 +1785,7 @@ describe('library.books.refreshMetadata', () => {
     const updated = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
     expect(updated.metadataFetchStatus).toBe('PENDING');
 
-    expect(addSpy).toHaveBeenCalledWith(
-      'fetch-metadata',
-      { bookId: book.id, mode: 'manual' },
-    );
+    expect(addSpy).toHaveBeenCalledWith('fetch-metadata', { bookId: book.id, mode: 'manual' });
 
     const audit = await prisma.auditLog.findFirst({
       where: { action: 'library.book.metadata_refresh_requested', targetId: book.id },
@@ -1843,6 +1925,7 @@ git commit -m "feat(phase-2b/C): library.books.refreshMetadata mutation + audit 
 ### Task C.2 — Auto-enqueue on `create`
 
 **Files:**
+
 - Modify: `src/server/trpc/routers/library/books.ts` (the existing `create` mutation)
 - Test: extend `tests/integration/library-books-refresh-metadata.test.ts` OR create `tests/integration/library-books-create-enqueue.test.ts`
 
@@ -1877,10 +1960,7 @@ describe('library.books.create — metadata enqueue', () => {
       authors: ['A'],
       isbn13: '9782070612758',
     });
-    expect(addSpy).toHaveBeenCalledWith(
-      'fetch-metadata',
-      { bookId: book.id, mode: 'auto' },
-    );
+    expect(addSpy).toHaveBeenCalledWith('fetch-metadata', { bookId: book.id, mode: 'auto' });
   });
 
   it('does NOT enqueue when no ISBN provided', async () => {
@@ -1952,6 +2032,7 @@ git commit -m "feat(phase-2b/C): auto-enqueue fetch-metadata when create has ISB
 ### Task C.3 — Permissions matrix update
 
 **Files:**
+
 - Modify: `tests/integration/permissions-matrix.test.ts`
 - Modify: `docs/permissions-matrix.md`
 
@@ -2000,6 +2081,7 @@ git commit -m "test(phase-2b/C): permissions matrix row for refreshMetadata"
 ### Task D.1 — Cover serving route
 
 **Files:**
+
 - Create: `src/app/api/covers/[bookId]/route.ts`
 - Test: `tests/integration/covers-route.test.ts`
 
@@ -2119,10 +2201,7 @@ import { getEnv } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ bookId: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
   const session = await auth();
   if (!session?.user?.id) return new NextResponse('unauthorized', { status: 401 });
@@ -2179,6 +2258,7 @@ git commit -m "feat(phase-2b/D): /api/covers/:bookId route with member auth + ca
 ### Task D.2 — `MetadataFetchStatusBadge` + `MetadataSourceBadge`
 
 **Files:**
+
 - Create: `src/components/books/MetadataFetchStatusBadge.tsx`
 - Create: `src/components/books/MetadataSourceBadge.tsx`
 
@@ -2189,7 +2269,10 @@ git commit -m "feat(phase-2b/D): /api/covers/:bookId route with member auth + ca
 import { Badge } from '@/components/ui/badge';
 import type { MetadataFetchStatus } from '@prisma/client';
 
-const LABELS: Record<MetadataFetchStatus, { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+const LABELS: Record<
+  MetadataFetchStatus,
+  { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+> = {
   PENDING: { text: 'Métadonnées en cours', variant: 'secondary' },
   FETCHED: { text: 'Métadonnées récupérées', variant: 'outline' },
   NOT_FOUND: { text: 'Aucune metadata trouvée', variant: 'outline' },
@@ -2243,9 +2326,10 @@ export function MetadataSourceBadge({
       utils.library.books.get.invalidate({ id: bookId });
     },
     onError: (err) => {
-      const msg = err.data?.code === 'TOO_MANY_REQUESTS'
-        ? 'Trop de tentatives — réessayez dans 1 h.'
-        : err.message;
+      const msg =
+        err.data?.code === 'TOO_MANY_REQUESTS'
+          ? 'Trop de tentatives — réessayez dans 1 h.'
+          : err.message;
       toast({ variant: 'destructive', title: 'Échec', description: msg });
     },
     onSettled: () => setBusy(false),
@@ -2256,13 +2340,19 @@ export function MetadataSourceBadge({
 
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <span>Source : {sourceLabel}{fetchedAt && ` · récupéré le ${dateLabel}`}</span>
+      <span>
+        Source : {sourceLabel}
+        {fetchedAt && ` · récupéré le ${dateLabel}`}
+      </span>
       {canRefresh && (
         <Button
           size="sm"
           variant="outline"
           disabled={busy || isPending}
-          onClick={() => { setBusy(true); refresh.mutate({ id: bookId }); }}
+          onClick={() => {
+            setBusy(true);
+            refresh.mutate({ id: bookId });
+          }}
         >
           {isPending ? 'En cours…' : 'Rafraîchir'}
         </Button>
@@ -2288,6 +2378,7 @@ git commit -m "feat(phase-2b/D): metadata status + source badges with refresh bu
 ### Task D.3 — Wire badges into BookCard + detail page
 
 **Files:**
+
 - Modify: `src/components/books/BookCard.tsx`
 - Modify: `src/app/library/[slug]/books/[bookId]/page.tsx`
 
@@ -2296,9 +2387,9 @@ git commit -m "feat(phase-2b/D): metadata status + source badges with refresh bu
 In `BookCard.tsx`, where the existing `ScanStatusBadge` is rendered, also render :
 
 ```tsx
-{book.metadataFetchStatus === 'PENDING' && (
-  <MetadataFetchStatusBadge status="PENDING" />
-)}
+{
+  book.metadataFetchStatus === 'PENDING' && <MetadataFetchStatusBadge status="PENDING" />;
+}
 ```
 
 (Add the import. The list/get queries already select all Book columns — verify with `select` block ; if not, extend.)
@@ -2320,19 +2411,22 @@ In `src/app/library/[slug]/books/[bookId]/page.tsx`, in the metadata section, re
 For the cover, use `next/image` :
 
 ```tsx
-{book.coverPath ? (
-  <Image
-    src={`/api/covers/${book.id}`}
-    alt={`Couverture de ${book.title}`}
-    width={240} height={360}
-    className="rounded-md"
-    unoptimized={false}
-  />
-) : (
-  <div className="h-[360px] w-[240px] bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-    Pas de couverture
-  </div>
-)}
+{
+  book.coverPath ? (
+    <Image
+      src={`/api/covers/${book.id}`}
+      alt={`Couverture de ${book.title}`}
+      width={240}
+      height={360}
+      className="rounded-md"
+      unoptimized={false}
+    />
+  ) : (
+    <div className="flex h-[360px] w-[240px] items-center justify-center rounded-md bg-muted text-muted-foreground">
+      Pas de couverture
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 3: Typecheck + manual smoke**
@@ -2357,6 +2451,7 @@ git commit -m "feat(phase-2b/D): wire metadata badges + cover image into BookCar
 ### Task E.1 — E2E spec (happy path + manual refresh)
 
 **Files:**
+
 - Create: `tests/e2e/book-metadata.spec.ts`
 
 - [ ] **Step 1: Write spec — follows the in-spec direct-Prisma seeding pattern from `tests/e2e/book-create-flow.spec.ts`**
@@ -2470,7 +2565,12 @@ test.describe('@e2e.test book metadata', () => {
     for (let i = 0; i < 6; i++) {
       await page.waitForTimeout(5_000);
       await page.reload();
-      if (await page.getByText(/Source\s*:\s*Google Books/).isVisible().catch(() => false)) {
+      if (
+        await page
+          .getByText(/Source\s*:\s*Google Books/)
+          .isVisible()
+          .catch(() => false)
+      ) {
         fetched = true;
         break;
       }
@@ -2501,9 +2601,9 @@ test.describe('@e2e.test book metadata', () => {
     await page.goto(`/library/${library.slug}/books/${book.id}`);
     await expect(page.getByText(/Source\s*:\s*Google Books/)).toBeVisible();
     await page.getByRole('button', { name: /Rafraîchir/ }).click();
-    await expect(
-      page.getByText(/Rafraîchissement demandé|Métadonnées en cours/),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/Rafraîchissement demandé|Métadonnées en cours/)).toBeVisible({
+      timeout: 5_000,
+    });
   });
 
   test('non-admin member does not see Rafraîchir button', async ({ page }) => {
@@ -2555,6 +2655,7 @@ git commit -m "test(phase-2b/E): E2E for create-with-isbn + manual refresh + per
 ### Task E.2 — Wire CI
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Confirm metadata test files run in existing jobs**
@@ -2639,10 +2740,10 @@ Write Phase 2B' clôture memory under `~/.claude/projects/.../memory/phase-2b-co
 
 ## Risk register (cross-cutting)
 
-| Risk | Mitigation |
-|---|---|
-| Google Books quota hit during a load test | `metadataApiBudgetLimiter` (800/day) gates outbound HTTP from worker before any provider call |
-| Open Library cover URLs sometimes 302 → CDN | `fetch` follows redirects by default ; covered by `cover-storage` tests via MockAgent (add a 302 → 200 case if real fixtures show it) |
-| `sharp` libvips native binary missing on CI runner | `pnpm` installs prebuilt binaries automatically ; if a runner lacks AVX, switch to `sharp@alpine` build flag in CI step (document if encountered) |
-| Race : admin clicks Refresh while auto-job still in flight | First Refresh marks `PENDING` (idempotent) ; both jobs may run, last writer wins. Acceptable for MVP — second job's `attemptCount` increments. |
-| ISBN with hyphens (`978-2-07-061275-8`) at creation | Strip hyphens server-side before persisting `isbn13` (already a Phase 1D concern? Verify, otherwise add a 2-line normalize in `create`). |
+| Risk                                                       | Mitigation                                                                                                                                        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Books quota hit during a load test                  | `metadataApiBudgetLimiter` (800/day) gates outbound HTTP from worker before any provider call                                                     |
+| Open Library cover URLs sometimes 302 → CDN                | `fetch` follows redirects by default ; covered by `cover-storage` tests via MockAgent (add a 302 → 200 case if real fixtures show it)             |
+| `sharp` libvips native binary missing on CI runner         | `pnpm` installs prebuilt binaries automatically ; if a runner lacks AVX, switch to `sharp@alpine` build flag in CI step (document if encountered) |
+| Race : admin clicks Refresh while auto-job still in flight | First Refresh marks `PENDING` (idempotent) ; both jobs may run, last writer wins. Acceptable for MVP — second job's `attemptCount` increments.    |
+| ISBN with hyphens (`978-2-07-061275-8`) at creation        | Strip hyphens server-side before persisting `isbn13` (already a Phase 1D concern? Verify, otherwise add a 2-line normalize in `create`).          |

@@ -14,7 +14,13 @@ const merged: NormalizedPayload = {
 describe('applyPolicy(mode=auto)', () => {
   it('writes only fields where current is null', () => {
     const patch = applyPolicy(
-      { description: null, publisher: 'Old Pub.', publishedYear: null, language: 'en', coverPath: null },
+      {
+        description: null,
+        publisher: 'Old Pub.',
+        publishedYear: null,
+        language: 'en',
+        coverPath: null,
+      },
       merged,
       'auto',
     );

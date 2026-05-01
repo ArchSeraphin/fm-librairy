@@ -9,9 +9,7 @@
       "selfLink": "https://www.googleapis.com/books/v1/volumes/NFWzngEACAAJ",
       "volumeInfo": {
         "title": "Le petit prince",
-        "authors": [
-          "Antoine de Saint-Exupéry"
-        ],
+        "authors": ["Antoine de Saint-Exupéry"],
         "publisher": "Gallimard Editions",
         "publishedDate": "2007",
         "description": "Le premier soir je me suis donc endormi sur le sable à mille milles de toute terre habitée. J'étais bien plus isolé qu'un naufragé sur un radeau au milieu de l'océan. Alors vous imaginez ma surprise, au lever du jour, quand une drôle de petite voix m'a réveillé. Elle disait : S'il vous plaît... dessine-moi un mouton ! Hein ! - Dessine-moi un mouton... J'ai sauté sur mes pieds comme si j'avais été frappé par la foudre. Le chef-d'œuvre universel de poésie, d'humanité et d'émotion...",
@@ -31,9 +29,7 @@
         },
         "pageCount": 113,
         "printType": "BOOK",
-        "categories": [
-          "Fiction"
-        ],
+        "categories": ["Fiction"],
         "maturityRating": "NOT_MATURE",
         "allowAnonLogging": false,
         "contentVersion": "preview-1.0.0",
@@ -78,9 +74,7 @@
       "selfLink": "https://www.googleapis.com/books/v1/volumes/SujnuQEACAAJ",
       "volumeInfo": {
         "title": "Le petit prince",
-        "authors": [
-          "Antoine Jean Baptiste Marie Roger Saint-Exupéry"
-        ],
+        "authors": ["Antoine Jean Baptiste Marie Roger Saint-Exupéry"],
         "publishedDate": "2015",
         "description": "Weemoedig-poëtisch sprookje waarin een prinsje van een andere planeet aan een piloot over zijn ervaringen vertelt.",
         "industryIdentifiers": [

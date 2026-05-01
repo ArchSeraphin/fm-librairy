@@ -11,7 +11,10 @@ export interface NormalizedPayload {
 }
 
 export class ProviderTransientError extends Error {
-  constructor(message: string, public readonly status: number | null = null) {
+  constructor(
+    message: string,
+    public readonly status: number | null = null,
+  ) {
     super(message);
     this.name = 'ProviderTransientError';
   }

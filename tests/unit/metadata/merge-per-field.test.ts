@@ -31,16 +31,24 @@ describe('mergePayloads', () => {
 
   it('returns null payload when all sources are empty', () => {
     const empty: NormalizedPayload = {
-      source: 'GOOGLE_BOOKS', description: null, publisher: null,
-      publishedYear: null, language: null, coverUrl: null,
+      source: 'GOOGLE_BOOKS',
+      description: null,
+      publisher: null,
+      publishedYear: null,
+      language: null,
+      coverUrl: null,
     };
     expect(mergePayloads([empty])).toEqual(empty);
   });
 
   it('skips entirely-null sources for the source attribution', () => {
     const empty: NormalizedPayload = {
-      source: 'GOOGLE_BOOKS', description: null, publisher: null,
-      publishedYear: null, language: null, coverUrl: null,
+      source: 'GOOGLE_BOOKS',
+      description: null,
+      publisher: null,
+      publishedYear: null,
+      language: null,
+      coverUrl: null,
     };
     const merged = mergePayloads([empty, openLib]);
     expect(merged.source).toBe('OPEN_LIBRARY');

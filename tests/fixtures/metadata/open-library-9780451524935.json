@@ -12,18 +12,10 @@
     "number_of_pages": 328,
     "pagination": "328p.",
     "identifiers": {
-      "goodreads": [
-        "58325858"
-      ],
-      "isbn_10": [
-        "0451524934"
-      ],
-      "isbn_13": [
-        "9780451524935"
-      ],
-      "openlibrary": [
-        "OL34854896M"
-      ]
+      "goodreads": ["58325858"],
+      "isbn_10": ["0451524934"],
+      "isbn_13": ["9780451524935"],
+      "openlibrary": ["OL34854896M"]
     },
     "publishers": [
       {

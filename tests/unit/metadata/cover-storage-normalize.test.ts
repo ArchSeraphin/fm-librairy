@@ -26,9 +26,12 @@ afterEach(async () => {
 describe('downloadAndNormalize — normalize', () => {
   it('downloads JPEG and writes JPEG under STORAGE_ROOT/covers/', async () => {
     const sample = await readFile('tests/fixtures/metadata/cover-sample.jpg');
-    agent.get('https://cover.example').intercept({ path: '/x.jpg' }).reply(200, sample, {
-      headers: { 'content-type': 'image/jpeg' },
-    });
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/x.jpg' })
+      .reply(200, sample, {
+        headers: { 'content-type': 'image/jpeg' },
+      });
     const result = await downloadAndNormalize('https://cover.example/x.jpg', 'ckabc123');
     expect(result).not.toBeNull();
     expect(result!.relPath).toBe('covers/ckabc123.jpg');
@@ -38,9 +41,13 @@ describe('downloadAndNormalize — normalize', () => {
 
   it('atomically replaces an existing cover', async () => {
     const sample = await readFile('tests/fixtures/metadata/cover-sample.jpg');
-    agent.get('https://cover.example').intercept({ path: '/x.jpg' }).reply(200, sample, {
-      headers: { 'content-type': 'image/jpeg' },
-    }).times(2);
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/x.jpg' })
+      .reply(200, sample, {
+        headers: { 'content-type': 'image/jpeg' },
+      })
+      .times(2);
     await downloadAndNormalize('https://cover.example/x.jpg', 'ckabc123');
     const result = await downloadAndNormalize('https://cover.example/x.jpg', 'ckabc123');
     expect(result).not.toBeNull();

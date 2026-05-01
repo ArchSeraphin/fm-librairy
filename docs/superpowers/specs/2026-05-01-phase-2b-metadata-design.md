@@ -96,25 +96,26 @@ Un admin crée un `Book` avec `isbn13 = "9782070612758"` (Le Petit Prince) → l
 
 Tous les modules vivent **directement** sous `worker/lib/metadata/` (pas dans `src/lib/`), parce que seul le worker consomme la chaîne de fetch — les routers tRPC ne font qu'enqueuer, ils n'appellent jamais ces libs. Cela évite la duplication imposée par le pattern self-contained de Phase 2A'.
 
-| Module | Rôle | Dépendances |
-|---|---|---|
-| `google-books-client.ts` | `fetchByIsbn(isbn): Promise<NormalizedPayload \| null>`. HTTP GET + mapping vers shape interne. Mappe 404 → `null`, 5xx/timeout/429 → throw `ProviderTransientError`. | `undici` (déjà bundled), env `GOOGLE_BOOKS_API_KEY` (optionnel). |
-| `open-library-client.ts` | Idem shape. Endpoint `/api/books?bibkeys=ISBN:...`. | `undici`, env `OPEN_LIBRARY_USER_AGENT`. |
-| `merge.ts` | `mergePayloads(payloads: NormalizedPayload[]): NormalizedPayload` (per-field, premier non-null gagne) + `applyPolicy(book, merged, mode): Partial<Book>` (fill-only vs overwrite). | Aucune. |
-| `cover-storage.ts` | `downloadAndNormalize(url, bookId): Promise<{ relPath: string } \| null>`. Fetch HTTP (timeout, size cap), magic-byte validate, `sharp` → JPEG 85, atomic write. | `undici`, `sharp`, `worker/lib/storage-paths.ts`. |
-| `types.ts` | `NormalizedPayload`, `MetadataFetchMode`, `ProviderTransientError`. | Aucune. |
+| Module                   | Rôle                                                                                                                                                                               | Dépendances                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `google-books-client.ts` | `fetchByIsbn(isbn): Promise<NormalizedPayload \| null>`. HTTP GET + mapping vers shape interne. Mappe 404 → `null`, 5xx/timeout/429 → throw `ProviderTransientError`.              | `undici` (déjà bundled), env `GOOGLE_BOOKS_API_KEY` (optionnel). |
+| `open-library-client.ts` | Idem shape. Endpoint `/api/books?bibkeys=ISBN:...`.                                                                                                                                | `undici`, env `OPEN_LIBRARY_USER_AGENT`.                         |
+| `merge.ts`               | `mergePayloads(payloads: NormalizedPayload[]): NormalizedPayload` (per-field, premier non-null gagne) + `applyPolicy(book, merged, mode): Partial<Book>` (fill-only vs overwrite). | Aucune.                                                          |
+| `cover-storage.ts`       | `downloadAndNormalize(url, bookId): Promise<{ relPath: string } \| null>`. Fetch HTTP (timeout, size cap), magic-byte validate, `sharp` → JPEG 85, atomic write.                   | `undici`, `sharp`, `worker/lib/storage-paths.ts`.                |
+| `types.ts`               | `NormalizedPayload`, `MetadataFetchMode`, `ProviderTransientError`.                                                                                                                | Aucune.                                                          |
 
 **Note sémantique** : "fill-only" signifie qu'on n'écrit que si le champ courant est strictement `null` (côté Prisma). Une chaîne vide (`""`) ou `0` compte comme "set" et n'est **pas** écrasée — l'admin a explicitement vidé le champ.
 
 **Shape `NormalizedPayload`** :
+
 ```ts
 type NormalizedPayload = {
   source: 'GOOGLE_BOOKS' | 'OPEN_LIBRARY';
   description: string | null;
   publisher: string | null;
   publishedYear: number | null;
-  language: string | null;       // ISO 639-1, lowercase
-  coverUrl: string | null;       // HTTPS URL absolue
+  language: string | null; // ISO 639-1, lowercase
+  coverUrl: string | null; // HTTPS URL absolue
 };
 ```
 
@@ -123,14 +124,16 @@ type NormalizedPayload = {
 ### 4.2 Worker job (`worker/jobs/fetch-metadata.ts`)
 
 Self-contained. Imports internes uniquement depuis `worker/lib/` :
+
 - `worker/lib/storage-paths.ts` (déjà existant, étendre avec un helper `coverPath(bookId)` qui retourne le chemin absolu sous `STORAGE_ROOT/covers/{bookId}.jpg`).
 - `worker/lib/metadata/{google-books-client,open-library-client,merge,cover-storage,types}.ts` (cf. 4.1).
 
 Pattern arrêté en Phase 2A' clôture : worker ne doit pas importer `src/`. Vérifier que `scripts/check-worker-isolation.ts` (s'il existe ; sinon le créer) couvre tout `worker/`.
 
 **Job handler signature** :
+
 ```ts
-async function fetchMetadataJob(job: Job<{ bookId: string; mode: 'auto'|'manual' }>) {
+async function fetchMetadataJob(job: Job<{ bookId: string; mode: 'auto' | 'manual' }>) {
   // 1. read Book (must have isbn)
   // 2. budget check (apiBudgetLimiter)
   // 3. Promise.allSettled([googleFetch, openLibFetch])
@@ -147,6 +150,7 @@ async function fetchMetadataJob(job: Job<{ bookId: string; mode: 'auto'|'manual'
 ### 4.3 tRPC router (`src/server/trpc/routers/library/books.ts`)
 
 Modifications :
+
 - `create` mutation : après `db.book.create()`, si `book.isbn13 || book.isbn10`, set `metadataFetchStatus = 'PENDING'` et enqueue `fetch-metadata` (mode `'auto'`). Idempotent : si l'enqueue échoue, on log + continue (le book est créé, l'admin pourra cliquer Refresh).
 - `update` mutation : **ne déclenche pas** de fetch automatique même si l'admin ajoute l'ISBN après coup. Cohérent avec "manual via fiche livre" (option C du trigger).
 - **`refreshMetadata` mutation** (nouvelle, `libraryAdminProcedure`) :
@@ -161,16 +165,16 @@ Modifications :
       // 5. db.book.update({ metadataFetchStatus: 'PENDING' })
       // 6. enqueue fetch-metadata mode 'manual'
       // 7. recordAudit 'library.book.metadata_refresh_requested'
-    })
+    });
   ```
 
 ### 4.4 UI deltas
 
-| Surface | Changement |
-|---|---|
-| `BookCard` (catalog grid) | Si `metadataFetchStatus === 'PENDING'` → micro-badge "metadata…". Si `coverPath === null && metadataFetchStatus !== 'PENDING'` → placeholder neutre (déjà existant). |
+| Surface                                      | Changement                                                                                                                                                                                                                                                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BookCard` (catalog grid)                    | Si `metadataFetchStatus === 'PENDING'` → micro-badge "metadata…". Si `coverPath === null && metadataFetchStatus !== 'PENDING'` → placeholder neutre (déjà existant).                                                                                                                          |
 | Page detail `/library/[slug]/books/[bookId]` | Section "Source des métadonnées" : `metadataSource` ("Google Books · récupéré le 01/05/2026") OU "Saisie manuelle" si `metadataSource === 'MANUAL'`. Bouton **Rafraîchir les métadonnées** (admin only). Disabled + spinner si `PENDING`. Toast d'erreur si `ERROR` (avec lien "voir audit"). |
-| Page detail (cover area) | `next/image` pointant `/api/covers/{bookId}.jpg` (route handler qui sert depuis `STORAGE_ROOT/covers/`, header `Cache-Control: public, max-age=86400, immutable` + `ETag` basé sur `metadataFetchedAt`). |
+| Page detail (cover area)                     | `next/image` pointant `/api/covers/{bookId}.jpg` (route handler qui sert depuis `STORAGE_ROOT/covers/`, header `Cache-Control: public, max-age=86400, immutable` + `ETag` basé sur `metadataFetchedAt`).                                                                                      |
 
 **Cover serving route** (`src/app/api/covers/[bookId]/route.ts`) : auth gate `libraryMemberProcedure`-equivalent (l'utilisateur doit être membre de la library du book), puis stream le fichier. Pas d'URL signée, pas de pre-signed S3 (storage local).
 
@@ -178,10 +182,10 @@ Modifications :
 
 Ajout d'une ligne :
 
-| Action | Visiteur | Membre | Membre canUpload | Library Admin | Global Admin |
-|---|---|---|---|---|---|
-| `library.books.refreshMetadata` | — | — | — | O LOG | O LOG |
-| `GET /api/covers/:bookId` | — | O (si membre lib) | O | O | O |
+| Action                          | Visiteur | Membre            | Membre canUpload | Library Admin | Global Admin |
+| ------------------------------- | -------- | ----------------- | ---------------- | ------------- | ------------ |
+| `library.books.refreshMetadata` | —        | —                 | —                | O LOG         | O LOG        |
+| `GET /api/covers/:bookId`       | —        | O (si membre lib) | O                | O             | O            |
 
 ---
 
@@ -204,6 +208,7 @@ model Book {
 ```
 
 `metadataSource` enum (déjà existant) :
+
 - Set par le worker à la 1ère source qui contribue ≥1 champ non-null à la payload mergée.
 - Reste `MANUAL` si l'admin a saisi tous les champs manuellement (jamais écrasé en mode auto fill-only sauf si null).
 
@@ -230,14 +235,20 @@ COVER_MAX_BYTES            number, default 5_242_880 (5 MB)
 
 ```ts
 export const metadataRefreshPerBookLimiter = new RateLimiter({
-  points: 1, duration: 3600, keyPrefix: 'rl:meta_refresh_book',
+  points: 1,
+  duration: 3600,
+  keyPrefix: 'rl:meta_refresh_book',
 });
 export const metadataRefreshPerAdminLimiter = new RateLimiter({
-  points: 20, duration: 86400, keyPrefix: 'rl:meta_refresh_admin',
+  points: 20,
+  duration: 86400,
+  keyPrefix: 'rl:meta_refresh_admin',
 });
 // Worker-side, called from inside the job
 export const metadataApiBudgetLimiter = new RateLimiter({
-  points: 800, duration: 86400, keyPrefix: 'rl:meta_api_budget',
+  points: 800,
+  duration: 86400,
+  keyPrefix: 'rl:meta_api_budget',
 });
 ```
 
@@ -247,16 +258,16 @@ export const metadataApiBudgetLimiter = new RateLimiter({
 
 ## 8. Erreurs & retries
 
-| Cas | Status final | Retry BullMQ | AuditLog |
-|---|---|---|---|
-| Book sans ISBN au moment du job | `NOT_FOUND` | non | non |
-| Toutes sources retournent 404 / no-result | `NOT_FOUND` | non | non |
-| ≥1 source 5xx/timeout/429, ≥1 succès | `FETCHED` | n/a | non |
-| Toutes sources erreur transitoire | retry | 3× exp (30s/2m/10m) puis `ERROR` | oui après dernier échec |
-| Cover download échoue, metadata ok | `FETCHED` (sans cover) | non | warn log |
-| Budget API dépassé | `ERROR` | non | oui SECURITY |
-| Cover MIME invalide / oversize | metadata ok, cover skip | non | warn log |
-| Refresh manuel mais Book sans ISBN | tRPC `BAD_REQUEST 'NO_ISBN'` (avant enqueue) | n/a | non |
+| Cas                                       | Status final                                 | Retry BullMQ                     | AuditLog                |
+| ----------------------------------------- | -------------------------------------------- | -------------------------------- | ----------------------- |
+| Book sans ISBN au moment du job           | `NOT_FOUND`                                  | non                              | non                     |
+| Toutes sources retournent 404 / no-result | `NOT_FOUND`                                  | non                              | non                     |
+| ≥1 source 5xx/timeout/429, ≥1 succès      | `FETCHED`                                    | n/a                              | non                     |
+| Toutes sources erreur transitoire         | retry                                        | 3× exp (30s/2m/10m) puis `ERROR` | oui après dernier échec |
+| Cover download échoue, metadata ok        | `FETCHED` (sans cover)                       | non                              | warn log                |
+| Budget API dépassé                        | `ERROR`                                      | non                              | oui SECURITY            |
+| Cover MIME invalide / oversize            | metadata ok, cover skip                      | non                              | warn log                |
+| Refresh manuel mais Book sans ISBN        | tRPC `BAD_REQUEST 'NO_ISBN'` (avant enqueue) | n/a                              | non                     |
 
 ---
 
@@ -287,11 +298,11 @@ export const metadataApiBudgetLimiter = new RateLimiter({
 
 ## 10. Drifts vs master design (BiblioShare Phase 0)
 
-| Drift | Justification |
-|---|---|
-| ISBNdb non implémenté en 2B' | Payant, et Google + OL couvrent 95%+ du catalogue cible (FR + EN). À évaluer sur retours réels avant d'engager le coût. |
-| Pas de fallback titre+auteur | Trop bruité pour un MVP, risque d'écraser des champs avec de la mauvaise data. Documenté en non-objectif. |
-| Champ `metadataAttemptCount` ajouté | Pas dans le master design ; utile pour debug, observability et future page admin "metadata health". Coût migration trivial. |
+| Drift                                                                  | Justification                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ISBNdb non implémenté en 2B'                                           | Payant, et Google + OL couvrent 95%+ du catalogue cible (FR + EN). À évaluer sur retours réels avant d'engager le coût.                                                                                                                   |
+| Pas de fallback titre+auteur                                           | Trop bruité pour un MVP, risque d'écraser des champs avec de la mauvaise data. Documenté en non-objectif.                                                                                                                                 |
+| Champ `metadataAttemptCount` ajouté                                    | Pas dans le master design ; utile pour debug, observability et future page admin "metadata health". Coût migration trivial.                                                                                                               |
 | Storage cover sous `STORAGE_ROOT/covers/` (pas `library/{libraryId}/`) | Les covers ne sont pas library-scoped (un même ISBN partage potentiellement la même cover). Pas de dédup MVP, mais on s'autorise un index futur sans refonte. Cleanup simple : à la suppression d'un Book, `unlink(covers/{bookId}.jpg)`. |
 
 ---

@@ -73,9 +73,7 @@ export function BookDetail({
               {t('physical')}
             </Badge>
           )}
-          {book.metadataFetchStatus === 'PENDING' && (
-            <MetadataFetchStatusBadge status="PENDING" />
-          )}
+          {book.metadataFetchStatus === 'PENDING' && <MetadataFetchStatusBadge status="PENDING" />}
         </div>
         <Card>
           <CardContent className="space-y-3 py-5">

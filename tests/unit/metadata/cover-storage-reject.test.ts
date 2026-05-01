@@ -33,9 +33,12 @@ describe('downloadAndNormalize — reject', () => {
 
   it('returns null when payload exceeds COVER_MAX_BYTES', async () => {
     const big = await readFile('tests/fixtures/metadata/cover-oversized.bin');
-    agent.get('https://cover.example').intercept({ path: '/big' }).reply(200, big, {
-      headers: { 'content-length': String(big.length) },
-    });
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/big' })
+      .reply(200, big, {
+        headers: { 'content-length': String(big.length) },
+      });
     expect(await downloadAndNormalize('https://cover.example/big', 'ckabc123')).toBeNull();
   });
 
@@ -46,10 +49,13 @@ describe('downloadAndNormalize — reject', () => {
 
   it('returns null on timeout', async () => {
     process.env.METADATA_FETCH_TIMEOUT_MS = '50';
-    agent.get('https://cover.example').intercept({ path: '/slow' }).reply(200, async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      return Buffer.from('x');
-    });
+    agent
+      .get('https://cover.example')
+      .intercept({ path: '/slow' })
+      .reply(200, async () => {
+        await new Promise((r) => setTimeout(r, 200));
+        return Buffer.from('x');
+      });
     expect(await downloadAndNormalize('https://cover.example/slow', 'ckabc123')).toBeNull();
   });
 });

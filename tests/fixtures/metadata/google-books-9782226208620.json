@@ -9,9 +9,7 @@
       "selfLink": "https://www.googleapis.com/books/v1/volumes/E5WHSQAACAAJ",
       "volumeInfo": {
         "title": "L'été où je suis devenue jolie",
-        "authors": [
-          "Jenny Han"
-        ],
+        "authors": ["Jenny Han"],
         "publishedDate": "2010-06-02",
         "description": "Depuis qu'elle est enfant, Belly passe tous ses étés dans la maison au bord de la plage. La, entre les bains de mer et les pichets de thé glacé, la vie est parfaite. Il y a Susannah et ses fils, Conrad l'ombrageux et Jeremiah, si charmant Et puis l'été de ses seize ans, les choses changent Susannah sourit un peu moins. Les garçons paraissent plus lointains. Parce qu'il se passe quelque chose dont personne ne parle. Belly aussi a son secret La vie chavire doucement, pour chacun d'eux. Plus rien ne sera comme avant.",
         "industryIdentifiers": [

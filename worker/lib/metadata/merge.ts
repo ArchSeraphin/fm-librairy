@@ -11,8 +11,11 @@ function isNonEmpty(p: NormalizedPayload): boolean {
 export function mergePayloads(payloads: NormalizedPayload[]): NormalizedPayload {
   const merged: NormalizedPayload = {
     source: payloads[0]?.source ?? 'GOOGLE_BOOKS',
-    description: null, publisher: null, publishedYear: null,
-    language: null, coverUrl: null,
+    description: null,
+    publisher: null,
+    publishedYear: null,
+    language: null,
+    coverUrl: null,
   };
   let attributedSource: MetadataSource | null = null;
 
@@ -52,17 +55,17 @@ export function applyPolicy(
 ): BookPatch {
   const patch: BookPatch = {};
   const writable: Array<keyof CurrentBookFields & keyof NormalizedPayload> = [
-    'description', 'publisher', 'publishedYear', 'language',
+    'description',
+    'publisher',
+    'publishedYear',
+    'language',
   ];
   let wroteAny = false;
 
   for (const f of writable) {
     const newVal = merged[f];
     if (newVal === null) continue;
-    const shouldWrite =
-      mode === 'manual'
-        ? true
-        : current[f] === null; // auto = fill-only on strictly null
+    const shouldWrite = mode === 'manual' ? true : current[f] === null; // auto = fill-only on strictly null
     if (shouldWrite) {
       // @ts-expect-error narrow per-field
       patch[f] = newVal;

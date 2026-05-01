@@ -7,10 +7,7 @@ import { getEnv } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ bookId: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ bookId: string }> }) {
   const ctx = await getCurrentSessionAndUser();
   if (!ctx?.user) return new NextResponse('unauthorized', { status: 401 });
 

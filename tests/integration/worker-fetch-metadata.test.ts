@@ -59,7 +59,10 @@ describe('fetchMetadataJob', () => {
     const gb = await readFile('tests/fixtures/metadata/google-books-9782070612758.json', 'utf-8');
     const ol = await readFile('tests/fixtures/metadata/open-library-9782070612758.json', 'utf-8');
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(200, gb);
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(200, ol);
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(200, ol);
 
     await fetchMetadataJob(mkJob(book.id, 'auto'));
 
@@ -74,8 +77,14 @@ describe('fetchMetadataJob', () => {
 
   it('NOT_FOUND when both providers return null', async () => {
     const { book } = await makeLibAndBook({ isbn13: '0000000000000' });
-    agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(200, { totalItems: 0 });
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(200, {});
+    agent
+      .get('https://www.googleapis.com')
+      .intercept({ path: /books/ })
+      .reply(200, { totalItems: 0 });
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(200, {});
 
     await fetchMetadataJob(mkJob(book.id, 'auto'));
 
@@ -87,7 +96,10 @@ describe('fetchMetadataJob', () => {
   it('throws on transient error so BullMQ retries (attempts not exhausted)', async () => {
     const { book } = await makeLibAndBook();
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(503, '');
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(503, '');
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(503, '');
 
     await expect(fetchMetadataJob(mkJob(book.id, 'auto', 1, 3))).rejects.toThrow();
 
@@ -98,7 +110,10 @@ describe('fetchMetadataJob', () => {
   it('marks ERROR + writes audit on the last failed attempt', async () => {
     const { book } = await makeLibAndBook();
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(503, '');
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(503, '');
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(503, '');
 
     await fetchMetadataJob(mkJob(book.id, 'auto', 3, 3));
 
@@ -114,7 +129,10 @@ describe('fetchMetadataJob', () => {
     const { book } = await makeLibAndBook({ description: 'Old description.' });
     const gb = await readFile('tests/fixtures/metadata/google-books-9782070612758.json', 'utf-8');
     agent.get('https://www.googleapis.com').intercept({ path: /books/ }).reply(200, gb);
-    agent.get('https://openlibrary.org').intercept({ path: /api\/books/ }).reply(200, {});
+    agent
+      .get('https://openlibrary.org')
+      .intercept({ path: /api\/books/ })
+      .reply(200, {});
 
     await fetchMetadataJob(mkJob(book.id, 'manual'));
 

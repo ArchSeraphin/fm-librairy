@@ -28,10 +28,7 @@ describe('library.books.refreshMetadata', () => {
     const updated = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
     expect(updated.metadataFetchStatus).toBe('PENDING');
 
-    expect(addSpy).toHaveBeenCalledWith(
-      'fetch-metadata',
-      { bookId: book.id, mode: 'manual' },
-    );
+    expect(addSpy).toHaveBeenCalledWith('fetch-metadata', { bookId: book.id, mode: 'manual' });
 
     const audit = await prisma.auditLog.findFirst({
       where: { action: 'library.book.metadata_refresh_requested', targetId: book.id },

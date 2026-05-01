@@ -44,7 +44,10 @@ describe('GET /api/covers/[bookId]', () => {
       data: { coverPath: `covers/${book.id}.jpg` },
     });
     await mkdir(join(storageRoot, 'covers'), { recursive: true });
-    await writeFile(join(storageRoot, 'covers', `${book.id}.jpg`), Buffer.from([0xff, 0xd8, 0xff, 0xe0]));
+    await writeFile(
+      join(storageRoot, 'covers', `${book.id}.jpg`),
+      Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+    );
 
     sessionMock.mockResolvedValue({ session: {}, user: { id: user!.id, role: 'USER' } });
     const res = await callRoute(book.id);

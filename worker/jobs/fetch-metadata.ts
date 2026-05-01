@@ -7,7 +7,11 @@ import { fetchByIsbn as fetchGoogle } from '../lib/metadata/google-books-client.
 import { fetchByIsbn as fetchOpenLibrary } from '../lib/metadata/open-library-client.js';
 import { mergePayloads, applyPolicy } from '../lib/metadata/merge.js';
 import { downloadAndNormalize } from '../lib/metadata/cover-storage.js';
-import { ProviderTransientError, type MetadataFetchMode, type NormalizedPayload } from '../lib/metadata/types.js';
+import {
+  ProviderTransientError,
+  type MetadataFetchMode,
+  type NormalizedPayload,
+} from '../lib/metadata/types.js';
 
 const prisma = new PrismaClient();
 

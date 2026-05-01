@@ -25,10 +25,7 @@ describe('library.books.create — metadata enqueue', () => {
       authors: ['A'],
       isbn13: '9782070612758',
     });
-    expect(addSpy).toHaveBeenCalledWith(
-      'fetch-metadata',
-      { bookId: book.id, mode: 'auto' },
-    );
+    expect(addSpy).toHaveBeenCalledWith('fetch-metadata', { bookId: book.id, mode: 'auto' });
   });
 
   it('does NOT enqueue when no ISBN provided', async () => {

@@ -1,4 +1,4 @@
-import { Queue } from 'bullmq';
+import { Queue, type JobsOptions } from 'bullmq';
 import { getRedis } from '@/lib/redis';
 
 let _queue: Queue | null = null;
@@ -20,7 +20,6 @@ function ensureQueue(): Queue {
 
 // Export as a façade so callers can do `metadataQueue.add(...)` and tests can spy on `.add`.
 export const metadataQueue = {
-  add: (name: string, data: unknown, opts?: unknown) =>
-    (ensureQueue().add as any)(name, data, opts),
+  add: (name: string, data: unknown, opts?: JobsOptions) => ensureQueue().add(name, data, opts),
   close: () => (_queue ? _queue.close() : Promise.resolve()),
 };
