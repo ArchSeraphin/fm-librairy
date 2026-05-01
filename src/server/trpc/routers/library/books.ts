@@ -112,6 +112,18 @@ export const libraryBooksRouter = t.router({
       req: { ip: ctx.ip },
     });
 
+    if (book.isbn13 || book.isbn10) {
+      try {
+        await db.book.update({
+          where: { id: book.id },
+          data: { metadataFetchStatus: 'PENDING' },
+        });
+        await metadataQueue.add('fetch-metadata', { bookId: book.id, mode: 'auto' });
+      } catch (err) {
+        console.warn('[library.books.create] metadata enqueue failed (non-fatal)', err);
+      }
+    }
+
     return book;
   }),
 
