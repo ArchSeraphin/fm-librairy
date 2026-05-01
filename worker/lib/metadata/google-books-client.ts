@@ -1,4 +1,4 @@
-import { fetch } from 'undici';
+import { fetch, type Response } from 'undici';
 import { ProviderTransientError, type NormalizedPayload } from './types.js';
 
 const ENDPOINT = 'https://www.googleapis.com/books/v1/volumes';
