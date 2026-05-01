@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { BookOpen, Package, Archive } from 'lucide-react';
-import type { ScanStatus } from '@prisma/client';
+import type { ScanStatus, MetadataFetchStatus } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScanStatusBadge } from './ScanStatusBadge';
+import { MetadataFetchStatusBadge } from './MetadataFetchStatusBadge';
 
 export interface BookCardData {
   id: string;
@@ -19,6 +20,7 @@ export interface BookCardData {
   archivedAt: Date | null;
   /** scanStatus of the earliest file for this book, or null/undefined if none. */
   firstFileScanStatus?: ScanStatus | null;
+  metadataFetchStatus?: MetadataFetchStatus | null;
 }
 
 export function BookCard({
@@ -43,7 +45,7 @@ export function BookCard({
           {book.coverPath ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={book.coverPath}
+              src={`/api/covers/${book.id}`}
               alt={t('coverAlt', { title: book.title })}
               className="h-full w-full object-cover transition group-hover:scale-105"
               loading="lazy"
@@ -78,6 +80,9 @@ export function BookCard({
               </Badge>
             )}
             {scanStatus !== null && <ScanStatusBadge status={scanStatus} size="sm" />}
+            {book.metadataFetchStatus === 'PENDING' && (
+              <MetadataFetchStatusBadge status="PENDING" />
+            )}
           </div>
         </CardContent>
       </Card>

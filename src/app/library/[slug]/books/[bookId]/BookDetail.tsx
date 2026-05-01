@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { BookOpen, Package, Archive } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { BookActionsMenu } from './BookActionsMenu';
 import { BookFileUpload } from '@/components/books/BookFileUpload';
 import { ScanStatusBadge } from '@/components/books/ScanStatusBadge';
+import { MetadataSourceBadge } from '@/components/books/MetadataSourceBadge';
 import type { Book, BookFile } from '@prisma/client';
 
 export function BookDetail({
@@ -29,12 +31,13 @@ export function BookDetail({
     <article className="grid gap-8 lg:grid-cols-[280px_1fr]">
       <div>
         {book.coverPath ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={book.coverPath}
+          <Image
+            src={`/api/covers/${book.id}`}
             alt={t('coverAlt', { title: book.title })}
+            width={280}
+            height={420}
             className="aspect-[2/3] w-full rounded-lg object-cover shadow"
-            referrerPolicy="no-referrer"
+            unoptimized={false}
           />
         ) : (
           <div className="flex aspect-[2/3] items-center justify-center rounded-lg bg-muted">
@@ -79,6 +82,14 @@ export function BookDetail({
             {book.isbn10 && <Row k="ISBN-10" v={book.isbn10} />}
           </CardContent>
         </Card>
+        <MetadataSourceBadge
+          slug={slug}
+          bookId={book.id}
+          source={book.metadataSource}
+          fetchedAt={book.metadataFetchedAt}
+          canRefresh={isAdmin}
+          isPending={book.metadataFetchStatus === 'PENDING'}
+        />
         {book.description && (
           <section>
             <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">

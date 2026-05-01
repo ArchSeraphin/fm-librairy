@@ -1,4 +1,4 @@
-import { Prisma, type ScanStatus } from '@prisma/client';
+import { Prisma, type ScanStatus, type MetadataFetchStatus } from '@prisma/client';
 import { db } from '@/lib/db';
 
 export type BookSort = 'title_asc' | 'createdAt_desc' | 'createdAt_asc';
@@ -34,6 +34,7 @@ export interface BookRow {
   updatedAt: Date;
   /** scanStatus of the earliest file for this book, or null if none. */
   firstFileScanStatus: ScanStatus | null;
+  metadataFetchStatus: MetadataFetchStatus | null;
 }
 
 export interface SearchResult {
@@ -108,7 +109,7 @@ export async function buildSearchQuery(input: SearchInput): Promise<SearchResult
     SELECT b."id", b."libraryId", b."title", b."authors", b."isbn10", b."isbn13",
            b."publisher", b."publishedYear", b."language", b."description",
            b."coverPath", b."hasDigital", b."hasPhysical", b."archivedAt",
-           b."createdAt", b."updatedAt",
+           b."createdAt", b."updatedAt", b."metadataFetchStatus",
            (
              SELECT f."scanStatus"
              FROM "BookFile" f
