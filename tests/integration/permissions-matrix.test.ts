@@ -342,6 +342,15 @@ const matrix: MatrixCase[] = [
       return c.library.books.delete({ slug, id: STUB_CUID });
     },
   },
+  {
+    router: 'library.books',
+    procedure: 'refreshMetadata',
+    byRole: ADMIN_ONLY,
+    call: async (c, ctx) => {
+      const slug = await resolveSlugFromCtx(ctx);
+      return c.library.books.refreshMetadata({ slug, id: STUB_CUID });
+    },
+  },
 
   // -------- library.files -- read = AUTHED_ONLY, delete = ADMIN_ONLY --------
   // uploadBookFile (server action) — covered by tests/integration/upload-action-attacks.test.ts

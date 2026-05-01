@@ -71,6 +71,21 @@ Légende : ✓ allow · ✗ deny · `(*)` voir contraintes au bas de table.
 
 Routers `auth.*`, `invitation.*`, `password.*` couverts par leurs propres tests Phase 1A/1B (déjà inclus dans la matrice via le test anti-drift).
 
+## library.books (admins only for mutations, authed for reads)
+
+| Procedure       | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
+| --------------- | ------------ | ------------- | ------ | ---- | ----------- |
+| list            | ✓            | ✓             | ✓      | ✗    | ✗           |
+| get             | ✓            | ✓             | ✓      | ✗    | ✗           |
+| create          | ✓            | ✓             | ✗      | ✗    | ✗           |
+| update          | ✓            | ✓             | ✗      | ✗    | ✗           |
+| archive         | ✓            | ✓             | ✗      | ✗    | ✗           |
+| unarchive       | ✓            | ✓             | ✗      | ✗    | ✗           |
+| delete          | ✓            | ✗             | ✗      | ✗    | ✗           |
+| refreshMetadata | ✓            | ✓             | ✗      | ✗    | ✗           |
+
+`delete` est exclusif GLOBAL_ADMIN. `refreshMetadata` valide ISBN, puis rate-limite, puis enqueued le refresh de métadonnées Open Library/Google Books.
+
 ## library.files (members + admins)
 
 | Procedure | GLOBAL_ADMIN | LIBRARY_ADMIN | MEMBER | ANON | PENDING_2FA |
