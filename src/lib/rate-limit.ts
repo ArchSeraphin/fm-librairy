@@ -141,3 +141,27 @@ export const libraryFileDeleteLimiter = new RateLimiterRedis({
   duration: 60,
   insuranceLimiter: memInsurance(5, 60),
 });
+
+export const metadataRefreshPerBookLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:meta_refresh_book',
+  points: 1,
+  duration: 60 * 60,
+  insuranceLimiter: memInsurance(1, 60 * 60),
+});
+
+export const metadataRefreshPerAdminLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:meta_refresh_admin',
+  points: 20,
+  duration: 24 * 60 * 60,
+  insuranceLimiter: memInsurance(20, 24 * 60 * 60),
+});
+
+export const metadataApiBudgetLimiter = new RateLimiterRedis({
+  ...baseOpts(),
+  keyPrefix: 'rl:meta_api_budget',
+  points: 800,
+  duration: 24 * 60 * 60,
+  insuranceLimiter: memInsurance(800, 24 * 60 * 60),
+});
