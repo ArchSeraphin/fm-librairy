@@ -52,6 +52,8 @@ prisma/generated/
 uploads/
 uploads-staging/
 covers/
+# But the Next.js API route directory is source code, not data
+!/src/app/api/covers/
 
 # Backups
 *.borg
