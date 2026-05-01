@@ -7,7 +7,10 @@ import {
   libraryBookCreateLimiter,
   libraryBookUpdateLimiter,
   libraryBookDeleteLimiter,
+  metadataRefreshPerAdminLimiter,
+  metadataRefreshPerBookLimiter,
 } from '@/lib/rate-limit';
+import { metadataQueue } from '@/server/queues/metadata';
 import { buildSearchQuery } from '@/lib/book-search';
 import { db } from '@/lib/db';
 import {
@@ -18,6 +21,7 @@ import {
   archiveBookInput,
   unarchiveBookInput,
   deleteBookInput,
+  refreshMetadataInput,
 } from '../../schemas/book';
 import { recordAudit } from '@/lib/audit-log';
 import { assertBookInLibrary, assertNotArchived, assertNoBookDependencies } from '@/lib/book-admin';
@@ -285,4 +289,39 @@ export const libraryBooksRouter = t.router({
 
     return { ok: true };
   }),
+
+  refreshMetadata: libraryAdminProcedure
+    .input(refreshMetadataInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await metadataRefreshPerAdminLimiter.consume(ctx.user.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      const book = await assertBookInLibrary(input.id, ctx.library.id);
+      if (!book.isbn13 && !book.isbn10) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'NO_ISBN' });
+      }
+
+      try {
+        await metadataRefreshPerBookLimiter.consume(input.id);
+      } catch {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS' });
+      }
+
+      await db.book.update({
+        where: { id: input.id },
+        data: { metadataFetchStatus: 'PENDING' },
+      });
+      await metadataQueue.add('fetch-metadata', { bookId: input.id, mode: 'manual' });
+      await recordAudit({
+        action: 'library.book.metadata_refresh_requested',
+        actor: { id: ctx.user.id },
+        target: { type: 'BOOK', id: input.id },
+        metadata: { libraryId: ctx.library.id },
+        req: { ip: ctx.ip },
+      });
+      return { ok: true as const };
+    }),
 });

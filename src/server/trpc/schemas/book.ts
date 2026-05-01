@@ -122,3 +122,14 @@ export const deleteBookInput = z.object({
 });
 
 export type DeleteBookInput = z.infer<typeof deleteBookInput>;
+
+// ---------------------------------------------------------------------------
+// Refresh metadata (Phase 2B')
+// ---------------------------------------------------------------------------
+
+export const refreshMetadataInput = z.object({
+  slug: z.string(),
+  id: z.string().cuid(),
+});
+
+export type RefreshMetadataInput = z.infer<typeof refreshMetadataInput>;

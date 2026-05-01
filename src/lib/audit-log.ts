@@ -64,7 +64,10 @@ export type AuditAction =
   // 2A' — book file lifecycle
   | 'library.book_file.uploaded'
   | 'library.book_file.infected'
-  | 'library.book_file.deleted';
+  | 'library.book_file.deleted'
+  // 2B' — metadata refresh
+  | 'library.book.metadata_refresh_requested'
+  | 'library.book.metadata_fetch_failed';
 
 export type AuditTargetType =
   | 'USER'
