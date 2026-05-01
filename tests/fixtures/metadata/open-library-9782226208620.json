@@ -1,0 +1,29 @@
+{
+  "ISBN:9782226208620": {
+    "url": "http://openlibrary.org/books/OL43709237M/L'Ã©tÃ©_oÃ¹_je_suis_devenue_jolie_(French_Edition)",
+    "key": "/books/OL43709237M",
+    "title": "L'Ã©tÃ© oÃ¹ je suis devenue jolie (French Edition)",
+    "authors": [
+      {
+        "url": "http://openlibrary.org/authors/OL1425972A/Jenny_Han",
+        "name": "Jenny Han"
+      }
+    ],
+    "identifiers": {
+      "isbn_10": [
+        "2226208623"
+      ],
+      "isbn_13": [
+        "9782226208620"
+      ],
+      "openlibrary": [
+        "OL43709237M"
+      ]
+    },
+    "publishers": [
+      {
+        "name": "ALBIN MICHEL"
+      }
+    ]
+  }
+}
