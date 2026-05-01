@@ -222,7 +222,37 @@ const scanWorker = new Worker(
 
 scanWorker.on('failed', (job, err) => logger.error({ jobId: job?.id, err }, 'scan job failed'));
 
-export { scanQueue };
+// =========================================================================
+// Metadata queue (Phase 2B')
+// =========================================================================
+const METADATA_QUEUE = 'metadata';
+const metadataQueue = new Queue(METADATA_QUEUE, {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 5_000 },
+    removeOnComplete: { count: 1000, age: 24 * 3600 },
+    removeOnFail: { count: 5000 },
+  },
+});
+
+const metadataWorker = new Worker(
+  METADATA_QUEUE,
+  async (job) => {
+    if (job.name === 'fetch-metadata') {
+      const { fetchMetadataJob } = await import('./jobs/fetch-metadata.js');
+      return fetchMetadataJob(job);
+    }
+    logger.warn({ name: job.name }, 'unknown metadata job');
+  },
+  { connection: redis, concurrency: 2 },
+);
+
+metadataWorker.on('failed', (job, err) =>
+  logger.error({ jobId: job?.id, err }, 'metadata job failed'),
+);
+
+export { scanQueue, metadataQueue };
 
 async function scheduleCleanup(): Promise<void> {
   await queue.upsertJobScheduler(
@@ -252,9 +282,11 @@ const shutdown = async (): Promise<void> => {
   await worker.close();
   await mailWorker.close();
   await scanWorker.close();
+  await metadataWorker.close();
   await queue.close();
   await mailQueue.close();
   await scanQueue.close();
+  await metadataQueue.close();
   await prisma.$disconnect();
   await redis.quit();
   process.exit(0);
