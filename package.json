@@ -71,6 +71,7 @@
     "react-dom": "19.2.5",
     "react-hook-form": "^7.74.0",
     "resend": "^6.12.2",
+    "sharp": "^0.33.5",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },
