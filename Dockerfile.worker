@@ -3,7 +3,7 @@
 # Build context: repo root (needed for pnpm workspace + Prisma schema).
 # Build with: docker build -f Dockerfile.worker -t biblioshare-worker .
 
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9 --activate
 # Workspace files needed to resolve --filter and the worker package
@@ -13,7 +13,7 @@ COPY worker/package.json ./worker/
 COPY eslint-rules ./eslint-rules
 RUN pnpm install --frozen-lockfile --filter biblioshare-worker...
 
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9 --activate
 COPY --from=deps /repo/node_modules ./node_modules
@@ -28,7 +28,7 @@ RUN pnpm --filter biblioshare-worker build
 # Bundle worker into a self-contained deploy dir (resolves workspace symlinks)
 RUN pnpm --filter biblioshare-worker deploy --prod /deploy
 
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /worker
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
