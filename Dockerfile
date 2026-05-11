@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.6
 
 # Stage 1 — deps
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 # Workspace files: pnpm-lock.yaml is shared, pnpm-workspace.yaml lists `worker/`,
@@ -15,7 +15,7 @@ RUN corepack enable && corepack prepare pnpm@9 --activate \
  && pnpm install --frozen-lockfile --filter app...
 
 # Stage 2 — build
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 # Placeholder env values consumed only by `next build` page-data collection.
@@ -43,7 +43,7 @@ RUN corepack enable && corepack prepare pnpm@9 --activate \
  && pnpm build
 
 # Stage 3 — runtime
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
